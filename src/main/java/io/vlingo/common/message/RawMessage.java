@@ -26,6 +26,15 @@ public class RawMessage {
     return new RawMessage(RawMessageHeader.from(nodeId, type, length), length);
   }
 
+  public static RawMessage from(final int nodeId, final int type, final String textMessage) {
+    final byte[] textBytes = Converters.textToBytes(textMessage);
+    final RawMessageHeader header = RawMessageHeader.from(nodeId, type, textBytes.length);
+    final RawMessage message = new RawMessage(header, textBytes.length);
+    message.append(textBytes, 0, textBytes.length);
+    
+    return message;
+  }
+
   public static RawMessage from(final ByteBuffer buffer) {
     final RawMessageHeader header = RawMessageHeader.from(buffer);
     final RawMessage message = new RawMessage(header, header.length());
