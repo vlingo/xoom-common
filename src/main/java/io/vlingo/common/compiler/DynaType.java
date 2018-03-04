@@ -5,7 +5,8 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-package io.vlingo.common.message;
+package io.vlingo.common.compiler;
 
-public interface Message {
+public enum DynaType {
+  Main, Test
 }
