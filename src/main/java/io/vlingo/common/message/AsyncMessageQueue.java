@@ -10,14 +10,15 @@ package io.vlingo.common.message;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AsyncMessageQueue implements MessageQueue, Runnable {
 
   private final MessageQueue deadLettersQueue;
-  private boolean dispatching;
+  private AtomicBoolean dispatching;
   private final ThreadPoolExecutor executor;
   private MessageQueueListener listener;
-  private volatile boolean open;
+  private AtomicBoolean open;
   private final ConcurrentLinkedQueue<Message> queue;
 
   public AsyncMessageQueue() {
@@ -26,9 +27,9 @@ public class AsyncMessageQueue implements MessageQueue, Runnable {
 
   public AsyncMessageQueue(final MessageQueue deadLettersQueue) {
     this.deadLettersQueue = deadLettersQueue;
-    this.dispatching = false;
+    this.dispatching = new AtomicBoolean(false);
     this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
-    this.open = false;
+    this.open = new AtomicBoolean(false);
     this.queue = new ConcurrentLinkedQueue<Message>();
   }
 
@@ -37,8 +38,8 @@ public class AsyncMessageQueue implements MessageQueue, Runnable {
   }
 
   public void close(final boolean flush) {
-    if (open) {
-      open = false;
+    if (open.get()) {
+      open.set(false);
       
       if (flush) {
         flush();
@@ -49,7 +50,7 @@ public class AsyncMessageQueue implements MessageQueue, Runnable {
   }
 
   public void enqueue(final Message message) {
-    if (open) {
+    if (open.get()) {
       queue.add(message);
       executor.execute(this);
     }
@@ -66,11 +67,11 @@ public class AsyncMessageQueue implements MessageQueue, Runnable {
   }
 
   public boolean isEmpty() {
-    return queue.isEmpty() && !dispatching;
+    return queue.isEmpty() && !dispatching.get();
   }
 
   public void registerListener(final MessageQueueListener listener) {
-    this.open = true;
+    this.open.set(true);
     this.listener = listener;
   }
 
@@ -78,7 +79,7 @@ public class AsyncMessageQueue implements MessageQueue, Runnable {
     Message message = null;
     
     try {
-      dispatching = true;
+      dispatching.set(true);
       message = dequeue();
       if (message != null) {
         listener.handleMessage(message);
@@ -91,7 +92,7 @@ public class AsyncMessageQueue implements MessageQueue, Runnable {
       System.out.println("AsyncMessageQueue: Dispatch to listener failed because: " + e.getMessage());
       e.printStackTrace();
     } finally {
-      dispatching = false;
+      dispatching.set(false);
     }
   }
 
