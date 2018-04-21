@@ -89,8 +89,8 @@ public class AsyncMessageQueueTest {
       Thread.sleep(5);
     }
     
-    assertEquals(5, countingDeadLettersQueue.enqueuedCount.get());
-    assertEquals(5, countingDeadLettersListener.handledCount.get());
+    assertEquals(5, countingDeadLettersQueue.enqueuedCount());
+    assertEquals(5, countingDeadLettersListener.handledCount());
   }
 
   @Before
@@ -109,10 +109,14 @@ public class AsyncMessageQueueTest {
   }
 
   private class CountingDeadLettersListener implements MessageQueueListener {
-    public AtomicInteger handledCount = new AtomicInteger();
+    private AtomicInteger handledCount = new AtomicInteger();
+
+    public int handledCount() {
+      return handledCount.get();
+    }
 
     public boolean hasNotCompleted(final int expected) {
-      return handledCount.get() < expected;
+      return handledCount() < expected;
     }
 
     @Override
@@ -139,10 +143,14 @@ public class AsyncMessageQueueTest {
   }
 
   private class CountingDeadLettersQueue extends AsyncMessageQueue {
-    public AtomicInteger enqueuedCount = new AtomicInteger(0);
+    private AtomicInteger enqueuedCount = new AtomicInteger(0);
+
+    public int enqueuedCount() {
+      return enqueuedCount.get();
+    }
 
     public boolean hasNotCompleted(final int expected) {
-      return enqueuedCount.get() < expected;
+      return enqueuedCount() < expected;
     }
 
     @Override
