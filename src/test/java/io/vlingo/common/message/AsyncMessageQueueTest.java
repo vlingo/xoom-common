@@ -84,9 +84,10 @@ public class AsyncMessageQueueTest {
     
     exceptionsQueue.close();
     
-    while (countingDeadLettersQueue.enqueuedCount.get() < expected &&
-            countingDeadLettersListener.handledCount.get() < expected)
+    while (countingDeadLettersQueue.hasNotCompleted(expected) &&
+            countingDeadLettersListener.hasNotCompleted(expected)) {
       Thread.sleep(5);
+    }
     
     assertEquals(5, countingDeadLettersQueue.enqueuedCount.get());
     assertEquals(5, countingDeadLettersListener.handledCount.get());
@@ -109,6 +110,10 @@ public class AsyncMessageQueueTest {
 
   private class CountingDeadLettersListener implements MessageQueueListener {
     public AtomicInteger handledCount = new AtomicInteger();
+
+    public boolean hasNotCompleted(final int expected) {
+      return handledCount.get() < expected;
+    }
 
     @Override
     public void handleMessage(final Message message) throws Exception {
@@ -135,7 +140,11 @@ public class AsyncMessageQueueTest {
 
   private class CountingDeadLettersQueue extends AsyncMessageQueue {
     public AtomicInteger enqueuedCount = new AtomicInteger(0);
-    
+
+    public boolean hasNotCompleted(final int expected) {
+      return enqueuedCount.get() < expected;
+    }
+
     @Override
     public void enqueue(final Message message) {
       enqueuedCount.incrementAndGet();
