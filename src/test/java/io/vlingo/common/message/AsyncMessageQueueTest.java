@@ -86,7 +86,7 @@ public class AsyncMessageQueueTest {
     
     while (countingDeadLettersQueue.enqueuedCount.get() < expected &&
             countingDeadLettersListener.handledCount.get() < expected)
-      ;
+      Thread.sleep(5);
     
     assertEquals(5, countingDeadLettersQueue.enqueuedCount.get());
     assertEquals(5, countingDeadLettersListener.handledCount.get());
