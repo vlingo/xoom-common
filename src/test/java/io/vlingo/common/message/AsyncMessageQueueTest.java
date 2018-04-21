@@ -10,15 +10,12 @@ package io.vlingo.common.message;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import io.vlingo.common.message.AsyncMessageQueue;
-import io.vlingo.common.message.Message;
-import io.vlingo.common.message.MessageQueueListener;
+import org.junit.Before;
+import org.junit.Test;
 
 public class AsyncMessageQueueTest {
 
@@ -79,14 +76,20 @@ public class AsyncMessageQueueTest {
 
   @Test
   public void testDeadLettersQueue() throws Exception {
-    for (int idx = 0; idx < 5; ++idx) {
+    final int expected = 5;
+    
+    for (int idx = 0; idx < expected; ++idx) {
       exceptionsQueue.enqueue(new Message() {});
     }
     
     exceptionsQueue.close();
     
-    assertEquals(5, countingDeadLettersQueue.enqueuedCount);
-    assertEquals(5, countingDeadLettersListener.handledCount);
+    while (countingDeadLettersQueue.enqueuedCount.get() < expected &&
+            countingDeadLettersListener.handledCount.get() < expected)
+      ;
+    
+    assertEquals(5, countingDeadLettersQueue.enqueuedCount.get());
+    assertEquals(5, countingDeadLettersListener.handledCount.get());
   }
 
   @Before
@@ -105,11 +108,11 @@ public class AsyncMessageQueueTest {
   }
 
   private class CountingDeadLettersListener implements MessageQueueListener {
-    public int handledCount;
+    public AtomicInteger handledCount = new AtomicInteger();
 
     @Override
     public void handleMessage(final Message message) throws Exception {
-      ++handledCount;
+      handledCount.incrementAndGet();
     }    
   }
 
@@ -131,11 +134,11 @@ public class AsyncMessageQueueTest {
   }
 
   private class CountingDeadLettersQueue extends AsyncMessageQueue {
-    public int enqueuedCount;
+    public AtomicInteger enqueuedCount = new AtomicInteger(0);
     
     @Override
     public void enqueue(final Message message) {
-      ++enqueuedCount;
+      enqueuedCount.incrementAndGet();
       super.enqueue(message);
     }
   }
