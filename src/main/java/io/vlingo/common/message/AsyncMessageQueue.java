@@ -57,11 +57,7 @@ public class AsyncMessageQueue implements MessageQueue, Runnable {
 
   public void flush() {
     try {
-      while (!queue.isEmpty()) {
-        Thread.sleep(1L);
-      }
-      
-      while (dispatching) {
+      while (!isEmpty()) {
         Thread.sleep(1L);
       }
     } catch (Exception e) {

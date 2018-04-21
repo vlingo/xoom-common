@@ -1,0 +1,38 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'idea'
+
+group = 'io.vlingo'
+version = '0.2.0-SNAPSHOT'
+
+description = """vlingo-common"""
+
+
+// common project settings
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+repositories {
+     maven { url "http://repo.maven.apache.org/maven2" }
+}
+
+test {
+    testLogging {
+        exceptionFormat "full"
+    }
+
+    afterTest { descr, result ->
+        def elapsed = result.endTime - result.startTime
+        println ("$descr takes $elapsed ms.")
+    }
+}
+
+//
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version:'4.11'
+}
