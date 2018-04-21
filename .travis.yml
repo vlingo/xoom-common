@@ -11,4 +11,4 @@ cache:
 
 script:
   - mvn install
-  - gradle test --rerun-tasks --stacktraceß
+  - gradle test --rerun-tasks --stacktrace
