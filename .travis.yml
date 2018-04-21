@@ -1,6 +1,5 @@
 language: java
 
-before_script:
-  - echo ${TRAVIS_BUILD_DIR}
-  - touch ../test
-  - ls -rtl ..
+script:
+  - mvn install
+  - gradle test --rerun-tasks --stacktraceß
