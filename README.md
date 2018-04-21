@@ -1,6 +1,6 @@
 # vlingo-common
 
-[![Build Status](https://travis-ci.org/d-led/vlingo-common.svg?branch=master)](https://travis-ci.org/d-led/vlingo-common)
+[![Build Status](https://travis-ci.org/vlingo/vlingo-common.svg?branch=master)](https://travis-ci.org/vlingo/vlingo-common)
 
 This is a very early stage release of the vlingo platform.
 
