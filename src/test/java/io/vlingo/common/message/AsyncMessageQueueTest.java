@@ -84,7 +84,7 @@ public class AsyncMessageQueueTest {
     
     exceptionsQueue.close();
     
-    while (countingDeadLettersQueue.hasNotCompleted(expected) &&
+    while (countingDeadLettersQueue.hasNotCompleted(expected) ||
             countingDeadLettersListener.hasNotCompleted(expected)) {
       Thread.sleep(5);
     }
