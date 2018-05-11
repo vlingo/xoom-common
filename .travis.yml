@@ -1,14 +1,12 @@
 language: java
 
-before_cache:
-  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
-
-cache:
-  directories:
-    - $HOME/.gradle/caches/
-    - $HOME/.gradle/wrapper/
-    - $HOME/.m2
-
 script:
   - mvn install
-  - gradle test --rerun-tasks --stacktrace
+
+deploy:
+  provider: bintray
+  file: "bintray.json"
+  skip_cleanup: true # to upload artifacts created during the build
+  user: "d-led"
+  key:
+    secure: hPEUtFsRnIgzq4nnXURBYoh7BHspStHSA69LHlqe9zejEnPatozPkvrV8/D8+JmzknANEkBVjhLc/N2l/inV8cyr01NETvuRvy1y+11gjClSjniAgWnxYQXfZBQQ1NqiF6uFfkY9zZ78suNSIUV1y6y+hplhxJZ1m/Gg0Xs5laSC/vnZtPXuh0xioIjswdi0K1AZ05xmEIl3M+H173bm1/y8gJ4zj+BfsXUVoSc3Y4Au2WJrjFGRj1TjFiqoEdyDLXqKh/NoAgWZhBdpI4AdL6RbNG17bbKOxas0R0ruRysFE7o2BWmMMcXLP2GNvF0HRNuzebxyLLYfEdihwNxYlH3p3sFRgqg9gUpn4Y5uZUvOFyqFAw7QfkVYSXarg9GW6RLxk5y1sXamdtp9WT7fX3TSNKjBLnAXvMS1gKjbhGgPD5eMw7UrryqL9dzPcd9N97dY6X04JZr1F1Ykdc0TjzvL0t8vvkSOv4YzAtgDmAEjvsv5rvuDmmbe83sdvebMdIJoFy5xBzE+VX1ucBXDtP48cTcd1qRJa2XuY2rRNTX8mQ5W+4kqnsTkVzVSM2twxORYBx169b3h+i98swIGQG70T5CpEBm+6hTEw+pzHDvEkDI7vMFvbGRgHM7cfqDUNKFsUfcsriSiOVIR4AtfOsDHohSaHg0gEgZ8avUN6rw=
