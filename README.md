@@ -1,6 +1,6 @@
 # vlingo-common
 
-[![Build Status](https://travis-ci.org/vlingo/vlingo-common.svg?branch=master)](https://travis-ci.org/vlingo/vlingo-common)
+[![Build Status](https://travis-ci.org/vlingo/vlingo-common.svg?branch=master)](https://travis-ci.org/vlingo/vlingo-common) [ ![Download](https://api.bintray.com/packages/vlingo/vlingo-platform-java/vlingo-common/images/download.svg) ](https://bintray.com/vlingo/vlingo-platform-java/vlingo-common/_latestVersion)
 
 This is a very early stage release of the vlingo platform.
 
