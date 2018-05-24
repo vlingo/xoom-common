@@ -25,7 +25,13 @@
                 "override": 1
             }
         },
-        {"includePattern": "pom.xml", "uploadPattern": "/io/vlingo/vlingo-common/0.2.1/vlingo-common-0.2.1.pom"}
+        {
+            "includePattern": "pom.xml",
+            "uploadPattern": "/io/vlingo/vlingo-common/0.2.1/vlingo-common-0.2.1.pom",
+            "matrixParams": {
+                "override": 1
+            }
+        }
     ],
 
     "publish": true
