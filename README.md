@@ -8,13 +8,30 @@ The vlingo-common project consists of some tools that are used across
 various other vlingo projects.
 
 ### Bintray
+
 ```xml
-<dependency>
-  <groupId>io.vlingo</groupId>
-  <artifactId>vlingo-common</artifactId>
-  <version>0.2.1</version>
-  <type>pom</type>
-</dependency>
+  <repositories>
+    <repository>
+      <id>jcenter</id>
+      <url>https://jcenter.bintray.com/</url>
+    </repository>
+  </repositories>
+  <dependency>
+    <groupId>io.vlingo</groupId>
+    <artifactId>vlingo-common</artifactId>
+    <version>0.3.1</version>
+    <type>pom</type>
+  </dependency>
+```
+
+```gradle
+dependencies {
+    compile 'io.vlingo:vlingo-common:0.3.1'
+}
+
+repositories {
+    jcenter()
+}
 ```
 
 License (See LICENSE file for full license)

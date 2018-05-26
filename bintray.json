@@ -3,7 +3,7 @@
         "name": "vlingo-common",
         "repo": "vlingo-platform-java",
         "subject": "vlingo",
-        "desc": "Common tools shared across various vlingo projects",
+        "desc": "Common tools shared across various vlingo projects.",
         "website_url": "https://github.com/vlingo/vlingo-common",
         "issue_tracker_url": "https://github.com/vlingo/vlingo-common/issues",
         "vcs_url": "https://github.com/vlingo/vlingo-common.git",
@@ -13,21 +13,21 @@
     },
 
     "version": {
-        "name": "0.3.0",
+        "name": "0.3.1",
         "gpgSign": false
     },
 
     "files": [
         {
             "includePattern": "target/(.*).jar",
-            "uploadPattern": "/io/vlingo/vlingo-common/0.3.0/$1.jar",
+            "uploadPattern": "/io/vlingo/vlingo-common/0.3.1/$1.jar",
             "matrixParams": {
                 "override": 1
             }
         },
         {
             "includePattern": "pom.xml",
-            "uploadPattern": "/io/vlingo/vlingo-common/0.3.0/vlingo-common-0.3.0.pom",
+            "uploadPattern": "/io/vlingo/vlingo-common/0.3.1/vlingo-common-0.3.1.pom",
             "matrixParams": {
                 "override": 1
             }
