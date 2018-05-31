@@ -13,13 +13,8 @@
     },
 
     "version": {
-<<<<<<< HEAD
         "name": "0.3.2",
-        "gpgSign": false
-=======
-        "name": "0.3.1",
         "gpgSign": true
->>>>>>> 8c68dcc69921c84cfd82c60a3e679ca0cb432043
     },
 
     "files": [
