@@ -2,11 +2,40 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.vlingo</groupId>
   <artifactId>vlingo-common</artifactId>
-  <version>0.3.1</version>
+  <version>0.3.2</version>
   <packaging>jar</packaging>
 
   <name>vlingo-common</name>
-  <url>http://maven.apache.org</url>
+  <description>These are just a few common tools shared across various vlingo projects.</description>
+  <url>https://github.com/vlingo/vlingo-common</url>
+
+  <licenses>
+    <license>
+      <name>Mozilla Public License 2.0</name>
+      <url>https://mozilla.org/MPL/2.0/</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Vaughn Vernon</name>
+      <email>vaughn@kalele.io</email>
+      <organization>Kalele</organization>
+      <organizationUrl>http://kalele.io</organizationUrl>
+    </developer>
+    <developer>
+      <name>Dmitry Ledentsov</name>
+      <email>d.ledentsov@gmail.com</email>
+      <organization>Dmitry Ledentsov</organization>
+      <organizationUrl>https://github.com/d-led</organizationUrl>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git://github.com/vlingo/vlingo-common.git</connection>
+    <developerConnection>scm:git:ssh://github.com/vlingo/vlingo-common.git</developerConnection>
+    <url>http://github.com/vlingo/vlingo-common/tree/master</url>
+  </scm>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
