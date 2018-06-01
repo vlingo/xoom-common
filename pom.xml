@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.vlingo</groupId>
   <artifactId>vlingo-common</artifactId>
-  <version>0.3.2</version>
+  <version>0.3.3</version>
   <packaging>jar</packaging>
 
   <name>vlingo-common</name>
@@ -25,7 +25,7 @@
     </developer>
     <developer>
       <name>Dmitry Ledentsov</name>
-      <email>d.ledentsov@gmail.com</email>
+      <email>dmlled@yahoo.com</email>
       <organization>Dmitry Ledentsov</organization>
       <organizationUrl>https://github.com/d-led</organizationUrl>
     </developer>
