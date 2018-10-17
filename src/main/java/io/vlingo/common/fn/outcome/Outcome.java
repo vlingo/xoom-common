@@ -19,6 +19,8 @@ public interface Outcome<Failure extends Throwable, Success> {
 
     Success get() throws Failure;
 
+    Success getOrNull();
+
     <NextSuccess>
     NextSuccess resolve(
             final Function<Failure, NextSuccess> onFailedOutcome,
