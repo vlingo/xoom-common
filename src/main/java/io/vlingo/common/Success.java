@@ -8,6 +8,7 @@
 package io.vlingo.common;
 
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -80,7 +81,7 @@ public class Success<CauseT extends RuntimeException, ValueT> implements Outcome
             return Success.of(value);
         }
 
-        return Failure.of(new NoSuchElementException(value.toString()));
+        return Failure.of(new NoSuchElementException(Objects.toString(value, "null")));
     }
 
     @Override
