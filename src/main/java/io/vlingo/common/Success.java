@@ -7,6 +7,7 @@
 
 package io.vlingo.common;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -60,5 +61,15 @@ public class Success<CauseT extends RuntimeException, ValueT> implements Outcome
     @Override
     public <NextSuccessT> NextSuccessT resolve(final Function<CauseT, NextSuccessT> onFailedOutcome, final Function<ValueT, NextSuccessT> onSuccessfulOutcome) {
         return onSuccessfulOutcome.apply(value);
+    }
+
+    @Override
+    public Optional<ValueT> asOptional() {
+        return Optional.of(value);
+    }
+
+    @Override
+    public Completes<ValueT> asCompletes() {
+        return Completes.withSuccess(value);
     }
 }

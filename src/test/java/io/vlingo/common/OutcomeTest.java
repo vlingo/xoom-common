@@ -7,14 +7,13 @@
 
 package io.vlingo.common;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
-
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class OutcomeTest {
     @Test
@@ -169,6 +168,32 @@ public class OutcomeTest {
 
         assertEquals(outcome, currentValue.get());
         assertEquals(currentValue.get(), failedBranch);
+    }
+
+    @Test
+    public void testThatASuccessOutcomeIsTransformedToAValidOptional() {
+        final int value = randomInteger();
+        final Optional<Integer> outcome = Success.of(value).asOptional();
+
+        assertEquals(outcome, Optional.of(value));
+    }
+
+    @Test
+    public void testThatAFailedOutcomeIsTransformedToAnEmptyOptional() {
+        assertEquals(Failure.of(randomException()).asOptional(), Optional.empty());
+    }
+
+    @Test
+    public void testThatASuccessOutcomeIsTransformedToASuccessCompletes() {
+        final Integer value = randomInteger();
+        final Completes<Integer> outcome = Success.of(value).asCompletes();
+
+        assertEquals(outcome.outcome(), value);
+    }
+
+    @Test
+    public void testThatAFailedOutcomeIsTransformedToAFailedCompletes() {
+        assertTrue(Failure.of(randomException()).asCompletes().hasFailed());
     }
 
     private int randomInteger() {

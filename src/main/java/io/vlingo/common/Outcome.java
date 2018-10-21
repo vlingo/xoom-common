@@ -7,6 +7,7 @@
 
 package io.vlingo.common;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -33,4 +34,10 @@ public interface Outcome<FailureT extends Throwable, SuccessT> {
             final Function<FailureT, NextSuccessT> onFailedOutcome,
             final Function<SuccessT, NextSuccessT> onSuccessfulOutcome
     );
+
+    Optional<SuccessT>
+    asOptional();
+
+    Completes<SuccessT>
+    asCompletes();
 }
