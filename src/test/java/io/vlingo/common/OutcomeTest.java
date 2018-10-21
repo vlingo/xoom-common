@@ -7,11 +7,12 @@
 
 package io.vlingo.common;
 
+import org.junit.Test;
+
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.junit.Test;
 
 import static org.junit.Assert.*;
 
@@ -122,8 +123,8 @@ public class OutcomeTest {
     public void testThatAFailureIsRecoveredWithOtherwise() {
         final int recoveredValue = randomInteger();
         final int outcome = Failure.<RuntimeException, Integer>of(randomException())
-            .otherwise(ex -> recoveredValue)
-            .get();
+                .otherwise(ex -> recoveredValue)
+                .get();
 
         assertEquals(outcome, recoveredValue);
     }
@@ -132,8 +133,8 @@ public class OutcomeTest {
     public void testThatAFailureIsRecoveredWithOtherwiseInto() {
         final int recoveredValue = randomInteger();
         final int outcome = Failure.<RuntimeException, Integer>of(randomException())
-            .otherwiseInto(ex -> Success.of(recoveredValue))
-            .get();
+                .otherwiseInto(ex -> Success.of(recoveredValue))
+                .get();
 
         assertEquals(outcome, recoveredValue);
     }
@@ -194,6 +195,51 @@ public class OutcomeTest {
     @Test
     public void testThatAFailedOutcomeIsTransformedToAFailedCompletes() {
         assertTrue(Failure.of(randomException()).asCompletes().hasFailed());
+    }
+
+    @Test
+    public void testThatFilteringInASuccessOutcomeReturnsTheSameOutcome() {
+        final Outcome<RuntimeException, Integer> outcome = Success.of(randomInteger());
+        final Outcome<NoSuchElementException, Integer> filteredOutcome = outcome.filter(val -> true);
+
+        assertEquals(outcome.get(), filteredOutcome.get());
+    }
+
+    @Test(expected = NoSuchElementException.class)
+    public void testThatFilteringOutASuccessOutcomeReturnsAFailedOutcome() {
+        final Outcome<RuntimeException, Integer> outcome = Success.of(randomInteger());
+        final Outcome<NoSuchElementException, Integer> filteredOutcome = outcome.filter(val -> false);
+
+        assertTrue(filteredOutcome instanceof Failure);
+        filteredOutcome.get();
+    }
+
+    @Test(expected = NoSuchElementException.class)
+    public void testThatFilteringInAFailureOutcomeReturnsAFailedOutcome() {
+        final Outcome<RuntimeException, Integer> outcome = Failure.of(randomException());
+        final Outcome<NoSuchElementException, Integer> filteredOutcome = outcome.filter(val -> true);
+
+        assertTrue(filteredOutcome instanceof Failure);
+        filteredOutcome.get();
+    }
+
+    @Test
+    public void testThatAlongWithReturnsBothSuccessesInATuple() {
+        final Outcome<RuntimeException, Integer> first = Success.of(randomInteger());
+        final Outcome<RuntimeException, Integer> second = Success.of(randomInteger());
+
+        final Outcome<RuntimeException, Tuple2<Integer, Integer>> wrapped = first.alongWith(second);
+        assertEquals(first.get(), wrapped.get()._1);
+        assertEquals(second.get(), wrapped.get()._2);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testThatAlongWithReturnsFirstFailure() {
+        final Outcome<RuntimeException, Integer> first = Failure.of(randomException());
+        final Outcome<RuntimeException, Integer> second = Success.of(randomInteger());
+
+        final Outcome<RuntimeException, Tuple2<Integer, Integer>> wrapped = first.alongWith(second);
+        wrapped.get();
     }
 
     private int randomInteger() {

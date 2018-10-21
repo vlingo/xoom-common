@@ -7,6 +7,7 @@
 
 package io.vlingo.common;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -72,5 +73,16 @@ public class Failure<CauseT extends RuntimeException, ValueT> implements Outcome
     @Override
     public Completes<ValueT> asCompletes() {
         return Completes.withFailure();
+    }
+
+    @Override
+    public Outcome<NoSuchElementException, ValueT> filter(Function<ValueT, Boolean> filterFunction) {
+        return Failure.of((NoSuchElementException) new NoSuchElementException().initCause(cause));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <SecondSuccessT> Outcome<CauseT, Tuple2<ValueT, SecondSuccessT>> alongWith(Outcome<?, SecondSuccessT> outcome) {
+        return (Outcome<CauseT, Tuple2<ValueT, SecondSuccessT>>) this;
     }
 }
