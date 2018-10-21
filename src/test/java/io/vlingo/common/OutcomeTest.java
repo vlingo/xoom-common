@@ -1,14 +1,20 @@
-package io.vlingo.common.fn.outcome;
+// Copyright © 2012-2018 Vaughn Vernon. All rights reserved.
+//
+// This Source Code Form is subject to the terms of the
+// Mozilla Public License, v. 2.0. If a copy of the MPL
+// was not distributed with this file, You can obtain
+// one at https://mozilla.org/MPL/2.0/.
 
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
+package io.vlingo.common;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
+
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.junit.Test;
 
 public class OutcomeTest {
     @Test

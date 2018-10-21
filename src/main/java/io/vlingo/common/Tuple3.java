@@ -5,18 +5,20 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-package io.vlingo.common.fn;
+package io.vlingo.common;
 
-public class Tuple2<A, B> {
+public class Tuple3<A, B, C> {
   public final A _1;
   public final B _2;
+  public final C _3;
   
-  public static <A, B> Tuple2<A, B> from(final A a, final B b) {
-    return new Tuple2<A, B>(a, b);
+  public static <A, B, C> Tuple3<A, B, C> from(final A a, final B b, final C c) {
+    return new Tuple3<A, B, C>(a, b, c);
   }
 
-  private Tuple2(final A a, final B b) {
+  private Tuple3(final A a, final B b, final C c) {
     this._1 = a;
     this._2 = b;
+    this._3 = c;
   }
 }
