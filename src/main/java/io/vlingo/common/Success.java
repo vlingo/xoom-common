@@ -7,6 +7,9 @@
 
 package io.vlingo.common;
 
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -60,5 +63,29 @@ public class Success<CauseT extends RuntimeException, ValueT> implements Outcome
     @Override
     public <NextSuccessT> NextSuccessT resolve(final Function<CauseT, NextSuccessT> onFailedOutcome, final Function<ValueT, NextSuccessT> onSuccessfulOutcome) {
         return onSuccessfulOutcome.apply(value);
+    }
+
+    @Override
+    public Optional<ValueT> asOptional() {
+        return Optional.of(value);
+    }
+
+    @Override
+    public Completes<ValueT> asCompletes() {
+        return Completes.withSuccess(value);
+    }
+
+    @Override
+    public Outcome<NoSuchElementException, ValueT> filter(Function<ValueT, Boolean> filterFunction) {
+        if (filterFunction.apply(value)) {
+            return Success.of(value);
+        }
+
+        return Failure.of(new NoSuchElementException(Objects.toString(value, "null")));
+    }
+
+    @Override
+    public <SecondSuccessT> Outcome<CauseT, Tuple2<ValueT, SecondSuccessT>> alongWith(Outcome<?, SecondSuccessT> outcome) {
+        return outcome.andThenInto(secondOutcome -> Success.of(Tuple2.from(value, secondOutcome)));
     }
 }

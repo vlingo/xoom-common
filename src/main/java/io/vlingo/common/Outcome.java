@@ -7,6 +7,8 @@
 
 package io.vlingo.common;
 
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -33,4 +35,13 @@ public interface Outcome<FailureT extends Throwable, SuccessT> {
             final Function<FailureT, NextSuccessT> onFailedOutcome,
             final Function<SuccessT, NextSuccessT> onSuccessfulOutcome
     );
+
+    Optional<SuccessT> asOptional();
+
+    Completes<SuccessT> asCompletes();
+
+    Outcome<NoSuchElementException, SuccessT> filter(final Function<SuccessT, Boolean> filterFunction);
+
+    <SecondSuccessT>
+    Outcome<FailureT, Tuple2<SuccessT, SecondSuccessT>> alongWith(final Outcome<?, SecondSuccessT> outcome);
 }
