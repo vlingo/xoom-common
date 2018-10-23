@@ -49,29 +49,23 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   @Override
-  public Completes<T> andThen(final long timeout, final T failedOutcomeValue, final Function<T,T> function) {
-    state.failedValue(failedOutcomeValue);
-    state.action(Action.with(function));
-    if (state.isCompleted()) {
-      state.completeActions();
-    } else {
-      state.startTimer(timeout);
-    }
-    return this;
+  @SuppressWarnings("unchecked")
+  public <O> Completes<O> andThen(final long timeout, final T failedOutcomeValue, final Function<T,O> function) {
+    return (Completes<O>) andThenInto(timeout, failedOutcomeValue, function);
   }
 
   @Override
-  public Completes<T> andThen(final T failedOutcomeValue, final Function<T,T> function) {
+  public <O> Completes<O> andThen(final T failedOutcomeValue, final Function<T,O> function) {
     return andThen(-1L, failedOutcomeValue, function);
   }
 
   @Override
-  public Completes<T> andThen(final long timeout, final Function<T,T> function) {
+  public <O> Completes<O> andThen(final long timeout, final Function<T,O> function) {
     return andThen(timeout, null, function);
   }
 
   @Override
-  public Completes<T> andThen(final Function<T,T> function) {
+  public <O> Completes<O> andThen(final Function<T,O> function) {
     return andThen(-1L, null, function);
   }
 
@@ -577,8 +571,12 @@ public class BasicCompletes<T> implements Completes<T> {
               action.asConsumer().accept((T) outcome.get());
             } else if (action.isFunction()) {
               if (action.hasNestedCompletes()) {
-                ((Completes<T>) action.asFunction().apply((T) outcome.get()))
-                  .andThenConsume(value -> action.nestedCompletes().with(value));
+                final Object result = action.asFunction().apply((T) outcome.get());
+                if (result instanceof Completes) {
+                  ((Completes<T>) result).andThenConsume(value -> action.nestedCompletes().with(value));
+                } else {
+                  action.nestedCompletes().with(result);
+                }
               } else {
                 outcome.set(action.asFunction().apply((T) outcome.get()));
               }
