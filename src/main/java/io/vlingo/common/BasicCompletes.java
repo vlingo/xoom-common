@@ -51,7 +51,7 @@ public class BasicCompletes<T> implements Completes<T> {
   @Override
   @SuppressWarnings("unchecked")
   public <O> Completes<O> andThen(final long timeout, final T failedOutcomeValue, final Function<T,O> function) {
-    return (Completes<O>) andThenInto(timeout, failedOutcomeValue, function);
+    return andThenInto(timeout, failedOutcomeValue, function.andThen(Completes::withSuccess));
   }
 
   @Override
