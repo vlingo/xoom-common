@@ -44,7 +44,7 @@ public class OutcomeTest {
         final int successInt = randomInteger();
         final int expected = initialValue * successInt;
 
-        final int outcome = Success.of(initialValue).andThenInto(value -> Success.of(value * successInt)).get();
+        final int outcome = Success.of(initialValue).andThenTo(value -> Success.of(value * successInt)).get();
         assertEquals(expected, outcome);
     }
 
@@ -78,7 +78,7 @@ public class OutcomeTest {
         final int initialValue = randomInteger();
 
         Outcome<RuntimeException, Integer> success = Success.of(initialValue);
-        Outcome<RuntimeException, Integer> otherwise = success.otherwiseInto(ex -> {
+        Outcome<RuntimeException, Integer> otherwise = success.otherwiseTo(ex -> {
             currentValue.set(initialValue);
             return Success.of(initialValue);
         });
@@ -103,10 +103,10 @@ public class OutcomeTest {
     }
 
     @Test
-    public void testThatAFailureIsNotComposedWithAndThenInto() {
+    public void testThatAFailureIsNotComposedWithAndThenTo() {
         final AtomicInteger currentValue = new AtomicInteger(0);
         Failure.<RuntimeException, Integer>of(randomException())
-                .andThenInto(value -> Success.of(currentValue.getAndSet(value)));
+                .andThenTo(value -> Success.of(currentValue.getAndSet(value)));
 
         assertEquals(0, currentValue.get());
     }
@@ -133,7 +133,7 @@ public class OutcomeTest {
     public void testThatAFailureIsRecoveredWithOtherwiseInto() {
         final int recoveredValue = randomInteger();
         final int outcome = Failure.<RuntimeException, Integer>of(randomException())
-                .otherwiseInto(ex -> Success.of(recoveredValue))
+                .otherwiseTo(ex -> Success.of(recoveredValue))
                 .get();
 
         assertEquals(outcome, recoveredValue);
