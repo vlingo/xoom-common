@@ -30,7 +30,7 @@ public class Success<CauseT extends RuntimeException, ValueT> implements Outcome
     }
 
     @Override
-    public <NextCauseT extends Throwable, NextSuccessT> Outcome<NextCauseT, NextSuccessT> andThenInto(final Function<ValueT, Outcome<NextCauseT, NextSuccessT>> action) {
+    public <NextCauseT extends Throwable, NextSuccessT> Outcome<NextCauseT, NextSuccessT> andThenTo(final Function<ValueT, Outcome<NextCauseT, NextSuccessT>> action) {
         return action.apply(value);
     }
 
@@ -46,7 +46,7 @@ public class Success<CauseT extends RuntimeException, ValueT> implements Outcome
 
     @Override
     @SuppressWarnings("unchecked")
-    public <NextCauseT extends Throwable, NextSuccessT> Outcome<NextCauseT, NextSuccessT> otherwiseInto(final Function<CauseT, Outcome<NextCauseT, NextSuccessT>> action) {
+    public <NextCauseT extends Throwable, NextSuccessT> Outcome<NextCauseT, NextSuccessT> otherwiseTo(final Function<CauseT, Outcome<NextCauseT, NextSuccessT>> action) {
         return (Outcome<NextCauseT, NextSuccessT>) this;
     }
 
@@ -86,6 +86,20 @@ public class Success<CauseT extends RuntimeException, ValueT> implements Outcome
 
     @Override
     public <SecondSuccessT> Outcome<CauseT, Tuple2<ValueT, SecondSuccessT>> alongWith(Outcome<?, SecondSuccessT> outcome) {
-        return outcome.andThenInto(secondOutcome -> Success.of(Tuple2.from(value, secondOutcome)));
+        return outcome.andThenTo(secondOutcome -> Success.of(Tuple2.from(value, secondOutcome)));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public boolean equals(final Object other) {
+      if (other == null || !other.getClass().equals(getClass())) {
+        return false;
+      }
+      return this.value.equals(((Success<CauseT, ValueT>) other).value);
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * value.hashCode();
     }
 }
