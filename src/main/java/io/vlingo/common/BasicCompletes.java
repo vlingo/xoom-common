@@ -104,7 +104,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
   @Override
   @SuppressWarnings("unchecked")
-  public <F,O> O andThenInto(final long timeout, final F failedOutcomeValue, final Function<T, O> function) {
+  public <F,O> O andThenTo(final long timeout, final F failedOutcomeValue, final Function<T, O> function) {
     final BasicCompletes<O> nestedCompletes = new BasicCompletes<>(state.scheduler());
     nestedCompletes.state.failedValue(failedOutcomeValue);
     nestedCompletes.state.failureAction((Action<O>) state.failureActionFunction());
@@ -118,17 +118,17 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   @Override
-  public <F,O> O andThenInto(final F failedOutcomeValue, final Function<T,O> function) {
-    return andThenInto(-1, failedOutcomeValue, function);
+  public <F,O> O andThenTo(final F failedOutcomeValue, final Function<T,O> function) {
+    return andThenTo(-1, failedOutcomeValue, function);
   }
 
   @Override
-  public <O> O andThenInto(final long timeout, final Function<T,O> function) {
-    return andThenInto(timeout, null, function);
+  public <O> O andThenTo(final long timeout, final Function<T,O> function) {
+    return andThenTo(timeout, null, function);
   }
 
-  public <O> O andThenInto(final Function<T,O> function) {
-    return andThenInto(-1, null, function);
+  public <O> O andThenTo(final Function<T,O> function) {
+    return andThenTo(-1, null, function);
   }
 
   @Override
