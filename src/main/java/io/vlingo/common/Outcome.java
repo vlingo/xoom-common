@@ -17,14 +17,14 @@ public interface Outcome<FailureT extends Throwable, SuccessT> {
     Outcome<FailureT, NextSuccessT> andThen(final Function<SuccessT, NextSuccessT> action);
 
     <NextFailureT extends Throwable, NextSuccessT>
-    Outcome<NextFailureT, NextSuccessT> andThenInto(final Function<SuccessT, Outcome<NextFailureT, NextSuccessT>> action);
+    Outcome<NextFailureT, NextSuccessT> andThenTo(final Function<SuccessT, Outcome<NextFailureT, NextSuccessT>> action);
 
     void atLeastConsume(final Consumer<SuccessT> consumer);
 
     Outcome<FailureT, SuccessT> otherwise(final Function<FailureT, SuccessT> action);
 
     <NextFailureT extends Throwable, NextSuccessT>
-    Outcome<NextFailureT, NextSuccessT> otherwiseInto(final Function<FailureT, Outcome<NextFailureT, NextSuccessT>> action);
+    Outcome<NextFailureT, NextSuccessT> otherwiseTo(final Function<FailureT, Outcome<NextFailureT, NextSuccessT>> action);
 
     SuccessT get() throws FailureT;
 
