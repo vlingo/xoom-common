@@ -11,6 +11,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.concurrent.CountDownLatch;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,26 +23,22 @@ public class SchedulerTest {
   
   @Test
   public void testScheduleOnceOneHappyDelivery() throws Exception {
-    final CounterHolder holder = new CounterHolder();
-    
-    holder.until = TestUntil.happenings(1);
+    final CounterHolder holder = new CounterHolder(1);
     
     scheduler.scheduleOnce(scheduled, holder, 0L, 1L);
     
-    holder.until.completes();
+    holder.completes();
     
     assertEquals(1, holder.counter);
   }
   
   @Test
   public void testScheduleManyHappyDelivery() throws Exception {
-    final CounterHolder holder = new CounterHolder();
-    
-    holder.until = TestUntil.happenings(505);
+    final CounterHolder holder = new CounterHolder(505);
     
     scheduler.schedule(scheduled, holder, 0L, 1L);
     
-    holder.until.completes();
+    holder.completes();
     
     assertFalse(0 == holder.counter);
     assertFalse(1 == holder.counter);
@@ -66,11 +64,23 @@ public class SchedulerTest {
   
   public static class CounterHolder {
     public int counter;
-    public TestUntil until;
+    public CountDownLatch until;
     
+    public CounterHolder(final int totalExpected) {
+      this.until = new CountDownLatch(totalExpected);
+    }
+
+    public void completes() {
+      try {
+        until.await();
+      } catch (Exception e) {
+        // ignore
+      }
+    }
+
     public void increment() {
       ++counter;
-      until.happened();
+      until.countDown();
     }
   }
 }
