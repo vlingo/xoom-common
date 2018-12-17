@@ -31,7 +31,7 @@ public class Failure<CauseT extends RuntimeException, ValueT> implements Outcome
 
     @Override
     @SuppressWarnings("unchecked")
-    public <NextFailure extends Throwable, NextSuccessT> Outcome<NextFailure, NextSuccessT> andThenInto(final Function<ValueT, Outcome<NextFailure, NextSuccessT>> action) {
+    public <NextFailure extends Throwable, NextSuccessT> Outcome<NextFailure, NextSuccessT> andThenTo(final Function<ValueT, Outcome<NextFailure, NextSuccessT>> action) {
         return (Outcome<NextFailure, NextSuccessT>) this;
     }
 
@@ -46,7 +46,7 @@ public class Failure<CauseT extends RuntimeException, ValueT> implements Outcome
     }
 
     @Override
-    public <NextFailure extends Throwable, NextSuccessT> Outcome<NextFailure, NextSuccessT> otherwiseInto(final Function<CauseT, Outcome<NextFailure, NextSuccessT>> action) {
+    public <NextFailure extends Throwable, NextSuccessT> Outcome<NextFailure, NextSuccessT> otherwiseTo(final Function<CauseT, Outcome<NextFailure, NextSuccessT>> action) {
         return action.apply(cause);
     }
 
@@ -84,5 +84,19 @@ public class Failure<CauseT extends RuntimeException, ValueT> implements Outcome
     @SuppressWarnings("unchecked")
     public <SecondSuccessT> Outcome<CauseT, Tuple2<ValueT, SecondSuccessT>> alongWith(Outcome<?, SecondSuccessT> outcome) {
         return (Outcome<CauseT, Tuple2<ValueT, SecondSuccessT>>) this;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public boolean equals(final Object other) {
+      if (other == null || !other.getClass().equals(getClass())) {
+        return false;
+      }
+      return this.cause.equals(((Failure<CauseT, ValueT>) other).cause);
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * cause.hashCode();
     }
 }

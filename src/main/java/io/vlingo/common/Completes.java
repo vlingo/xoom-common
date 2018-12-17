@@ -53,10 +53,10 @@ public interface Completes<T> {
   Completes<T> andThenConsume(final long timeout, final Consumer<T> consumer);
   Completes<T> andThenConsume(final Consumer<T> consumer);
 
-  <F,O> O andThenInto(final long timeout, final F failedOutcomeValue, final Function<T,O> function);
-  <F,O> O andThenInto(final F failedOutcomeValue, final Function<T,O> function);
-  <O> O andThenInto(final long timeout, final Function<T,O> function);
-  <O> O andThenInto(final Function<T,O> function);
+  <F,O> O andThenTo(final long timeout, final F failedOutcomeValue, final Function<T,O> function);
+  <F,O> O andThenTo(final F failedOutcomeValue, final Function<T,O> function);
+  <O> O andThenTo(final long timeout, final Function<T,O> function);
+  <O> O andThenTo(final Function<T,O> function);
 
   Completes<T> otherwise(final Function<T,T> function);
   Completes<T> otherwiseConsume(final Consumer<T> consumer);
