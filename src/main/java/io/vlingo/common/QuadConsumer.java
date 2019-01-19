@@ -21,12 +21,12 @@ import java.util.function.Consumer;
  * @param <T> the type of the first argument to the operation
  * @param <U> the type of the second argument to the operation
  * @param <V> the type of the third argument to the operation
- * @param <X> the type of the fourth argument to the operation
+ * @param <W> the type of the fourth argument to the operation
  *
  * @see Consumer
  */
 @FunctionalInterface
-public interface QuadConsumer<T, U, V, X> {
+public interface QuadConsumer<T, U, V, W> {
   
   /**
    * Performs this operation on the given arguments.
@@ -34,9 +34,9 @@ public interface QuadConsumer<T, U, V, X> {
    * @param t the first input argument
    * @param u the second input argument
    * @param v the third input argument
-   * @param x the fourth input argument
+   * @param w the fourth input argument
    */
-  void accept(T t, U u, V v, X x);
+  void accept(T t, U u, V v, W w);
 
   /**
    * Returns a composed {@code QuadConsumer} that performs, in sequence, this
@@ -50,7 +50,7 @@ public interface QuadConsumer<T, U, V, X> {
    * operation followed by the {@code after} operation
    * @throws NullPointerException if {@code after} is null
    */
-  default QuadConsumer<T, U, V, X> andThen(QuadConsumer<? super T, ? super U, ? super V, ? super X> after) {
+  default QuadConsumer<T, U, V, W> andThen(QuadConsumer<? super T, ? super U, ? super V, ? super W> after) {
       Objects.requireNonNull(after);
 
       return (a, b, c, d) -> {
