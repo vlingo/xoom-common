@@ -19,14 +19,14 @@ various other vlingo projects.
   <dependency>
     <groupId>io.vlingo</groupId>
     <artifactId>vlingo-common</artifactId>
-    <version>0.8.0</version>
+    <version>0.8.1</version>
     <type>pom</type>
   </dependency>
 ```
 
 ```gradle
 dependencies {
-    compile 'io.vlingo:vlingo-common:0.8.0'
+    compile 'io.vlingo:vlingo-common:0.8.1'
 }
 
 repositories {
