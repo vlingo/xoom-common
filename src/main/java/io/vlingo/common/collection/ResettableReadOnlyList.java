@@ -35,6 +35,11 @@ public class ResettableReadOnlyList<T> implements List<T> {
     this.iterator = new ResettableReadOnlyIterator();
   }
 
+  @SuppressWarnings("unchecked")
+  public <E> List<E> asList() {
+    return (List<E>) this;
+  }
+
   public void wrap(final T[] all) {
     this.all = all;
     this.iterator.current = 0;
