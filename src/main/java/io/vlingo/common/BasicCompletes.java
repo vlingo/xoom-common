@@ -9,6 +9,8 @@ package io.vlingo.common;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -151,31 +153,16 @@ public class BasicCompletes<T> implements Completes<T> {
 
   @Override
   public T await() {
-    return await(-1);
+    state.await();
+    return outcome();
   }
 
   @Override
   public T await(final long timeout) {
-    long countDown = timeout;
-    while (true) {
-      if (isCompleted()) {
-        return outcome();
-      }
-      try {
-        Thread.sleep((countDown >= 0 && countDown < 100) ? countDown : 100);
-      } catch (Exception e) {
-        // ignore
-      }
-      if (isCompleted()) {
-        return outcome();
-      }
-      if (timeout >= 0) {
-        countDown -= 100;
-        if (countDown <= 0) {
-          return null;
-        }
-      }
+    if (state.await(timeout)) {
+      return outcome();
     }
+    return null;
   }
 
   @Override
@@ -297,6 +284,8 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   protected static interface ActiveState<T> {
+    void await();
+    boolean await(final long timeout);
     boolean hasAction();
     void action(final Action<T> action);
     Action<T> action();
@@ -330,7 +319,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
     private Queue<Action<T>> actions;
     private Cancellable cancellable;
-    private final AtomicBoolean completed;
+    private final CountDownLatch completed;
     private final AtomicBoolean completing;
     private final AtomicBoolean executingActions;
     private final AtomicBoolean failed;
@@ -346,7 +335,7 @@ public class BasicCompletes<T> implements Completes<T> {
     protected BasicActiveState(final Scheduler scheduler) {
       this.scheduler = scheduler;
       this.actions = new ConcurrentLinkedQueue<>();
-      this.completed = new AtomicBoolean(false);
+      this.completed = new CountDownLatch(1);
       this.completing = new AtomicBoolean(false);
       this.executingActions = new AtomicBoolean(false);
       this.failed = new AtomicBoolean(false);
@@ -358,6 +347,24 @@ public class BasicCompletes<T> implements Completes<T> {
 
     protected BasicActiveState() {
       this(null);
+    }
+
+    @Override
+    public void await() {
+      try {
+        completed.await();
+      } catch (InterruptedException e) {
+        // fall through
+      }
+    }
+
+    @Override
+    public boolean await(final long timeout) {
+      try {
+        return completed.await(timeout, TimeUnit.MILLISECONDS);
+      } catch (InterruptedException e) {
+        return false;
+      }
     }
 
     @Override
@@ -382,9 +389,15 @@ public class BasicCompletes<T> implements Completes<T> {
       }
     }
 
+    private void completed(final boolean flag) {
+      if (flag) {
+        completed.countDown();
+      }
+    }
+
     @Override
     public boolean isCompleted() {
-      return completed.get();
+      return completed.getCount() == 0;
     }
 
     @Override
@@ -392,7 +405,7 @@ public class BasicCompletes<T> implements Completes<T> {
       if (completing.compareAndSet(false, true)) {
         executeActions();
 
-        completed.set(true);
+        completed(true);
 
         completing.set(false);
       }
@@ -409,7 +422,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
         executeActions();
 
-        completed.set(true);
+        completed(true);
 
         completing.set(false);
       }
@@ -477,7 +490,7 @@ public class BasicCompletes<T> implements Completes<T> {
         failed.set(true);
         actions.clear();
         this.outcome.set(failedOutcomeValue);
-        completed.set(true);
+        completed(true);
         failureAction();
       }
       return handle;
@@ -499,7 +512,7 @@ public class BasicCompletes<T> implements Completes<T> {
         failed.set(true);
         actions.clear();
         outcome.set((T) exceptionAction.apply(e));
-        completed.set(true);
+        completed(true);
       }
     }
 
@@ -554,8 +567,16 @@ public class BasicCompletes<T> implements Completes<T> {
 
     @Override
     public void intervalSignal(final Scheduled scheduled, final Object data) {
-      timedOut.set(true);
-      failed();
+      // favor success over failure when
+      // completing and timeout race
+      if (isCompleted()) {
+        completeActions();
+      } else if (completing.get()) {
+        ;
+      } else {
+        timedOut.set(true);
+        failed();
+      }
     }
 
     @Override
