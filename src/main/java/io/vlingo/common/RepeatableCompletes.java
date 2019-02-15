@@ -27,7 +27,7 @@ public class RepeatableCompletes<T> extends BasicCompletes<T> {
 
   @Override
   public Completes<T> repeat() {
-    if (state.isCompleted()) {
+    if (state.isOutcomeKnown()) {
       state.repeat();
     }
     return this;
@@ -36,20 +36,18 @@ public class RepeatableCompletes<T> extends BasicCompletes<T> {
   @Override
   @SuppressWarnings("unchecked")
   public <O> Completes<O> with(O outcome) {
-    state.outcome((T) outcome);
+    super.with(outcome);
     state.repeat();
     return (Completes<O>) this;
   }
 
   protected static class RepeatableActiveState<T> extends BasicActiveState<T> {
     private final Queue<Action<T>> actionsBackup;
-    private final Queue<T> pendingOutcomes;
     private final AtomicBoolean repeating;
 
     protected RepeatableActiveState(final Scheduler scheduler) {
       super(scheduler);
       this.actionsBackup = new ConcurrentLinkedQueue<>();
-      this.pendingOutcomes = new ConcurrentLinkedQueue<>();
       this.repeating = new AtomicBoolean(false);
     }
 
@@ -58,39 +56,25 @@ public class RepeatableCompletes<T> extends BasicCompletes<T> {
     }
 
     @Override
-    public Action<T> action() {
-      final Action<T> action = super.action();
-      backUp(action);
-      return action;
-    }
-
-    @Override
-    public void outcome(final T outcome) {
-      cancelTimer();
-      pendingOutcomes.add(outcome);
-    }
-
-    @Override
-    public void repeat() {
-      if (repeating.compareAndSet(false, true)) {
-        while (pendingOutcomes.peek() != null) {
-          final T pendingOutcome = pendingOutcomes.poll();
-          completedWith(pendingOutcome);
-          restore();
-        }
-        repeating.set(false);
-      }
-    }
-
-    private void backUp(final Action<T> action) {
+    public void backUp(final Action<T> action) {
       if (action != null) {
         actionsBackup.add(action);
       }
     }
 
-    private void restore() {
+    @Override
+    public void repeat() {
+      if (repeating.compareAndSet(false, true)) {
+        restore();
+        outcomeKnown(false);
+        repeating.set(false);
+      }
+    }
+
+    @Override
+    public void restore() {
       while (actionsBackup.peek() != null) {
-        action(actionsBackup.poll());
+        restore(actionsBackup.poll());
       }
     }
   }
