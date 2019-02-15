@@ -53,12 +53,7 @@ public class BasicCompletes<T> implements Completes<T> {
   @Override
   public Completes<T> andThen(final long timeout, final T failedOutcomeValue, final Function<T,T> function) {
     state.failedValue(failedOutcomeValue);
-    state.action(Action.with(function));
-    if (state.isCompleted()) {
-      state.completeActions();
-    } else {
-      state.startTimer(timeout);
-    }
+    state.registerWithExecution(Action.with(function), timeout, state);
     return this;
   }
 
@@ -80,12 +75,7 @@ public class BasicCompletes<T> implements Completes<T> {
   @Override
   public Completes<T> andThenConsume(final long timeout, final T failedOutcomeValue, final Consumer<T> consumer) {
     state.failedValue(failedOutcomeValue);
-    state.action(Action.with(consumer));
-    if (state.isCompleted()) {
-      state.completeActions();
-    } else {
-      state.startTimer(timeout);
-    }
+    state.registerWithExecution(Action.with(consumer), timeout, state);
     return this;
   }
 
@@ -110,12 +100,7 @@ public class BasicCompletes<T> implements Completes<T> {
     final BasicCompletes<O> nestedCompletes = new BasicCompletes<>(state.scheduler());
     nestedCompletes.state.failedValue(failedOutcomeValue);
     nestedCompletes.state.failureAction((Action<O>) state.failureActionFunction());
-    state.action((Action<T>) Action.with(function, nestedCompletes));
-    if (state.isCompleted()) {
-      state.completeActions();
-    } else {
-      state.startTimer(timeout);
-    }
+    state.registerWithExecution((Action<T>) Action.with(function, nestedCompletes), timeout, state);
     return (O) nestedCompletes;
   }
 
@@ -167,7 +152,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
   @Override
   public boolean isCompleted() {
-    return state.isCompleted();
+    return state.isOutcomeKnown();
   }
 
   @Override
@@ -286,12 +271,8 @@ public class BasicCompletes<T> implements Completes<T> {
   protected static interface ActiveState<T> {
     void await();
     boolean await(final long timeout);
-    boolean hasAction();
-    void action(final Action<T> action);
-    Action<T> action();
+    void backUp(final Action<T> action);
     void cancelTimer();
-    boolean isCompleted();
-    void completeActions();
     void completedWith(final T outcome);
     boolean hasFailed();
     void failed();
@@ -305,43 +286,130 @@ public class BasicCompletes<T> implements Completes<T> {
     void handleException(final Exception e);
     boolean hasException();
     boolean hasOutcome();
-    boolean outcomeMustDefault();
     void outcome(final T outcome);
     <O> O outcome();
+    boolean isOutcomeKnown();
+    void outcomeKnown(final boolean flag);
+    boolean outcomeMustDefault();
+    void registerWithExecution(final Action<T> action, final long timeout, final ActiveState<T> state);
     boolean isRepeatable();
     void repeat();
+    void restore();
+    void restore(final Action<T> action);
     Scheduler scheduler();
     void startTimer(final long timeout);
+  }
+
+  private static class Executables<T> {
+    private AtomicBoolean accessible;
+    private Queue<Action<T>> actions;
+    private AtomicBoolean readyToExecute;
+
+    Executables() {
+      this.accessible = new AtomicBoolean(false);
+      this.actions = new ConcurrentLinkedQueue<>();
+      this.readyToExecute = new AtomicBoolean(false);
+    }
+
+    int count() {
+      return actions.size();
+    }
+
+    void execute(final ActiveState<T> state) {
+      while (true) {
+        if (accessible.compareAndSet(false, true)) {
+          readyToExecute.set(true);
+          executeActions(state);
+          accessible.set(false);
+          break;
+        }
+      }
+    }
+
+    boolean isReadyToExecute() {
+      return readyToExecute.get();
+    }
+
+    void registerWithExecution(final Action<T> action, final long timeout, final ActiveState<T> state) {
+      while (true) {
+        if (accessible.compareAndSet(false, true)) {
+          actions.add(action);
+          if (isReadyToExecute()) {
+            executeActions(state);
+          } else {
+            state.startTimer(timeout);
+          }
+          accessible.set(false);
+          break;
+        }
+      }
+    }
+
+    void reset() {
+      readyToExecute.set(false);
+      actions.clear();
+    }
+
+    void restore(final Action<T> action) {
+      actions.add(action);
+    }
+
+    private boolean hasAction() {
+      return !actions.isEmpty();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void executeActions(final ActiveState<T> state) {
+      while (hasAction()) {
+        final Action<T> action = actions.poll();
+        state.backUp(action);
+        if (action.hasDefaultValue && state.outcomeMustDefault()) {
+          state.outcome(action.defaultValue);
+        } else {
+          try {
+            if (action.isConsumer()) {
+              action.asConsumer().accept((T) state.outcome());
+            } else if (action.isFunction()) {
+              if (action.hasNestedCompletes()) {
+                ((Completes<T>) action.asFunction().apply((T) state.outcome()))
+                  .andThenConsume(value -> action.nestedCompletes().with(value));
+              } else {
+                state.outcome(action.asFunction().apply(state.outcome()));
+              }
+            }
+          } catch (Exception e) {
+            state.handleException(e);
+            break;
+          }
+        }
+      }
+    }
   }
 
   protected static class BasicActiveState<T> implements ActiveState<T>, Scheduled {
     private static final Object UnfailedValue = new Object();
 
-    private Queue<Action<T>> actions;
     private Cancellable cancellable;
-    private final CountDownLatch completed;
-    private final AtomicBoolean completing;
-    private final AtomicBoolean executingActions;
+    private final Executables<T> executables;
     private final AtomicBoolean failed;
     private T failedOutcomeValue;
     private Action<T> failureAction;
     private AtomicReference<Exception> exception;
     private Function<Exception,?> exceptionAction;
     private final AtomicReference<Object> outcome;
+    private CountDownLatch outcomeKnown;
     private Scheduler scheduler;
     private final AtomicBoolean timedOut;
 
     @SuppressWarnings("unchecked")
     protected BasicActiveState(final Scheduler scheduler) {
       this.scheduler = scheduler;
-      this.actions = new ConcurrentLinkedQueue<>();
-      this.completed = new CountDownLatch(1);
-      this.completing = new AtomicBoolean(false);
-      this.executingActions = new AtomicBoolean(false);
+      this.executables = new Executables<>();
       this.failed = new AtomicBoolean(false);
       this.failedOutcomeValue = (T) UnfailedValue;
       this.exception = new AtomicReference<>(null);
       this.outcome = new AtomicReference<>(null);
+      this.outcomeKnown = new CountDownLatch(1);
       this.timedOut = new AtomicBoolean(false);
     }
 
@@ -352,7 +420,7 @@ public class BasicCompletes<T> implements Completes<T> {
     @Override
     public void await() {
       try {
-        completed.await();
+        outcomeKnown.await();
       } catch (InterruptedException e) {
         // fall through
       }
@@ -361,27 +429,18 @@ public class BasicCompletes<T> implements Completes<T> {
     @Override
     public boolean await(final long timeout) {
       try {
-        return completed.await(timeout, TimeUnit.MILLISECONDS);
+        return outcomeKnown.await(timeout, TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
         return false;
       }
     }
 
     @Override
-    public boolean hasAction() {
-      return actions.peek() != null;
+    public void backUp(final Action<T> action) {
+      // unused; see RepeatableCompletes
     }
 
     @Override
-    public void action(final Action<T> action) {
-      actions.add(action);
-    }
-
-    @Override
-    public Action<T> action() {
-      return actions.poll();
-    }
-
     public void cancelTimer() {
       if (cancellable != null) {
         cancellable.cancel();
@@ -389,43 +448,17 @@ public class BasicCompletes<T> implements Completes<T> {
       }
     }
 
-    private void completed(final boolean flag) {
-      if (flag) {
-        completed.countDown();
-      }
-    }
-
-    @Override
-    public boolean isCompleted() {
-      return completed.getCount() == 0;
-    }
-
-    @Override
-    public void completeActions() {
-      if (completing.compareAndSet(false, true)) {
-        executeActions();
-
-        completed(true);
-
-        completing.set(false);
-      }
-    }
-
     @Override
     public void completedWith(final T outcome) {
-      if (completing.compareAndSet(false, true)) {
-        cancelTimer();
+      cancelTimer();
 
-        if (!timedOut.get()) {
-          this.outcome.set(outcome);
-        }
-
-        executeActions();
-
-        completed(true);
-
-        completing.set(false);
+      if (!timedOut.get()) {
+        this.outcome.set(outcome);
       }
+
+      executables.execute(this);
+
+      outcomeKnown(true);
     }
 
     @Override
@@ -452,7 +485,7 @@ public class BasicCompletes<T> implements Completes<T> {
     @Override
     public void failureAction(final Action<T> action) {
       this.failureAction = action;
-      if (isCompleted() && hasFailed()) {
+      if (isOutcomeKnown() && hasFailed()) {
         failureAction();
       }
     }
@@ -477,7 +510,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
     @Override
     public boolean handleFailure(final T outcome) {
-      if (isCompleted() && hasFailed()) {
+      if (isOutcomeKnown() && hasFailed()) {
         return true; // already reached below
       }
       boolean handle = false;
@@ -488,9 +521,9 @@ public class BasicCompletes<T> implements Completes<T> {
       }
       if (handle) {
         failed.set(true);
-        actions.clear();
+        executables.reset();
         this.outcome.set(failedOutcomeValue);
-        completed(true);
+        outcomeKnown(true);
         failureAction();
       }
       return handle;
@@ -510,9 +543,9 @@ public class BasicCompletes<T> implements Completes<T> {
       exception.set(e);
       if (exceptionAction != null) {
         failed.set(true);
-        actions.clear();
+        executables.reset();
         outcome.set((T) exceptionAction.apply(e));
-        completed(true);
+        outcomeKnown(true);
       }
     }
 
@@ -527,11 +560,6 @@ public class BasicCompletes<T> implements Completes<T> {
     }
 
     @Override
-    public boolean outcomeMustDefault() {
-      return outcome() == null;
-    }
-
-    @Override
     public void outcome(final T outcome) {
       this.outcome.set(outcome);
     }
@@ -543,6 +571,30 @@ public class BasicCompletes<T> implements Completes<T> {
     }
 
     @Override
+    public boolean isOutcomeKnown() {
+      return this.outcomeKnown.getCount() == 0;
+    }
+
+    @Override
+    public void outcomeKnown(final boolean flag) {
+      if (flag) {
+        outcomeKnown.countDown();
+      } else {
+        outcomeKnown = new CountDownLatch(1);
+      }
+    }
+
+    @Override
+    public boolean outcomeMustDefault() {
+      return outcome() == null;
+    }
+
+    @Override
+    public void registerWithExecution(final Action<T> action, final long timeout, final ActiveState<T> state) {
+      executables.registerWithExecution(action, timeout, state);
+    }
+
+    @Override
     public boolean isRepeatable() {
       return false;
     }
@@ -550,6 +602,16 @@ public class BasicCompletes<T> implements Completes<T> {
     @Override
     public void repeat() {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void restore() {
+      // unused; see RepeatableCompletes
+    }
+
+    @Override
+    public void restore(final Action<T> action) {
+      executables.restore(action);
     }
 
     @Override
@@ -569,9 +631,7 @@ public class BasicCompletes<T> implements Completes<T> {
     public void intervalSignal(final Scheduled scheduled, final Object data) {
       // favor success over failure when
       // completing and timeout race
-      if (isCompleted()) {
-        completeActions();
-      } else if (completing.get()) {
+      if (isOutcomeKnown() || executables.isReadyToExecute()) {
         ;
       } else {
         timedOut.set(true);
@@ -581,36 +641,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
     @Override
     public String toString() {
-      return "BasicActiveState[actions=" + actions.size() + "]";
-    }
-
-    @SuppressWarnings("unchecked")
-    protected void executeActions() {
-      if (executingActions.compareAndSet(false, true))
-        ;
-      while (hasAction()) {
-        final Action<T> action = action();
-        if (action.hasDefaultValue && outcomeMustDefault()) {
-          outcome(action.defaultValue);
-        } else {
-          try {
-            if (action.isConsumer()) {
-              action.asConsumer().accept((T) outcome.get());
-            } else if (action.isFunction()) {
-              if (action.hasNestedCompletes()) {
-                ((Completes<T>) action.asFunction().apply((T) outcome.get()))
-                  .andThenConsume(value -> action.nestedCompletes().with(value));
-              } else {
-                outcome.set(action.asFunction().apply((T) outcome.get()));
-              }
-            }
-          } catch (Exception e) {
-            handleException(e);
-            break;
-          }
-        }
-      }
-      executingActions.set(false);
+      return "BasicActiveState[actions=" + executables.count() + "]";
     }
   }
 }
