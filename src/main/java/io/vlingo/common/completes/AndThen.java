@@ -12,13 +12,23 @@ public class AndThen<I, O, NO> implements Operation<I, O, NO> {
         this.failedOutcome = failedOutcome;
     }
 
+    public static <T> AndThen<T, T, ?> identity(Sink<T, T> sink) {
+        final AndThen<T, T, Object> identity = new AndThen<>(e -> e, null);
+        identity.addSubscriber((Operation) sink);
+        return identity;
+    }
+
     @Override
     public void onOutcome(I outcome) {
-        O next = mapper.apply(outcome);
-        if (next == failedOutcome) {
-            nextOperation.onFailure(next);
-        } else {
-            nextOperation.onOutcome(next);
+        try {
+            O next = mapper.apply(outcome);
+            if (next == failedOutcome) {
+                nextOperation.onFailure(next);
+            } else {
+                nextOperation.onOutcome(next);
+            }
+        } catch (Throwable ex) {
+            nextOperation.onError(ex);
         }
     }
 

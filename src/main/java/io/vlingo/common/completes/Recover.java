@@ -22,7 +22,13 @@ public class Recover<I, NO> implements Operation<I, I, NO> {
 
     @Override
     public void onError(Throwable ex) {
-        nextOperation.onOutcome(mapper.apply(ex));
+        try {
+            nextOperation.onOutcome(mapper.apply(ex));
+        } catch (Throwable mapperEx) {
+            final IllegalStateException mappingEx = new IllegalStateException(mapperEx);
+            mappingEx.addSuppressed(ex);
+            nextOperation.onError(mappingEx);
+        }
     }
 
     @Override

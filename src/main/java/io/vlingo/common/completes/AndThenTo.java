@@ -6,18 +6,18 @@ import io.vlingo.common.Scheduled;
 import io.vlingo.common.Scheduler;
 
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 public class AndThenTo<I, O, NO> implements Operation<I, O, NO> {
     private final Scheduler scheduler;
-    private final int timeout;
+    private final long timeout;
     private final Function<I, Completes<O>> mapper;
     private final O failedOutcome;
     private Operation<O, NO, ?> nextOperation;
     private Cancellable timeoutCancellable;
-    private Cancellable outcomeChecker;
 
-    public AndThenTo(Scheduler scheduler, int timeout, Function<I, Completes<O>> mapper, O failedOutcome) {
+    public AndThenTo(Scheduler scheduler, long timeout, Function<I, Completes<O>> mapper, O failedOutcome) {
         this.scheduler = scheduler;
         this.timeout = timeout;
         this.mapper = mapper;
@@ -27,8 +27,24 @@ public class AndThenTo<I, O, NO> implements Operation<I, O, NO> {
     @Override
     public void onOutcome(I outcome) {
         Completes<O> completes = mapper.apply(outcome);
-        timeoutCancellable = scheduler.scheduleOnce(this::raiseTimeout, null, 0, timeout);
-        outcomeChecker = scheduler.schedule(this::propagateOutcome, completes, 0, 0);
+        AtomicBoolean didTimeout = new AtomicBoolean(false);
+        completes.andThenConsume(v -> {
+            if (!didTimeout.get()) {
+                if (v == failedOutcome) {
+                    nextOperation.onFailure(v);
+                } else {
+                    nextOperation.onOutcome(v);
+                }
+                timeoutCancellable.cancel();
+            }
+        }).otherwiseConsume(v -> {
+            if (!didTimeout.get()) {
+                nextOperation.onFailure(v);
+                timeoutCancellable.cancel();
+            }
+        });
+
+        timeoutCancellable = scheduler.scheduleOnce(this::raiseTimeout, didTimeout, 0, timeout);
     }
 
     @Override
@@ -46,23 +62,9 @@ public class AndThenTo<I, O, NO> implements Operation<I, O, NO> {
         nextOperation = operation;
     }
 
-    private void raiseTimeout(Scheduled scheduled, Object nullData) {
+    private void raiseTimeout(Scheduled scheduled, Object timeout) {
+        AtomicBoolean didTimeout = (AtomicBoolean) timeout;
         this.onError(new TimeoutException());
-        this.outcomeChecker.cancel();
-        this.timeoutCancellable.cancel();
-    }
-
-    private void propagateOutcome(Scheduled scheduled, Object completesAny) {
-        Completes<O> completes = (Completes<O>) completesAny;
-        completes.andThenConsume(next -> {
-            timeoutCancellable.cancel();
-            outcomeChecker.cancel();
-
-            if (next == failedOutcome) {
-                nextOperation.onFailure(next);
-            } else {
-                nextOperation.onOutcome(next);
-            }
-        }).otherwiseConsume(nextOperation::onOutcome);
+        didTimeout.set(true);
     }
 }

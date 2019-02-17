@@ -7,12 +7,9 @@
 
 package io.vlingo.common;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class BasicCompletesTest {
   private Integer andThenValue;
@@ -94,25 +91,6 @@ public class BasicCompletesTest {
   }
 
   @Test
-  public void testTimeoutBeforeOutcome() throws Exception {
-    final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
-    
-    completes
-      .andThen(1, 0, (value) -> value * 2)
-      .andThen((value) -> andThenValue = value);
-    
-    Thread.sleep(100);
-    
-    completes.with(5);
-
-    completes.await();
-
-    assertTrue(completes.hasFailed());
-    assertNotEquals(new Integer(10), andThenValue);
-    assertNull(andThenValue);
-  }
-
-  @Test
   public void testThatFailureOutcomeFails() {
     final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
     
@@ -143,7 +121,7 @@ public class BasicCompletesTest {
 
     completes.await();
 
-    assertTrue(completes.hasFailed());
+    assertFalse(completes.hasFailed());
     assertNull(andThenValue);
     assertEquals(new Integer(8), failureValue);
   }

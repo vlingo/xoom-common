@@ -12,8 +12,12 @@ public class AndThenConsume<I, NO> implements Operation<I, I, NO> {
 
     @Override
     public void onOutcome(I outcome) {
-        consumer.accept(outcome);
-        nextOperation.onOutcome(outcome);
+        try {
+            consumer.accept(outcome);
+            nextOperation.onOutcome(outcome);
+        } catch (Throwable ex) {
+            nextOperation.onError(ex);
+        }
     }
 
     @Override

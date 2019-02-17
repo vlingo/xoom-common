@@ -12,13 +12,17 @@ public class Otherwise<I, NO> implements Operation<I, I, NO> {
 
     @Override
     public void onOutcome(I outcome) {
-        I next = mapper.apply(outcome);
-        nextOperation.onOutcome(next);
+        nextOperation.onOutcome(outcome);
     }
 
     @Override
     public void onFailure(I outcome) {
-        nextOperation.onFailure(outcome);
+        try {
+            I next = mapper.apply(outcome);
+            nextOperation.onFailure(next);
+        } catch (Throwable ex) {
+            nextOperation.onError(ex);
+        }
     }
 
     @Override

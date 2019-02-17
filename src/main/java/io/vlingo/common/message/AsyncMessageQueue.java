@@ -93,7 +93,7 @@ public class AsyncMessageQueue implements MessageQueue, Runnable {
       if (message != null && deadLettersQueue != null) {
         deadLettersQueue.enqueue(message);
       }
-      System.out.println("AsyncMessageQueue: Dispatch to listener failed because: " + e.getMessage());
+      System.out.println("AsyncMessageQueue: Dispatch to listener hasFailed because: " + e.getMessage());
       e.printStackTrace();
     } finally {
       dispatching.set(false);

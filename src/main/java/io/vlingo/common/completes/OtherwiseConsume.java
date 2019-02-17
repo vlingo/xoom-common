@@ -1,24 +1,28 @@
 package io.vlingo.common.completes;
 
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 public class OtherwiseConsume<I, NO> implements Operation<I, I, NO> {
-    private final Function<I, Void> mapper;
+    private final Consumer<I> mapper;
     private Operation<I, NO, ?> nextOperation;
 
-    public OtherwiseConsume(Function<I, Void> mapper) {
+    public OtherwiseConsume(Consumer<I> mapper) {
         this.mapper = mapper;
     }
 
     @Override
     public void onOutcome(I outcome) {
-        mapper.apply(outcome);
         nextOperation.onOutcome(outcome);
     }
 
     @Override
     public void onFailure(I outcome) {
-        nextOperation.onFailure(outcome);
+        try {
+            mapper.accept(outcome);
+            nextOperation.onFailure(outcome);
+        } catch (Throwable ex) {
+            nextOperation.onError(ex);
+        }
     }
 
     @Override
