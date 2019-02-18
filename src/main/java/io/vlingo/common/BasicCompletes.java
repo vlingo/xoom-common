@@ -49,6 +49,7 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   @Override
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public <O> Completes<O> andThen(long timeout, O failedOutcomeValue, Function<T, O> function) {
     return apply(new AndThen(scheduler, timeout, function, failedOutcomeValue));
   }
@@ -69,6 +70,7 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   @Override
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public Completes<T> andThenConsume(long timeout, T failedOutcomeValue, Consumer<T> consumer) {
     return apply(new AndThenConsume(scheduler, timeout, consumer));
   }
@@ -89,6 +91,7 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   @Override
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public <F, O> O andThenTo(long timeout, F failedOutcomeValue, Function<T, O> function) {
     return (O) apply(new AndThenTo(scheduler, timeout, function, failedOutcomeValue));
   }
@@ -109,16 +112,19 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   @Override
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public Completes<T> otherwise(Function<T, T> function) {
     return apply(new Otherwise(function));
   }
 
   @Override
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public Completes<T> otherwiseConsume(Consumer<T> consumer) {
     return apply(new OtherwiseConsume(consumer));
   }
 
   @Override
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public Completes<T> recoverFrom(Function<Exception, T> function) {
     return apply(new Recover(function));
   }
@@ -164,6 +170,7 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public <O> Completes<O> with(O outcome) {
     if (sink.hasFailed() || sink.hasErrored()) {
       return (Completes<O>) this;
@@ -173,6 +180,7 @@ public class BasicCompletes<T> implements Completes<T> {
     return (Completes<O>) this;
   }
 
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   private <O> Completes<O> apply(Operation nextOp) {
     nextOp.addSubscriber(sink);
     sink.pipeIfNeeded(nextOp);
@@ -180,5 +188,4 @@ public class BasicCompletes<T> implements Completes<T> {
     current = nextOp;
     return (Completes<O>) this;
   }
-
 }

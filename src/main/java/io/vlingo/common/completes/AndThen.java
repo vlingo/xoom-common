@@ -1,3 +1,10 @@
+// Copyright © 2012-2018 Vaughn Vernon. All rights reserved.
+//
+// This Source Code Form is subject to the terms of the
+// Mozilla Public License, v. 2.0. If a copy of the MPL
+// was not distributed with this file, You can obtain
+// one at https://mozilla.org/MPL/2.0/.
+
 package io.vlingo.common.completes;
 
 import io.vlingo.common.Scheduler;
@@ -17,6 +24,7 @@ public class AndThen<Input, Output, NextOutput> implements Operation<Input, Outp
         this.failedOutcome = failedOutcome;
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <First> AndThen<First, First, ?> identity(Scheduler scheduler, Sink<First, First> sink) {
         final AndThen<First, First, Object> identity = new AndThen<>(scheduler, 1000, e -> e, null);
         identity.addSubscriber((Operation) sink);
@@ -42,6 +50,7 @@ public class AndThen<Input, Output, NextOutput> implements Operation<Input, Outp
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onFailure(Input outcome) {
         nextOperation.onFailure((Output) outcome);
     }
