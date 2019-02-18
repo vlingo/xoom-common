@@ -4,22 +4,21 @@ import io.vlingo.common.Cancellable;
 import io.vlingo.common.Completes;
 import io.vlingo.common.Scheduled;
 import io.vlingo.common.Scheduler;
+import io.vlingo.common.completes.barrier.TimeBarrier;
 
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 public class AndThenTo<I, O, NO> implements Operation<I, O, NO> {
-    private final Scheduler scheduler;
-    private final long timeout;
+    private final TimeBarrier timeBarrier;
     private final Function<I, Completes<O>> mapper;
     private final O failedOutcome;
     private Operation<O, NO, ?> nextOperation;
     private Cancellable timeoutCancellable;
 
     public AndThenTo(Scheduler scheduler, long timeout, Function<I, Completes<O>> mapper, O failedOutcome) {
-        this.scheduler = scheduler;
-        this.timeout = timeout;
+        this.timeBarrier = new TimeBarrier(scheduler, timeout);
         this.mapper = mapper;
         this.failedOutcome = failedOutcome;
     }
@@ -27,24 +26,21 @@ public class AndThenTo<I, O, NO> implements Operation<I, O, NO> {
     @Override
     public void onOutcome(I outcome) {
         Completes<O> completes = mapper.apply(outcome);
-        AtomicBoolean didTimeout = new AtomicBoolean(false);
+        this.timeBarrier.initialize();
         completes.andThenConsume(v -> {
-            if (!didTimeout.get()) {
+            this.timeBarrier.execute(() -> {
                 if (v == failedOutcome) {
                     nextOperation.onFailure(v);
                 } else {
                     nextOperation.onOutcome(v);
                 }
-                timeoutCancellable.cancel();
-            }
+            }, nextOperation);
         }).otherwiseConsume(v -> {
-            if (!didTimeout.get()) {
+            timeBarrier.execute(() -> {
                 nextOperation.onFailure(v);
                 timeoutCancellable.cancel();
-            }
+            }, nextOperation);
         });
-
-        timeoutCancellable = scheduler.scheduleOnce(this::raiseTimeout, didTimeout, 0, timeout);
     }
 
     @Override
@@ -60,11 +56,5 @@ public class AndThenTo<I, O, NO> implements Operation<I, O, NO> {
     @Override
     public <N2O> void addSubscriber(Operation<O, NO, N2O> operation) {
         nextOperation = operation;
-    }
-
-    private void raiseTimeout(Scheduled scheduled, Object timeout) {
-        AtomicBoolean didTimeout = (AtomicBoolean) timeout;
-        this.onError(new TimeoutException());
-        didTimeout.set(true);
     }
 }

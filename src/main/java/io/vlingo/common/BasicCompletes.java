@@ -9,7 +9,6 @@ package io.vlingo.common;
 
 import io.vlingo.common.completes.*;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -23,7 +22,7 @@ public class BasicCompletes<T> implements Completes<T> {
   private BasicCompletes(Scheduler scheduler, T defaultValue, boolean succeed) {
     this.scheduler = scheduler;
     this.sink = new Sink<>();
-    this.operation = AndThen.identity(sink);
+    this.operation = AndThen.identity(scheduler, sink);
     this.current = operation;
 
     if (defaultValue != null) {
@@ -51,7 +50,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
   @Override
   public <O> Completes<O> andThen(long timeout, O failedOutcomeValue, Function<T, O> function) {
-    return apply(new AndThen(function, failedOutcomeValue));
+    return apply(new AndThen(scheduler, timeout, function, failedOutcomeValue));
   }
 
   @Override
@@ -71,7 +70,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
   @Override
   public Completes<T> andThenConsume(long timeout, T failedOutcomeValue, Consumer<T> consumer) {
-    return apply(new AndThenConsume(consumer));
+    return apply(new AndThenConsume(scheduler, timeout, consumer));
   }
 
   @Override

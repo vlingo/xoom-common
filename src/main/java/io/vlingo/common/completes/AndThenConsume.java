@@ -1,23 +1,31 @@
 package io.vlingo.common.completes;
 
+import io.vlingo.common.Scheduler;
+import io.vlingo.common.completes.barrier.TimeBarrier;
+
 import java.util.function.Consumer;
 
 public class AndThenConsume<I, NO> implements Operation<I, I, NO> {
+    private final TimeBarrier timeBarrier;
     private final Consumer<I> consumer;
     private Operation<I, NO, ?> nextOperation;
 
-    public AndThenConsume(Consumer<I> consumer) {
+    public AndThenConsume(Scheduler scheduler, long timeout, Consumer<I> consumer) {
+        this.timeBarrier = new TimeBarrier(scheduler, timeout);
         this.consumer = consumer;
     }
 
     @Override
     public void onOutcome(I outcome) {
-        try {
-            consumer.accept(outcome);
-            nextOperation.onOutcome(outcome);
-        } catch (Throwable ex) {
-            nextOperation.onError(ex);
-        }
+        this.timeBarrier.initialize();
+        this.timeBarrier.execute(() -> {
+            try {
+                consumer.accept(outcome);
+                nextOperation.onOutcome(outcome);
+            } catch (Throwable ex) {
+                nextOperation.onError(ex);
+            }
+        }, nextOperation);
     }
 
     @Override
@@ -34,5 +42,4 @@ public class AndThenConsume<I, NO> implements Operation<I, I, NO> {
     public <N2O> void addSubscriber(Operation<I, NO, N2O> operation) {
         this.nextOperation = operation;
     }
-
 }
