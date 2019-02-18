@@ -7,12 +7,9 @@
 
 package io.vlingo.common;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class BasicCompletesTest {
   private Integer andThenValue;
@@ -94,26 +91,7 @@ public class BasicCompletesTest {
   }
 
   @Test
-  public void testTimeoutBeforeOutcome() throws Exception {
-    final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
-    
-    completes
-      .andThen(1, 0, (value) -> value * 2)
-      .andThen((value) -> andThenValue = value);
-    
-    Thread.sleep(100);
-    
-    completes.with(5);
-
-    completes.await();
-
-    assertTrue(completes.hasFailed());
-    assertNotEquals(new Integer(10), andThenValue);
-    assertNull(andThenValue);
-  }
-
-  @Test
-  public void testThatNullFailureOutcomeFails() {
+  public void testThatFailureOutcomeFails() {
     final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
     
     completes
@@ -122,24 +100,6 @@ public class BasicCompletesTest {
       .otherwise((failedValue) -> failureValue = 1000);
 
     completes.with(null);
-
-    completes.await();
-
-    assertTrue(completes.hasFailed());
-    assertNull(andThenValue);
-    assertEquals(new Integer(1000), failureValue);
-  }
-
-  @Test
-  public void testThatNonNullFailureOutcomeFails() {
-    final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
-    
-    completes
-      .andThen(new Integer(20000), (value) -> value * 2)
-      .andThen((Integer value) -> andThenValue = value)
-      .otherwise((failedValue) -> failureValue = 1000);
-
-    completes.with(new Integer(20000));
 
     completes.await();
 
@@ -161,7 +121,7 @@ public class BasicCompletesTest {
 
     completes.await();
 
-    assertTrue(completes.hasFailed());
+    assertFalse(completes.hasFailed());
     assertNull(andThenValue);
     assertEquals(new Integer(8), failureValue);
   }
@@ -198,6 +158,17 @@ public class BasicCompletesTest {
 
     assertEquals(new Integer(5), completed);
   }
+
+  @Test
+  public void testThatHotPipesAlreadyFulfilledCompletes() throws Exception {
+    final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
+    completes.with(5);
+    completes.andThen(e -> e * 10);
+    final Integer completed = completes.await();
+
+    assertEquals(new Integer(50), completed);
+  }
+
 
   private class Holder {
     private void hold(final Integer value) {
