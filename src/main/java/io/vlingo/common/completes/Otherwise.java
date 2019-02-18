@@ -2,23 +2,23 @@ package io.vlingo.common.completes;
 
 import java.util.function.Function;
 
-public class Otherwise<I, NO> implements Operation<I, I, NO> {
-    private final Function<I, I> mapper;
-    private Operation<I, NO, ?> nextOperation;
+public class Otherwise<Input, NextOutput> implements Operation<Input, Input, NextOutput> {
+    private final Function<Input, Input> mapper;
+    private Operation<Input, NextOutput, ?> nextOperation;
 
-    public Otherwise(Function<I, I> mapper) {
+    public Otherwise(Function<Input, Input> mapper) {
         this.mapper = mapper;
     }
 
     @Override
-    public void onOutcome(I outcome) {
+    public void onOutcome(Input outcome) {
         nextOperation.onOutcome(outcome);
     }
 
     @Override
-    public void onFailure(I outcome) {
+    public void onFailure(Input outcome) {
         try {
-            I next = mapper.apply(outcome);
+            Input next = mapper.apply(outcome);
             nextOperation.onFailure(next);
         } catch (Throwable ex) {
             nextOperation.onError(ex);
@@ -31,7 +31,7 @@ public class Otherwise<I, NO> implements Operation<I, I, NO> {
     }
 
     @Override
-    public <N2O> void addSubscriber(Operation<I, NO, N2O> operation) {
+    public <LastOutput> void addSubscriber(Operation<Input, NextOutput, LastOutput> operation) {
         nextOperation = operation;
     }
 }

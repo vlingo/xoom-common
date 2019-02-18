@@ -3,8 +3,8 @@ package io.vlingo.common.completes;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class Sink<I, O> implements Operation<I, I, O> {
-    private I outcome;
+public class Sink<Input, Output> implements Operation<Input, Input, Output> {
+    private Input outcome;
     private Throwable error;
     private boolean hasFailed;
     private boolean hasErrored;
@@ -16,7 +16,7 @@ public class Sink<I, O> implements Operation<I, I, O> {
         return error;
     }
 
-    public final I outcome() {
+    public final Input outcome() {
         return outcome;
     }
 
@@ -36,7 +36,7 @@ public class Sink<I, O> implements Operation<I, I, O> {
         return hasOutcome() || hasFailed() || hasErrored();
     }
 
-    public final <NO> void pipeIfNeeded(Operation<I, O, NO> op) {
+    public final <NextOutput> void pipeIfNeeded(Operation<Input, Output, NextOutput> op) {
         if (hasErrored) {
             op.onError(error);
             resetLatch();
@@ -61,7 +61,7 @@ public class Sink<I, O> implements Operation<I, I, O> {
     }
 
     @Override
-    public void onOutcome(I outcome) {
+    public void onOutcome(Input outcome) {
         this.outcome = outcome;
         this.hasOutcome = true;
         this.completed = true;
@@ -69,7 +69,7 @@ public class Sink<I, O> implements Operation<I, I, O> {
     }
 
     @Override
-    public void onFailure(I outcome) {
+    public void onFailure(Input outcome) {
         this.outcome = outcome;
         this.hasFailed = true;
         this.completed = true;
@@ -85,11 +85,11 @@ public class Sink<I, O> implements Operation<I, I, O> {
     }
 
     @Override
-    public <N2O> void addSubscriber(Operation<I, O, N2O> operation) {
+    public <LastOutput> void addSubscriber(Operation<Input, Output, LastOutput> operation) {
         throw new IllegalStateException("You can't subscribe to a sink.");
     }
 
-    public I await(final long timeout) {
+    public Input await(final long timeout) {
         try {
             latch.await(timeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {

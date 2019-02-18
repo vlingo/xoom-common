@@ -5,30 +5,30 @@ import io.vlingo.common.completes.barrier.TimeBarrier;
 
 import java.util.function.Function;
 
-public class AndThen<I, O, NO> implements Operation<I, O, NO> {
+public class AndThen<Input, Output, NextOutput> implements Operation<Input, Output, NextOutput> {
     private final TimeBarrier timeBarrier;
-    private final Function<I, O> mapper;
-    private final O failedOutcome;
-    private Operation<O, NO, ?> nextOperation;
+    private final Function<Input, Output> mapper;
+    private final Output failedOutcome;
+    private Operation<Output, NextOutput, ?> nextOperation;
 
-    public AndThen(Scheduler scheduler, long timeout, Function<I, O> mapper, O failedOutcome) {
+    public AndThen(Scheduler scheduler, long timeout, Function<Input, Output> mapper, Output failedOutcome) {
         this.timeBarrier = new TimeBarrier(scheduler, timeout);
         this.mapper = mapper;
         this.failedOutcome = failedOutcome;
     }
 
-    public static <T> AndThen<T, T, ?> identity(Scheduler scheduler, Sink<T, T> sink) {
-        final AndThen<T, T, Object> identity = new AndThen<>(scheduler, 1000, e -> e, null);
+    public static <First> AndThen<First, First, ?> identity(Scheduler scheduler, Sink<First, First> sink) {
+        final AndThen<First, First, Object> identity = new AndThen<>(scheduler, 1000, e -> e, null);
         identity.addSubscriber((Operation) sink);
         return identity;
     }
 
     @Override
-    public void onOutcome(I outcome) {
+    public void onOutcome(Input outcome) {
         timeBarrier.initialize();
         timeBarrier.execute(() -> {
             try {
-                O next = mapper.apply(outcome);
+                Output next = mapper.apply(outcome);
                 if (next == failedOutcome) {
                     nextOperation.onFailure(next);
                 } else {
@@ -42,8 +42,8 @@ public class AndThen<I, O, NO> implements Operation<I, O, NO> {
     }
 
     @Override
-    public void onFailure(I outcome) {
-        nextOperation.onFailure((O) outcome);
+    public void onFailure(Input outcome) {
+        nextOperation.onFailure((Output) outcome);
     }
 
     @Override
@@ -52,7 +52,7 @@ public class AndThen<I, O, NO> implements Operation<I, O, NO> {
     }
 
     @Override
-    public <N2O> void addSubscriber(Operation<O, NO, N2O> operation) {
+    public <N2O> void addSubscriber(Operation<Output, NextOutput, N2O> operation) {
         nextOperation = operation;
     }
 }

@@ -2,21 +2,21 @@ package io.vlingo.common.completes;
 
 import java.util.function.Consumer;
 
-public class OtherwiseConsume<I, NO> implements Operation<I, I, NO> {
-    private final Consumer<I> mapper;
-    private Operation<I, NO, ?> nextOperation;
+public class OtherwiseConsume<Input, NextOutput> implements Operation<Input, Input, NextOutput> {
+    private final Consumer<Input> mapper;
+    private Operation<Input, NextOutput, ?> nextOperation;
 
-    public OtherwiseConsume(Consumer<I> mapper) {
+    public OtherwiseConsume(Consumer<Input> mapper) {
         this.mapper = mapper;
     }
 
     @Override
-    public void onOutcome(I outcome) {
+    public void onOutcome(Input outcome) {
         nextOperation.onOutcome(outcome);
     }
 
     @Override
-    public void onFailure(I outcome) {
+    public void onFailure(Input outcome) {
         try {
             mapper.accept(outcome);
             nextOperation.onFailure(outcome);
@@ -31,7 +31,7 @@ public class OtherwiseConsume<I, NO> implements Operation<I, I, NO> {
     }
 
     @Override
-    public <N2O> void addSubscriber(Operation<I, NO, N2O> operation) {
+    public <LastOutput> void addSubscriber(Operation<Input, NextOutput, LastOutput> operation) {
         nextOperation = operation;
     }
 }

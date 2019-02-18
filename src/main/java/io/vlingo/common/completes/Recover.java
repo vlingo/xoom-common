@@ -2,21 +2,21 @@ package io.vlingo.common.completes;
 
 import java.util.function.Function;
 
-public class Recover<I, NO> implements Operation<I, I, NO> {
-    private final Function<Throwable, I> mapper;
-    private Operation<I, NO, ?> nextOperation;
+public class Recover<Input, NextOutput> implements Operation<Input, Input, NextOutput> {
+    private final Function<Throwable, Input> mapper;
+    private Operation<Input, NextOutput, ?> nextOperation;
 
-    public Recover(Function<Throwable, I> mapper) {
+    public Recover(Function<Throwable, Input> mapper) {
         this.mapper = mapper;
     }
 
     @Override
-    public void onOutcome(I outcome) {
+    public void onOutcome(Input outcome) {
         nextOperation.onOutcome(outcome);
     }
 
     @Override
-    public void onFailure(I outcome) {
+    public void onFailure(Input outcome) {
         nextOperation.onFailure(outcome);
     }
 
@@ -32,7 +32,7 @@ public class Recover<I, NO> implements Operation<I, I, NO> {
     }
 
     @Override
-    public <N2O> void addSubscriber(Operation<I, NO, N2O> operation) {
+    public <LastOutput> void addSubscriber(Operation<Input, NextOutput, LastOutput> operation) {
         nextOperation = operation;
     }
 }
