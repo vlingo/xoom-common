@@ -113,7 +113,7 @@ public class BasicCompletesTest {
   }
 
   @Test
-  public void testThatFailureOutcomeFails() {
+  public void testThatNullFailureOutcomeFails() {
     final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
     
     completes
@@ -122,6 +122,24 @@ public class BasicCompletesTest {
       .otherwise((failedValue) -> failureValue = 1000);
 
     completes.with(null);
+
+    completes.await();
+
+    assertTrue(completes.hasFailed());
+    assertNull(andThenValue);
+    assertEquals(new Integer(1000), failureValue);
+  }
+
+  @Test
+  public void testThatNonNullFailureOutcomeFails() {
+    final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
+    
+    completes
+      .andThen(new Integer(20000), (value) -> value * 2)
+      .andThen((Integer value) -> andThenValue = value)
+      .otherwise((failedValue) -> failureValue = 1000);
+
+    completes.with(new Integer(20000));
 
     completes.await();
 
