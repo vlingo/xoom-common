@@ -159,6 +159,17 @@ public class BasicCompletesTest {
     assertEquals(new Integer(5), completed);
   }
 
+  @Test
+  public void testThatHotPipesAlreadyFulfilledCompletes() throws Exception {
+    final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
+    completes.with(5);
+    completes.andThen(e -> e * 10);
+    final Integer completed = completes.await();
+
+    assertEquals(new Integer(50), completed);
+  }
+
+
   private class Holder {
     private void hold(final Integer value) {
       andThenValue = value;
