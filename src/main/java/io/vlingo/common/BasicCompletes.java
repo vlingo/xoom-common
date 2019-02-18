@@ -50,22 +50,22 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   @Override
-  public Completes<T> andThen(long timeout, T failedOutcomeValue, Function<T, T> function) {
+  public <O> Completes<O> andThen(long timeout, O failedOutcomeValue, Function<T, O> function) {
     return apply(new AndThen(function, failedOutcomeValue));
   }
 
   @Override
-  public Completes<T> andThen(T failedOutcomeValue, Function<T, T> function) {
+  public <O> Completes<O> andThen(O failedOutcomeValue, Function<T, O> function) {
     return andThen(DEFAULT_TIMEOUT, failedOutcomeValue, function);
   }
 
   @Override
-  public Completes<T> andThen(long timeout, Function<T, T> function) {
+  public <O> Completes<O> andThen(long timeout, Function<T, O> function) {
     return andThen(timeout, null, function);
   }
 
   @Override
-  public Completes<T> andThen(Function<T, T> function) {
+  public <O> Completes<O> andThen(Function<T, O> function) {
     return andThen(DEFAULT_TIMEOUT, null, function);
   }
 
