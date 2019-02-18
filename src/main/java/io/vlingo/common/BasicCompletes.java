@@ -64,12 +64,12 @@ public class BasicCompletes<T> implements Completes<T> {
 
   @Override
   public Completes<T> andThen(final long timeout, final Function<T,T> function) {
-    return andThen(timeout, null, function);
+    return andThen(timeout, state.failedValue(), function);
   }
 
   @Override
   public Completes<T> andThen(final Function<T,T> function) {
-    return andThen(-1L, null, function);
+    return andThen(-1L, state.failedValue(), function);
   }
 
   @Override
@@ -81,7 +81,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
   @Override
   public Completes<T> andThenConsume(final long timeout, final Consumer<T> consumer) {
-    return andThenConsume(timeout, null, consumer);
+    return andThenConsume(timeout, state.failedValue(), consumer);
   }
 
   @Override
@@ -91,7 +91,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
   @Override
   public Completes<T> andThenConsume(final Consumer<T> consumer) {
-    return andThenConsume(-1, null, consumer);
+    return andThenConsume(-1, state.failedValue(), consumer);
   }
 
   @Override
@@ -111,11 +111,11 @@ public class BasicCompletes<T> implements Completes<T> {
 
   @Override
   public <O> O andThenTo(final long timeout, final Function<T,O> function) {
-    return andThenTo(timeout, null, function);
+    return andThenTo(timeout, state.failedValue(), function);
   }
 
   public <O> O andThenTo(final Function<T,O> function) {
-    return andThenTo(-1, null, function);
+    return andThenTo(-1, state.failedValue(), function);
   }
 
   @Override
