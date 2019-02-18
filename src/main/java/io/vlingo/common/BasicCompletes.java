@@ -51,12 +51,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
   @Override
   public Completes<T> andThen(long timeout, T failedOutcomeValue, Function<T, T> function) {
-    final AndThen nextOp = new AndThen(function, failedOutcomeValue);
-    nextOp.addSubscriber(sink);
-    sink.pipeIfNeeded(nextOp);
-    current.addSubscriber(nextOp);
-    current = nextOp;
-    return this;
+    return apply(new AndThen(function, failedOutcomeValue));
   }
 
   @Override
@@ -76,12 +71,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
   @Override
   public Completes<T> andThenConsume(long timeout, T failedOutcomeValue, Consumer<T> consumer) {
-    final AndThenConsume nextOp = new AndThenConsume(consumer);
-    nextOp.addSubscriber(sink);
-    sink.pipeIfNeeded(nextOp);
-    current.addSubscriber(nextOp);
-    current = nextOp;
-    return this;
+    return apply(new AndThenConsume(consumer));
   }
 
   @Override
@@ -101,12 +91,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
   @Override
   public <F, O> O andThenTo(long timeout, F failedOutcomeValue, Function<T, O> function) {
-    final AndThenTo nextOp = new AndThenTo(scheduler, timeout, function, failedOutcomeValue);
-    nextOp.addSubscriber(sink);
-    sink.pipeIfNeeded(nextOp);
-    current.addSubscriber(nextOp);
-    current = nextOp;
-    return (O) this;
+    return (O) apply(new AndThenTo(scheduler, timeout, function, failedOutcomeValue));
   }
 
   @Override
@@ -126,32 +111,17 @@ public class BasicCompletes<T> implements Completes<T> {
 
   @Override
   public Completes<T> otherwise(Function<T, T> function) {
-    final Otherwise nextOp = new Otherwise(function);
-    nextOp.addSubscriber(sink);
-    sink.pipeIfNeeded(nextOp);
-    current.addSubscriber(nextOp);
-    current = nextOp;
-    return this;
+    return apply(new Otherwise(function));
   }
 
   @Override
   public Completes<T> otherwiseConsume(Consumer<T> consumer) {
-    final OtherwiseConsume nextOp = new OtherwiseConsume(consumer);
-    nextOp.addSubscriber(sink);
-    sink.pipeIfNeeded(nextOp);
-    current.addSubscriber(nextOp);
-    current = nextOp;
-    return this;
+    return apply(new OtherwiseConsume(consumer));
   }
 
   @Override
   public Completes<T> recoverFrom(Function<Exception, T> function) {
-    final Recover nextOp = new Recover(function);
-    nextOp.addSubscriber(sink);
-    sink.pipeIfNeeded(nextOp);
-    current.addSubscriber(nextOp);
-    current = nextOp;
-    return this;
+    return apply(new Recover(function));
   }
 
   @Override
@@ -161,21 +131,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
   @Override
   public T await(long timeout) {
-    if (this.scheduler != null) {
-      AtomicBoolean didTimeout = new AtomicBoolean(false);
-      Cancellable timeoutCancellable = this.scheduler.scheduleOnce((sc, data) -> {
-        didTimeout.set(true);
-        throw new IllegalStateException("Completes<T> raised a timeout after " + timeout + "ms");
-      }, null, 0, timeout);
-
-      while (!sink.isCompleted() && !didTimeout.get()) {
-      }
-      timeoutCancellable.cancel();
-    } else {
-      while (!sink.isCompleted()) {}
-    }
-
-    return sink.outcome();
+    return sink.await(timeout);
   }
 
   @Override
@@ -217,4 +173,13 @@ public class BasicCompletes<T> implements Completes<T> {
     operation.onOutcome((T) outcome);
     return (Completes<O>) this;
   }
+
+  private <O> Completes<O> apply(Operation nextOp) {
+    nextOp.addSubscriber(sink);
+    sink.pipeIfNeeded(nextOp);
+    current.addSubscriber(nextOp);
+    current = nextOp;
+    return (Completes<O>) this;
+  }
+
 }
