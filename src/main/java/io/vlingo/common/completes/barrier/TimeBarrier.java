@@ -16,6 +16,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class TimeBarrier {
+    private static final int INFINITE_TIMEOUT = -1;
     private final Scheduler scheduler;
     private final long timeout;
     private AtomicBoolean didTimeout;
@@ -28,13 +29,13 @@ public final class TimeBarrier {
     }
 
     public void initialize() {
-        if (scheduler != null) {
+        if (scheduler != null && timeout != INFINITE_TIMEOUT) {
             timeoutCancellable = scheduler.scheduleOnce(this::raiseTimeout, didTimeout, 0, timeout);
         }
     }
 
     public void execute(Runnable section, Operation<?, ?, ?> nextOperation) {
-        if (scheduler == null) {
+        if (scheduler == null || timeout == INFINITE_TIMEOUT) {
             section.run();
         } else {
             if (!didTimeout.get()) {
