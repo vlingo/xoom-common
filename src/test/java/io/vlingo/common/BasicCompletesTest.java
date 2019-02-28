@@ -169,6 +169,16 @@ public class BasicCompletesTest {
     assertEquals(new Integer(50), completed);
   }
 
+  @Test
+  public void testThatAndThenToPipes() throws Exception {
+    Completes<String> result = new BasicCompletes<>(5)
+            .andThenTo(e -> Completes.withSuccess(e.toString()))
+            .andThenTo(e -> Completes.withSuccess(":" + e));
+
+    String msg = result.await();
+    assertEquals(":5", msg);
+  }
+
 
   private class Holder {
     private void hold(final Integer value) {
