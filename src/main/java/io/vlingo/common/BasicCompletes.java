@@ -19,9 +19,9 @@ public class BasicCompletes<T> implements Completes<T> {
   private Operation<T, ?, ?> current;
   protected final Sink<T, T> sink;
 
-  private BasicCompletes(Scheduler scheduler, T defaultValue, boolean succeed) {
+  protected BasicCompletes(Scheduler scheduler, T defaultValue, boolean succeed, Sink<T, T> sink) {
     this.scheduler = scheduler;
-    this.sink = new Sink<>();
+    this.sink = sink;
     this.operation = AndThen.identity(scheduler, sink);
     this.current = operation;
 
@@ -37,15 +37,15 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   public BasicCompletes(Scheduler scheduler) {
-    this(scheduler, null, true);
+    this(scheduler, null, true, new Sink<>());
   }
 
   public BasicCompletes(T defaultValue, boolean succeed) {
-    this(null, defaultValue, succeed);
+    this(null, defaultValue, succeed, new Sink<>());
   }
 
   public BasicCompletes(T defaultValue) {
-    this(null, defaultValue, true);
+    this(null, defaultValue, true, new Sink<>());
   }
 
   @Override
