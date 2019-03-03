@@ -7,9 +7,12 @@
 
 package io.vlingo.common;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class BasicCompletesTest {
   private Integer andThenValue;
@@ -91,6 +94,25 @@ public class BasicCompletesTest {
   }
 
   @Test
+  public void testTimeoutBeforeOutcome() throws Exception {
+    final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
+    
+    completes
+      .andThen(1, 0, (value) -> value * 2)
+      .andThen((value) -> andThenValue = value);
+    
+    Thread.sleep(100);
+    
+    completes.with(5);
+
+    completes.await();
+
+    assertTrue(completes.hasFailed());
+    assertNotEquals(new Integer(10), andThenValue);
+    assertNull(andThenValue);
+  }
+
+  @Test
   public void testThatFailureOutcomeFails() {
     final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
     
@@ -121,7 +143,7 @@ public class BasicCompletesTest {
 
     completes.await();
 
-    assertFalse(completes.hasFailed());
+    assertTrue(completes.hasFailed());
     assertNull(andThenValue);
     assertEquals(new Integer(8), failureValue);
   }
@@ -158,27 +180,6 @@ public class BasicCompletesTest {
 
     assertEquals(new Integer(5), completed);
   }
-
-  @Test
-  public void testThatHotPipesAlreadyFulfilledCompletes() throws Exception {
-    final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
-    completes.with(5);
-    completes.andThen(e -> e * 10);
-    final Integer completed = completes.await();
-
-    assertEquals(new Integer(50), completed);
-  }
-
-  @Test
-  public void testThatAndThenToPipes() throws Exception {
-    Completes<String> result = new BasicCompletes<>(5)
-            .andThenTo(e -> Completes.withSuccess(e.toString()))
-            .andThenTo(e -> Completes.withSuccess(":" + e));
-
-    String msg = result.await();
-    assertEquals(":5", msg);
-  }
-
 
   private class Holder {
     private void hold(final Integer value) {
