@@ -8,6 +8,7 @@
 package io.vlingo.common.serialization;
 
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -48,6 +49,12 @@ public class JsonSerialization {
   
   public static String serialized(final Object instance) {
     final String serialization = gson.toJson(instance);
+    return serialization;
+  }
+
+  public static <T> String serialized(final Collection<T> instance) {
+    final Type collectionOfT = new TypeToken<Collection<T>>(){}.getType();
+    final String serialization = gson.toJson(instance, collectionOfT);
     return serialization;
   }
 
