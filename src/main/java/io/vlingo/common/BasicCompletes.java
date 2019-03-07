@@ -111,12 +111,15 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public <O> O andThenTo(final long timeout, final Function<T,O> function) {
-    return andThenTo(timeout, null, function);
+    return andThenTo(timeout, (O) BasicActiveState.UnfailedValue, function);
   }
 
+  @Override
+  @SuppressWarnings("unchecked")
   public <O> O andThenTo(final Function<T,O> function) {
-    return andThenTo(-1, null, function);
+    return andThenTo(-1, (O) BasicActiveState.UnfailedValue, function);
   }
 
   @Override
@@ -393,7 +396,7 @@ public class BasicCompletes<T> implements Completes<T> {
     private Cancellable cancellable;
     private final Executables<T> executables;
     private final AtomicBoolean failed;
-    private T failedOutcomeValue;
+    private AtomicReference<T> failedOutcomeValue;
     private Action<T> failureAction;
     private AtomicReference<Exception> exception;
     private Function<Exception,?> exceptionAction;
@@ -407,7 +410,7 @@ public class BasicCompletes<T> implements Completes<T> {
       this.scheduler = scheduler;
       this.executables = new Executables<>();
       this.failed = new AtomicBoolean(false);
-      this.failedOutcomeValue = (T) UnfailedValue;
+      this.failedOutcomeValue = new AtomicReference<>((T) UnfailedValue);
       this.exception = new AtomicReference<>(null);
       this.outcome = new AtomicReference<>(null);
       this.outcomeKnown = new CountDownLatch(1);
@@ -469,18 +472,18 @@ public class BasicCompletes<T> implements Completes<T> {
 
     @Override
     public void failed() {
-      handleFailure(failedOutcomeValue);
+      handleFailure(failedOutcomeValue.get());
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <F> void failedValue(final F failedOutcomeValue) {
-      this.failedOutcomeValue = (T) failedOutcomeValue;
+      this.failedOutcomeValue.set((T) failedOutcomeValue);
     }
 
     @Override
     public T failedValue() {
-      return failedOutcomeValue;
+      return failedOutcomeValue.get();
     }
 
     @Override
@@ -514,16 +517,17 @@ public class BasicCompletes<T> implements Completes<T> {
       if (isOutcomeKnown() && hasFailed()) {
         return true; // already reached below
       }
+      final T tempFailureOutcomeValue = failedOutcomeValue.get();
       boolean handle = false;
-      if (outcome == failedOutcomeValue) {
+      if (outcome == tempFailureOutcomeValue) {
         handle = true;
-      } else if (outcome != null && failedOutcomeValue != null && failedOutcomeValue.equals(outcome)) {
+      } else if (outcome != null && tempFailureOutcomeValue != null && tempFailureOutcomeValue.equals(outcome)) {
         handle = true;
       }
       if (handle) {
         failed.set(true);
         executables.reset();
-        this.outcome.set(failedOutcomeValue);
+        this.outcome.set(tempFailureOutcomeValue);
         outcomeKnown(true);
         failureAction();
       }
