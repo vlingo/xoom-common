@@ -367,8 +367,8 @@ public class BasicCompletes<T> implements Completes<T> {
       while (hasAction()) {
         final Action<T> action = actions.poll();
         state.backUp(action);
-        if (state.hasOutcome() && state.hasFailed() && state.executeFailureAction()) {
-          ;
+        if (state.hasOutcome() && state.hasFailed()) {
+          state.executeFailureAction();
         } else if (action.hasDefaultValue && state.outcomeMustDefault()) {
           state.outcome(action.defaultValue);
         } else {
