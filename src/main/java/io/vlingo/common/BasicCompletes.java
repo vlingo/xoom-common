@@ -278,12 +278,12 @@ public class BasicCompletes<T> implements Completes<T> {
     void backUp(final Action<T> action);
     void cancelTimer();
     void completedWith(final T outcome);
+    boolean executeFailureAction();
     boolean hasFailed();
     void failed();
     <F> void failedValue(final F failedOutcomeValue);
     T failedValue();
     void failureAction(final Action<T> action);
-    void failureAction();
     Action<T> failureActionFunction();
     boolean handleFailure(final T outcome);
     void exceptionAction(final Function<Exception,T> function);
@@ -367,7 +367,9 @@ public class BasicCompletes<T> implements Completes<T> {
       while (hasAction()) {
         final Action<T> action = actions.poll();
         state.backUp(action);
-        if (action.hasDefaultValue && state.outcomeMustDefault()) {
+        if (state.hasOutcome() && state.hasFailed() && state.executeFailureAction()) {
+          ;
+        } else if (action.hasDefaultValue && state.outcomeMustDefault()) {
           state.outcome(action.defaultValue);
         } else {
           try {
@@ -466,6 +468,23 @@ public class BasicCompletes<T> implements Completes<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public boolean executeFailureAction() {
+      if (failureAction != null) {
+        final Action<T> executeFailureAction = failureAction;
+        failureAction = null;
+        failed.set(true);
+        if (executeFailureAction.isConsumer()) {
+          executeFailureAction.asConsumer().accept((T) outcome.get());
+        } else {
+          outcome.set(executeFailureAction.asFunction().apply((T) outcome.get()));
+        }
+        return true;
+      }
+      return false;
+    }
+
+    @Override
     public boolean hasFailed() {
       return failed.get();
     }
@@ -490,20 +509,7 @@ public class BasicCompletes<T> implements Completes<T> {
     public void failureAction(final Action<T> action) {
       this.failureAction = action;
       if (isOutcomeKnown() && hasFailed()) {
-        failureAction();
-      }
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public void failureAction() {
-      failed.set(true);
-      if (failureAction != null) {
-        if (failureAction.isConsumer()) {
-          failureAction.asConsumer().accept((T) outcome.get());
-        } else {
-          outcome.set(failureAction.asFunction().apply((T) outcome.get()));
-        }
+        executeFailureAction();
       }
     }
 
@@ -529,7 +535,7 @@ public class BasicCompletes<T> implements Completes<T> {
         executables.reset();
         this.outcome.set(tempFailureOutcomeValue);
         outcomeKnown(true);
-        failureAction();
+        executeFailureAction();
       }
       return handle;
     }
@@ -543,13 +549,12 @@ public class BasicCompletes<T> implements Completes<T> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void handleException(final Exception e) {
       exception.set(e);
       if (exceptionAction != null) {
         failed.set(true);
         executables.reset();
-        outcome.set((T) exceptionAction.apply(e));
+        outcome.set(exceptionAction.apply(e));
         outcomeKnown(true);
       }
     }
