@@ -25,11 +25,14 @@ import com.google.gson.reflect.TypeToken;
 
 public class JsonSerialization {
   private final static Gson gson;
-  
+
   static {
     gson = new GsonBuilder()
+        .registerTypeAdapter(Class.class, new ClassSerializer())
+        .registerTypeAdapter(Class.class, new ClassDeserializer())
         .registerTypeAdapter(Date.class, new DateSerializer())
-        .registerTypeAdapter(Date.class, new DateDeserializer()).create();
+        .registerTypeAdapter(Date.class, new DateDeserializer())
+        .create();
   }
 
   public static <T> T deserialized(String serialization, final Class<T> type) {
@@ -46,7 +49,7 @@ public class JsonSerialization {
     final List<T> list = gson.fromJson(serialization, listOfType);
     return list;
   }
-  
+
   public static String serialized(final Object instance) {
     final String serialization = gson.toJson(instance);
     return serialization;
@@ -64,13 +67,36 @@ public class JsonSerialization {
     return serialization;
   }
 
+  @SuppressWarnings("rawtypes")
+  private static class ClassSerializer implements JsonSerializer<Class> {
+    @Override
+    public JsonElement serialize(Class source, Type typeOfSrc, JsonSerializationContext context) {
+      return new JsonPrimitive(source.getName());
+    }
+  }
+
+  @SuppressWarnings("rawtypes")
+  private static class ClassDeserializer implements JsonDeserializer<Class> {
+    @Override
+    public Class deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
+        final String classname = json.getAsJsonPrimitive().getAsString();
+        try {
+          return Class.forName(classname);
+        } catch (ClassNotFoundException e) {
+          throw new JsonParseException(e);
+        }
+    }
+  }
+
   private static class DateSerializer implements JsonSerializer<Date> {
+    @Override
     public JsonElement serialize(Date source, Type typeOfSource, JsonSerializationContext context) {
         return new JsonPrimitive(Long.toString(source.getTime()));
     }
   }
 
   private static class DateDeserializer implements JsonDeserializer<Date> {
+    @Override
     public Date deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
         long time = Long.parseLong(json.getAsJsonPrimitive().getAsString());
         return new Date(time);
