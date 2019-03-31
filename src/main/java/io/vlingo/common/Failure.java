@@ -12,14 +12,14 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class Failure<CauseT extends RuntimeException, ValueT> implements Outcome<CauseT, ValueT> {
+public class Failure<CauseT extends Throwable, ValueT> implements Outcome<CauseT, ValueT> {
     private final CauseT cause;
 
     private Failure(final CauseT cause) {
         this.cause = cause;
     }
 
-    public static <CauseT extends RuntimeException, ValueT> Outcome<CauseT, ValueT> of(final CauseT cause) {
+    public static <CauseT extends Throwable, ValueT> Outcome<CauseT, ValueT> of(final CauseT cause) {
         return new Failure<>(cause);
     }
 
@@ -84,6 +84,11 @@ public class Failure<CauseT extends RuntimeException, ValueT> implements Outcome
     @SuppressWarnings("unchecked")
     public <SecondSuccessT> Outcome<CauseT, Tuple2<ValueT, SecondSuccessT>> alongWith(Outcome<?, SecondSuccessT> outcome) {
         return (Outcome<CauseT, Tuple2<ValueT, SecondSuccessT>>) this;
+    }
+
+    @Override
+    public <NextFailureT extends Throwable> Outcome<NextFailureT, ValueT> otherwiseFail(Function<CauseT, NextFailureT> action) {
+        return Failure.of(action.apply(cause));
     }
 
     @Override

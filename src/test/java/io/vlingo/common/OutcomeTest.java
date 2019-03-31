@@ -9,6 +9,7 @@ package io.vlingo.common;
 
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Random;
@@ -29,7 +30,7 @@ public class OutcomeTest {
     }
 
     @Test
-    public void testThatASuccessfulOutcomeCanBeComposed() {
+    public void testThatASuccessfulOutcomeCanBeComposed() throws Throwable {
         final int initialValue = randomInteger();
         final int successInt = randomInteger();
         final int expected = initialValue * successInt;
@@ -39,7 +40,7 @@ public class OutcomeTest {
     }
 
     @Test
-    public void testThatASuccessfulOutcomeCanBeComposedWithANewOutcome() {
+    public void testThatASuccessfulOutcomeCanBeComposedWithANewOutcome() throws Throwable {
         final int initialValue = randomInteger();
         final int successInt = randomInteger();
         final int expected = initialValue * successInt;
@@ -130,7 +131,7 @@ public class OutcomeTest {
     }
 
     @Test
-    public void testThatAFailureIsRecoveredWithOtherwiseInto() {
+    public void testThatAFailureIsRecoveredWithOtherwiseInto() throws Throwable {
         final int recoveredValue = randomInteger();
         final int outcome = Failure.<RuntimeException, Integer>of(randomException())
                 .otherwiseTo(ex -> Success.of(recoveredValue))
@@ -240,6 +241,13 @@ public class OutcomeTest {
 
         final Outcome<RuntimeException, Tuple2<Integer, Integer>> wrapped = first.alongWith(second);
         wrapped.get();
+    }
+
+    @Test(expected = IOException.class)
+    public void testThatOtherwiseFailMapsTheException() throws IOException {
+        Failure.of(randomException())
+            .otherwiseFail(f -> new IOException(""))
+            .get();
     }
 
     private int randomInteger() {

@@ -13,14 +13,14 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class Success<CauseT extends RuntimeException, ValueT> implements Outcome<CauseT, ValueT> {
+public class Success<CauseT extends Throwable, ValueT> implements Outcome<CauseT, ValueT> {
     private final ValueT value;
 
     private Success(final ValueT value) {
         this.value = value;
     }
 
-    public static <CauseT extends RuntimeException, ValueT> Outcome<CauseT, ValueT> of(final ValueT value) {
+    public static <CauseT extends Throwable, ValueT> Outcome<CauseT, ValueT> of(final ValueT value) {
         return new Success<>(value);
     }
 
@@ -87,6 +87,11 @@ public class Success<CauseT extends RuntimeException, ValueT> implements Outcome
     @Override
     public <SecondSuccessT> Outcome<CauseT, Tuple2<ValueT, SecondSuccessT>> alongWith(Outcome<?, SecondSuccessT> outcome) {
         return outcome.andThenTo(secondOutcome -> Success.of(Tuple2.from(value, secondOutcome)));
+    }
+
+    @Override
+    public <NextFailureT extends Throwable> Outcome<NextFailureT, ValueT> otherwiseFail(Function<CauseT, NextFailureT> action) {
+        return (Outcome<NextFailureT, ValueT>) this;
     }
 
     @Override
