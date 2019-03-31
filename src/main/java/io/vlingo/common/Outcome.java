@@ -26,7 +26,7 @@ public interface Outcome<FailureT extends Throwable, SuccessT> {
      * For example:
      *
      * <code>
-     *     Success.of(42).andThen(v -> v + 8).get() // 50
+     *     Success.of(42).andThen(v -&gt; v + 8).get() // 50
      * </code>
      *
      * In case that the outcome is failure, nothing will happen.
@@ -42,9 +42,9 @@ public interface Outcome<FailureT extends Throwable, SuccessT> {
      * Maps a success Outcome value to a function that returns a new Outcome, that can be
      * either successful or failure.
      *
-     * @param action
-     * @param <NextFailureT>
-     * @param <NextSuccessT>
+     * @param action Function to apply to the current value
+     * @param <NextFailureT> the type of the outcome on failure
+     * @param <NextSuccessT> the type of the outcome on success
      * @return The mapped Outcome
      */
     <NextFailureT extends Throwable, NextSuccessT>
@@ -59,7 +59,7 @@ public interface Outcome<FailureT extends Throwable, SuccessT> {
     /**
      * Maps a failure outcome to a successful outcome, for recovery.
      *
-     * @param action
+     * @param action function to apply to the current value
      * @return A successful outcome.
      */
     Outcome<FailureT, SuccessT> otherwise(final Function<FailureT, SuccessT> action);
@@ -67,7 +67,9 @@ public interface Outcome<FailureT extends Throwable, SuccessT> {
     /**
      * Maps a failure outcome to a new outcome.
      *
-     * @param action
+     * @param action function to apply to current value
+     * @param <NextFailureT> the type of the outcome on failure
+     * @param <NextSuccessT> the type of the outcome on success
      * @return The mapped outcome.
      */
     <NextFailureT extends Throwable, NextSuccessT>
@@ -91,13 +93,13 @@ public interface Outcome<FailureT extends Throwable, SuccessT> {
      * For example:
      *
      * <code>
-     *     Failure.of(exception).resolve(f -> 42, s ->  1) // == 42
-     *     Success.of(value).resolve(f -> 42, s ->  1) // == 1
+     *     Failure.of(exception).resolve(f -&gt; 42, s -@gtl  1) // == 42
+     *     Success.of(value).resolve(f -@gt; 42, s -@gt;  1) // == 1
      * </code>
      *
      * @param onFailedOutcome A mapping function from a failure to a success outcome
      * @param onSuccessfulOutcome A mapping function from a success outcome to another success outcome
-     * @param <NextSuccessT>
+     * @param <NextSuccessT> the type of the next success
      * @return The mapped value
      */
     <NextSuccessT>
@@ -122,7 +124,7 @@ public interface Outcome<FailureT extends Throwable, SuccessT> {
      * Applies a filter predicate to the success value, or returns a failed Outcome in case
      * of not fulfilling the predicate.
      *
-     * @param filterFunction
+     * @param filterFunction the filter function
      * @return The filtered outcome
      */
     Outcome<NoSuchElementException, SuccessT> filter(final Function<SuccessT, Boolean> filterFunction);
@@ -130,9 +132,9 @@ public interface Outcome<FailureT extends Throwable, SuccessT> {
     /**
      * Returns a Outcome of a tuple of successes, or the first Failure in case of any of the failed outcomes.
      *
-     * @param outcome
-     * @param <SecondSuccessT>
-     * @return
+     * @param outcome the outcome
+     * @param <SecondSuccessT> the type of the second success
+     * @return a Outcome of a tuple of successes, or the first Failure in case of any of the failed outcomes
      */
     <SecondSuccessT>
     Outcome<FailureT, Tuple2<SuccessT, SecondSuccessT>> alongWith(final Outcome<?, SecondSuccessT> outcome);
@@ -140,8 +142,8 @@ public interface Outcome<FailureT extends Throwable, SuccessT> {
     /**
      * Maps a failed outcome to another failed outcome.
      *
-     * @param action
-     * @param <NextFailureT>
+     * @param action the function to map a failed outcome to another failed outcome
+     * @param <NextFailureT> the type of the next falure
      * @return The new failed outcome
      */
     <NextFailureT extends Throwable>
