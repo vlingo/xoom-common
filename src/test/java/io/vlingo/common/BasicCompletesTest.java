@@ -39,11 +39,11 @@ public class BasicCompletesTest {
   @Test
   public void testCompletesAfterConsumer() {
     final Completes<Integer> completes = new BasicCompletes<>(0);
-    
+
     completes.andThen((value) -> andThenValue = value);
-    
+
     completes.with(5);
-    
+
     assertEquals(new Integer(5), completes.outcome());
   }
 
@@ -54,9 +54,9 @@ public class BasicCompletesTest {
     completes
       .andThen((value) -> value * 2)
       .andThen((value) -> andThenValue = value);
-    
+
     completes.with(5);
-    
+
     assertEquals(new Integer(10), andThenValue);
     assertEquals(new Integer(10), completes.outcome());
   }
@@ -81,13 +81,13 @@ public class BasicCompletesTest {
   @Test
   public void testOutcomeBeforeTimeout() {
     final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
-    
+
     completes
       .andThen(1000, (value) -> value * 2)
       .andThen((value) -> andThenValue = value);
-    
+
     completes.with(5);
-    
+
     completes.await(10);
 
     assertEquals(new Integer(10), andThenValue);
@@ -96,13 +96,13 @@ public class BasicCompletesTest {
   @Test
   public void testTimeoutBeforeOutcome() throws Exception {
     final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
-    
+
     completes
       .andThen(1, 0, (value) -> value * 2)
       .andThen((value) -> andThenValue = value);
-    
+
     Thread.sleep(100);
-    
+
     completes.with(5);
 
     completes.await();
@@ -115,7 +115,7 @@ public class BasicCompletesTest {
   @Test
   public void testThatFailureOutcomeFails() {
     final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
-    
+
     completes
       .andThen(null, (value) -> value * 2)
       .andThen((Integer value) -> andThenValue = value)
@@ -133,7 +133,7 @@ public class BasicCompletesTest {
   @Test
   public void testThatExceptionOutcomeFails() {
     final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
-    
+
     completes
       .andThen(null, (value) -> value * 2)
       .andThen((Integer value) -> { throw new IllegalStateException("" + (value * 2)); })
@@ -149,13 +149,33 @@ public class BasicCompletesTest {
   }
 
   @Test
+  public void testThatExceptionHandlerDelayRecovers() {
+    final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
+
+    completes
+      .andThen(null, (value) -> value * 2)
+      .andThen((Integer value) -> { throw new IllegalStateException("" + (value * 2)); });
+
+    completes.with(10);
+
+    completes
+      .recoverFrom((e) -> failureValue = Integer.parseInt(e.getMessage()));
+
+    completes.await();
+
+    assertTrue(completes.hasFailed());
+    assertNull(andThenValue);
+    assertEquals(new Integer(40), failureValue);
+  }
+
+  @Test
   public void testThatAwaitTimesout() throws Exception {
     final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
-    
+
     final Integer completed = completes.await(10);
-    
+
     completes.with(5);
-    
+
     assertNotEquals(new Integer(5), completed);
     assertNull(completed);
   }
@@ -163,7 +183,7 @@ public class BasicCompletesTest {
   @Test
   public void testThatAwaitCompletes() throws Exception {
     final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
-    
+
     new Thread() {
       @Override
       public void run() {
