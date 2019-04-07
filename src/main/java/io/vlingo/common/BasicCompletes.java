@@ -287,6 +287,7 @@ public class BasicCompletes<T> implements Completes<T> {
     Action<T> failureActionFunction();
     boolean handleFailure(final T outcome);
     void exceptionAction(final Function<Exception,T> function);
+    void handleException();
     void handleException(final Exception e);
     boolean hasException();
     boolean hasOutcome();
@@ -365,11 +366,18 @@ public class BasicCompletes<T> implements Completes<T> {
     @SuppressWarnings("unchecked")
     private void executeActions(final ActiveState<T> state) {
       while (hasAction()) {
-        final Action<T> action = actions.poll();
-        state.backUp(action);
         if (state.hasOutcome() && state.hasFailed()) {
           state.executeFailureAction();
-        } else if (action.hasDefaultValue && state.outcomeMustDefault()) {
+          return;
+        } else if (state.hasException()) {
+          state.handleException();
+          return;
+        }
+
+        final Action<T> action = actions.poll();
+        state.backUp(action);
+
+        if (action.hasDefaultValue && state.outcomeMustDefault()) {
           state.outcome(action.defaultValue);
         } else {
           try {
@@ -543,6 +551,11 @@ public class BasicCompletes<T> implements Completes<T> {
     @Override
     public void exceptionAction(final Function<Exception,T> function) {
       exceptionAction = function;
+      handleException();
+    }
+
+    @Override
+    public void handleException() {
       if (hasException()) {
         handleException(exception.get());
       }
