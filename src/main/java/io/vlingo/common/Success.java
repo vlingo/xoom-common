@@ -90,6 +90,7 @@ public class Success<CauseT extends Throwable, ValueT> implements Outcome<CauseT
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <NextFailureT extends Throwable> Outcome<NextFailureT, ValueT> otherwiseFail(Function<CauseT, NextFailureT> action) {
         return (Outcome<NextFailureT, ValueT>) this;
     }
