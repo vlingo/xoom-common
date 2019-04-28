@@ -141,15 +141,17 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   @Override
-  public T await() {
+  @SuppressWarnings("unchecked")
+  public <O> O await() {
     state.await();
-    return outcome();
+    return (O) outcome();
   }
 
   @Override
-  public T await(final long timeout) {
+  @SuppressWarnings("unchecked")
+  public <O> O await(final long timeout) {
     if (state.await(timeout)) {
-      return outcome();
+      return (O) outcome();
     }
     return null;
   }

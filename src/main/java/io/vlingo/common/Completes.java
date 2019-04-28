@@ -62,8 +62,8 @@ public interface Completes<T> {
   Completes<T> otherwiseConsume(final Consumer<T> consumer);
   Completes<T> recoverFrom(final Function<Exception,T> function);
 
-  T await();
-  T await(final long timeout);
+  <O> O await();
+  <O> O await(final long timeout);
   boolean isCompleted();
   boolean hasFailed();
   void failed();
