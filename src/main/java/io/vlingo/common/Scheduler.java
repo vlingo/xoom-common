@@ -8,8 +8,10 @@
 package io.vlingo.common;
 
 import java.time.Duration;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Provide time-based notifications to a {@code Scheduled} once or any number of
@@ -18,7 +20,7 @@ import java.util.TimerTask;
  * are quite effectively used in an {@code Actor}-based asynchronous environment.
  */
 public class Scheduler {
-  private final Timer timer;
+  private final ScheduledExecutorService timer;
 
   /**
    * Answer a {@code Cancellable} for the repeating scheduled notifier.
@@ -31,7 +33,8 @@ public class Scheduler {
    */
   public <T> Cancellable schedule(final Scheduled<T> scheduled, final T data, final long delayBefore, final long interval) {
     final SchedulerTask<T> schedulerTask = new SchedulerTask<>(scheduled, data, true);
-    timer.schedule(schedulerTask, delayBefore, interval);
+    final ScheduledFuture<?> future = timer.scheduleWithFixedDelay(schedulerTask, delayBefore, interval, TimeUnit.MILLISECONDS);
+    schedulerTask.setFuture(future);
     return schedulerTask;
   }
 
@@ -45,9 +48,7 @@ public class Scheduler {
    * @return Cancellable
    */
   public <T> Cancellable schedule(final Scheduled<T> scheduled, final T data, final Duration delayBefore, final Duration interval) {
-    final SchedulerTask<T> schedulerTask = new SchedulerTask<>(scheduled, data, true);
-    timer.schedule(schedulerTask, delayBefore.toMillis(), interval.toMillis());
-    return schedulerTask;
+    return schedule(scheduled, data, delayBefore.toMillis(), interval.toMillis());
   }
 
   /**
@@ -61,7 +62,8 @@ public class Scheduler {
    */
   public <T> Cancellable scheduleOnce(final Scheduled<T> scheduled, final T data, final long delayBefore, final long interval) {
     final SchedulerTask<T> schedulerTask = new SchedulerTask<>(scheduled, data, false);
-    timer.schedule(schedulerTask, delayBefore + interval);
+    final ScheduledFuture<?> future = timer.schedule(schedulerTask, delayBefore + interval, TimeUnit.MILLISECONDS);
+    schedulerTask.setFuture(future);
     return schedulerTask;
   }
 
@@ -75,44 +77,61 @@ public class Scheduler {
    * @return Cancellable
    */
   public <T> Cancellable scheduleOnce(final Scheduled<T> scheduled, final T data, final Duration delayBefore, final Duration interval) {
-    final SchedulerTask<T> schedulerTask = new SchedulerTask<>(scheduled, data, false);
-    timer.schedule(schedulerTask, delayBefore.toMillis() + interval.toMillis());
-    return schedulerTask;
+    return scheduleOnce(scheduled, data, delayBefore.toMillis(), interval.toMillis());
   }
 
   /**
    * Construct my default state.
    */
   public Scheduler() {
-    this.timer = new Timer();
+    this.timer = Executors.newScheduledThreadPool(1);
   }
 
   /**
    * Close me canceling all schedule notifiers.
    */
   public void close() {
-    timer.cancel();
+    timer.shutdown();
   }
 
   /**
    * Wrapper for {@code TimerTask} to care for {@code Scheduled} instances.
    */
-  private class SchedulerTask<T> extends TimerTask implements Cancellable {
+  private class SchedulerTask<T> implements Runnable, Cancellable {
+    private boolean cancelled;
     private final Scheduled<T> scheduled;
     private final T data;
     private final boolean repeats;
-    
+    private ScheduledFuture<?> future;
+
     SchedulerTask(final Scheduled<T> scheduled, final T data, final boolean repeats) {
       this.scheduled = scheduled;
       this.data = data;
       this.repeats = repeats;
+      this.cancelled = false;
     }
-    
+
     @Override
     public void run() {
       scheduled.intervalSignal(scheduled, data);
-      
+
       if (!repeats) {
+        cancel();
+      }
+    }
+
+    @Override
+    public boolean cancel() {
+      cancelled = true;
+      if (future != null) {
+        return future.cancel(false);
+      }
+      return cancelled;
+    }
+
+    void setFuture(final ScheduledFuture<?> future) {
+      this.future = future;
+      if (cancelled) {
         cancel();
       }
     }
