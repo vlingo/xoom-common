@@ -1,1 +1,26 @@
+ version: 2
+jobs:
+  build:
+    working_directory: ~/vlingo-common
 
+    docker:
+      - image: circleci/openjdk:8-jdk-browsers
+    
+    steps:
+      - checkout
+      - restore_cache:
+        key: vlingo-common-{{ checksum "pom.xml" }}
+      - run: mvn dependency:go-offline
+      - save_cache:
+        paths:
+          - ~/.m2
+        key: vlingo-common-{{ checksum "pom.xml" }}
+      - run: mvn install
+      - store_test_results:
+        path: target/surefire-reports
+      - store_artifacts:
+        path: target/vlingo-common-0.8.3-javadoc.jar
+      - store_artifacts:
+        path: target/vlingo-common-0.8.3-sources.jar
+      - store_artifacts:
+        path: target/vlingo-common-0.8.3.jar
