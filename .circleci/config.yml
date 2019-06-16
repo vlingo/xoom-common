@@ -21,7 +21,7 @@ jobs:
           key: vlingo-common-{{ checksum "pom.xml" }}
 
       - run: mvn install
-]
+
       - store_test_results:
           path: target/surefire-reports
 
