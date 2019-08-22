@@ -1,7 +1,6 @@
 language: java
 script:
 - mvn install
-jdk: openjdk8
 deploy:
   provider: bintray
   file: bintray.json
