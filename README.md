@@ -2,10 +2,18 @@
 
 [![Javadocs](http://javadoc.io/badge/io.vlingo/vlingo-common.svg?color=brightgreen)](http://javadoc.io/doc/io.vlingo/vlingo-common) [![Build Status](https://travis-ci.org/vlingo/vlingo-common.svg?branch=master)](https://travis-ci.org/vlingo/vlingo-common) [ ![Download](https://api.bintray.com/packages/vlingo/vlingo-platform-java/vlingo-common/images/download.svg) ](https://bintray.com/vlingo/vlingo-platform-java/vlingo-common/_latestVersion) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/vlingo-platform-java/community)
 
-This is a very early stage release of the vlingo platform.
+The vlingo/PLATFORM common tools shared across various projects.
 
-The vlingo-common project consists of some tools that are used across
-various other vlingo projects.
+The vlingo-common project consists of a minimal toolset used across various other vlingo projects
+
+  - `Completes<T>` and `BasicCompletes`
+  - `IdentityGenerator` with various identity generation algorithms
+  - `Outcome` with `Success` and `Failure` (like `Either` and `Try`)
+  - `Scheduler`
+  - Serialization
+  - `SemanticVersion`
+  - `DynaCompiler` (makes `JavaCompiler` simpiler to use)
+  - `Tuple2`, `Tuple3`, `Tuple4`
 
 ### Bintray
 
