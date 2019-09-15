@@ -43,6 +43,7 @@ public class Union {
   /**
    * Answer my {@code value} as a {@code T}. If my {@code value} is
    * not of the expect type a {@code ClassCastException} will be thrown.
+   * @param <T> the type to answer
    * @return T
    */
   @SuppressWarnings("unchecked")

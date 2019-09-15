@@ -412,6 +412,7 @@ public interface Completes<T> {
    * Answer myself after setting my {@code outcome}. This should normally be used only
    * by internal operations or when available through an actor for its results.
    * @param outcome the O typed outcome to set as my outcome
+   * @param <O> the type to be answered
    * @return {@code Completes<O>}
    */
   <O> Completes<O> with(final O outcome);
