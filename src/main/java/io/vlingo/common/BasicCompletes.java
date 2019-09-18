@@ -502,7 +502,7 @@ public class BasicCompletes<T> implements Completes<T> {
         return true;
       } else if (parent != null) {
         // bubble up
-        parent.handleFailure(failedValue());
+        return parent.handleFailure(failedValue());
       }
       return false;
     }
@@ -584,6 +584,9 @@ public class BasicCompletes<T> implements Completes<T> {
         executables.reset();
         outcome.set(exceptionAction.apply(e));
         outcomeKnown(true);
+      } else if (parent != null) {
+        // bubble up
+        parent.handleException(e);
       }
     }
 
