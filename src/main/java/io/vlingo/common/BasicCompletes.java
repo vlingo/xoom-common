@@ -196,6 +196,10 @@ public class BasicCompletes<T> implements Completes<T> {
     return (Completes<O>) this;
   }
 
+  private BasicCompletes(final BasicActiveState<T> parent) {
+    this.state = new BasicActiveState<T>(parent.scheduler(), parent);
+  }
+
   protected static class Action<T> {
     private final T defaultValue;
     private final boolean hasDefaultValue;
@@ -414,12 +418,14 @@ public class BasicCompletes<T> implements Completes<T> {
     private Function<Exception,?> exceptionAction;
     private final AtomicReference<Object> outcome;
     private CountDownLatch outcomeKnown;
+    private final BasicActiveState<T> parent;
     private Scheduler scheduler;
     private final AtomicBoolean timedOut;
 
     @SuppressWarnings("unchecked")
-    protected BasicActiveState(final Scheduler scheduler) {
+    protected BasicActiveState(final Scheduler scheduler, final BasicActiveState<T> parent) {
       this.scheduler = scheduler;
+      this.parent = parent;
       this.executables = new Executables<>();
       this.failed = new AtomicBoolean(false);
       this.failedOutcomeValue = new AtomicReference<>((T) UnfailedValue);
@@ -427,6 +433,10 @@ public class BasicCompletes<T> implements Completes<T> {
       this.outcome = new AtomicReference<>(null);
       this.outcomeKnown = new CountDownLatch(1);
       this.timedOut = new AtomicBoolean(false);
+    }
+
+    protected BasicActiveState(final Scheduler scheduler) {
+      this(scheduler, null);
     }
 
     protected BasicActiveState() {
@@ -490,6 +500,9 @@ public class BasicCompletes<T> implements Completes<T> {
           outcome.set(executeFailureAction.asFunction().apply((T) outcome.get()));
         }
         return true;
+      } else if (parent != null) {
+        // bubble up
+        parent.handleFailure(failedValue());
       }
       return false;
     }
