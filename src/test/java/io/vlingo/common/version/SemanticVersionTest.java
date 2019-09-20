@@ -108,6 +108,27 @@ public class SemanticVersionTest {
     assertFalse(patchTooHigh.isCompatibleWith(version));
   }
 
+  @Test
+  public void testThatVersionIsGreaterOrNot() {
+    final SemanticVersion value000 = SemanticVersion.from("");
+    final SemanticVersion value001 = SemanticVersion.from(0, 0, 1);
+    final SemanticVersion value010 = SemanticVersion.from(0, 1, 0);
+    final SemanticVersion value100 = SemanticVersion.from(1, 0, 0);
+
+    assertTrue(value001.isGreaterThan(value000));
+    assertTrue(value010.isGreaterThan(value001));
+    assertTrue(value100.isGreaterThan(value010));
+
+    final SemanticVersion value111 = SemanticVersion.from(1, 1, 1);
+    final SemanticVersion value112 = SemanticVersion.from(1, 1, 2);
+    final SemanticVersion value122 = SemanticVersion.from(1, 2, 2);
+    final SemanticVersion value222 = SemanticVersion.from(2, 2, 2);
+
+    assertTrue(value112.isGreaterThan(value111));
+    assertTrue(value122.isGreaterThan(value112));
+    assertTrue(value222.isGreaterThan(value122));
+  }
+
   @Test(expected=IllegalArgumentException.class)
   public void testThatMajorVersionMinBoundsCheck() {
     SemanticVersion.toValue(-1, 1, 1);
