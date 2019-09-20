@@ -7,6 +7,9 @@
 
 package io.vlingo.common.version;
 
+import static io.vlingo.common.version.SemanticVersion.MAJOR_MAX;
+import static io.vlingo.common.version.SemanticVersion.MINOR_MAX;
+import static io.vlingo.common.version.SemanticVersion.PATCH_MAX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -127,6 +130,13 @@ public class SemanticVersionTest {
     assertTrue(value112.isGreaterThan(value111));
     assertTrue(value122.isGreaterThan(value112));
     assertTrue(value222.isGreaterThan(value122));
+  }
+
+  @Test
+  public void testThatVersionIsGreatest() {
+    final SemanticVersion greatest = SemanticVersion.greatest();
+    assertEquals(SemanticVersion.from(MAJOR_MAX, MINOR_MAX, PATCH_MAX), greatest);
+    assertEquals(SemanticVersion.toValue(MAJOR_MAX, MINOR_MAX, PATCH_MAX), greatest.toValue());
   }
 
   @Test(expected=IllegalArgumentException.class)
