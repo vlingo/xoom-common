@@ -23,10 +23,14 @@ public class SemanticVersion {
 
   public static SemanticVersion from(final String version) {
     final String[] parts = version.split("\\.");
-    final int major = Integer.parseInt(parts[0]);
-    final int minor = Integer.parseInt(parts[1]);
-    final int patch = Integer.parseInt(parts[2]);
-    return new SemanticVersion(major, minor, patch);
+    if (parts.length == 3) {
+      final int major = Integer.parseInt(parts[0]);
+      final int minor = Integer.parseInt(parts[1]);
+      final int patch = Integer.parseInt(parts[2]);
+      return new SemanticVersion(major, minor, patch);
+    } else {
+      return new SemanticVersion(0, 0, 0);
+    }
   }
 
   public static String toString(final int version) {
@@ -48,7 +52,15 @@ public class SemanticVersion {
 
   public static int toValue(final String version) {
     final String[] parts = version.split("\\.");
-    return toValue(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
+    if (parts.length == 3) {
+      return toValue(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
+    } else {
+      return zero();
+    }
+  }
+
+  public static int zero() {
+    return 0;
   }
 
   public final int major;
@@ -68,6 +80,19 @@ public class SemanticVersion {
     return false;
   }
 
+  public boolean isGreaterThan(final SemanticVersion version) {
+    if (major > version.major) {
+      return true;
+    }
+    if (major == version.major && minor > version.minor) {
+      return true;
+    }
+    if (major == version.major && minor == version.minor && patch > version.patch) {
+      return true;
+    }
+    return false;
+  }
+
   public SemanticVersion withIncrementedMajor() {
     return new SemanticVersion(major + 1, minor, patch);
   }
@@ -80,6 +105,7 @@ public class SemanticVersion {
     return new SemanticVersion(major, minor, patch + 1);
   }
 
+  @Override
   public String toString() {
     return "" + major + "." + minor + "." + patch;
   }
