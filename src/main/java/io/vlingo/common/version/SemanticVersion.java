@@ -33,6 +33,10 @@ public class SemanticVersion {
     }
   }
 
+  public static SemanticVersion greatest() {
+    return from(MAJOR_MAX, MINOR_MAX, PATCH_MAX);
+  }
+
   public static String toString(final int version) {
     return "" + (version >> MAJOR_SHIFT) + "." + ((version & MINOR_MASK) >> MINOR_SHIFT) + "." + (version & PATCH_MASK);
   }
@@ -103,6 +107,26 @@ public class SemanticVersion {
 
   public SemanticVersion withIncrementedPatch() {
     return new SemanticVersion(major, minor, patch + 1);
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * (major + minor + patch + 1);
+  }
+
+  @Override
+  public boolean equals(final Object other) {
+    if (this == other) {
+      return true;
+    }
+
+    if (other == null || other.getClass() != getClass()) {
+      return false;
+    }
+
+    final SemanticVersion otherVersion = (SemanticVersion) other;
+
+    return this.major == otherVersion.major && this.minor == otherVersion.minor && this.patch == otherVersion.patch;
   }
 
   @Override
