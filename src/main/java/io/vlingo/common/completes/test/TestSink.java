@@ -2,95 +2,102 @@ package io.vlingo.common.completes.test;
 
 import io.vlingo.common.completes.Sink;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class TestSink<Receives> implements Sink<Receives>, SinkVerifier<Receives> {
-    private Predicate<Receives> outcomeVerifications;
-    private boolean hasOutcomeVerifications;
-    private Predicate<Throwable> errorCausePredicates;
-    private boolean hasCausePredicates;
-
-    private Optional<Receives> receivedOutcome;
-    private Optional<Throwable> receivedErrorCause;
+    private List<Predicate<Receives>> outcomeVerifications;
+    private List<Predicate<Throwable>> errorCausePredicates;
+    private List<Receives> receivedOutcome;
+    private List<Throwable> receivedErrorCause;
 
     public TestSink() {
-        outcomeVerifications = (r) -> true;
-        errorCausePredicates = (r) -> true;
-        hasOutcomeVerifications = false;
-        hasCausePredicates = false;
+        outcomeVerifications = new ArrayList<>();
+        errorCausePredicates = new ArrayList<>();
 
-        receivedOutcome = Optional.empty();
-        receivedErrorCause = Optional.empty();
+        receivedOutcome = new ArrayList<>();
+        receivedErrorCause = new ArrayList<>();
     }
 
     @Override
     public void onOutcome(Receives receives) {
-        this.receivedOutcome = Optional.of(receives);
+        this.receivedOutcome.add(receives);
     }
 
     @Override
     public void onError(Throwable cause) {
-        this.receivedErrorCause = Optional.of(cause);
+        this.receivedErrorCause.add(cause);
     }
 
     @Override
     public void onCompletion() {
-        if (hasOutcomeVerifications) {
-            if (!receivedOutcome.isPresent()) {
-                throw new AssertionError("Sink was expecting to receive an outcome, but nothing arrived.");
+        if (!outcomeVerifications.isEmpty()) {
+            if (outcomeVerifications.size() != receivedOutcome.size()) {
+                int numberOfVerifications = outcomeVerifications.size();
+                int numberOfOutcomes = receivedOutcome.size();
+
+                throw new AssertionError("Sink was expecting to receive " + numberOfVerifications + " outcomes, but " + numberOfOutcomes + " received.");
             }
 
-            Receives outcome = receivedOutcome.get();
-            if (!outcomeVerifications.test(outcome)) {
-                throw new AssertionError("Sink received an outcome but did not fulfill expectations. The received value was:" + outcome);
+            for (int i = 0; i < outcomeVerifications.size(); i++) {
+                Receives outcome = receivedOutcome.get(i);
+                Predicate<Receives> verification = outcomeVerifications.get(i);
+
+                if (!verification.test(outcome)) {
+                    throw new AssertionError("Sink received an outcome but did not fulfill expectations. The received value was:" + outcome);
+                }
             }
         }
 
-        if (hasCausePredicates) {
-            if (!receivedErrorCause.isPresent()) {
-                throw new AssertionError("Sink was expecting to receive a failure, but completed successfully.");
+        if (!errorCausePredicates.isEmpty()) {
+            if (errorCausePredicates.size() != receivedErrorCause.size()) {
+                int numberOfVerifications = errorCausePredicates.size();
+                int numberOfOutcomes = receivedErrorCause.size();
+
+                throw new AssertionError("Sink was expecting to receive " + numberOfVerifications + " errors, but " + numberOfOutcomes + " received.");
             }
 
-            Throwable cause = receivedErrorCause.get();
-            if (!errorCausePredicates.test(cause)) {
-                throw new AssertionError("Sink received a failure, but did not fulfill expectations. The received error was:" + cause, cause);
+            for (int i = 0; i < errorCausePredicates.size(); i++) {
+                Throwable outcome = receivedErrorCause.get(i);
+                Predicate<Throwable> verification = errorCausePredicates.get(i);
+
+                if (!verification.test(outcome)) {
+                    throw new AssertionError("Sink received an error but did not fulfill expectations. The received value was:" + outcome);
+                }
             }
         }
     }
 
     @Override
     public SinkVerifier<Receives> outcomeIs(Receives receives) {
-        outcomeVerifications = outcomeVerifications.and(receives::equals);
-        hasOutcomeVerifications = true;
+        outcomeVerifications.add(receives::equals);
         return this;
     }
 
     @Override
     public SinkVerifier<Receives> outcomeIs(Predicate<Receives> predicate) {
-        outcomeVerifications = outcomeVerifications.and(predicate);
-        hasOutcomeVerifications = true;
+        outcomeVerifications.add(predicate);
         return this;
     }
 
     @Override
     public SinkVerifier<Receives> failedWith(Throwable ex) {
-        errorCausePredicates = errorCausePredicates.and(ex::equals);
-        hasCausePredicates = true;
+        errorCausePredicates.add(ex::equals);
         return this;
     }
 
     @Override
     public SinkVerifier<Receives> failedWith(Class<? extends Throwable> exClass) {
-        errorCausePredicates = errorCausePredicates.and(exClass::isInstance);
-        hasCausePredicates = true;
+        errorCausePredicates.add(exClass::isInstance);
         return this;
     }
 
     @Override
     public SinkVerifier<Receives> failedWith(Predicate<Throwable> predicate) {
-        errorCausePredicates = errorCausePredicates.and(predicate);
-        hasCausePredicates = true;
+        errorCausePredicates.add(predicate);
         return this;
     }
 

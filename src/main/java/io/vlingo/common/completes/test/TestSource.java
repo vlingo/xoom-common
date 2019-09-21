@@ -9,15 +9,22 @@ import java.util.function.Consumer;
 
 public class TestSource<Expose> implements Source<Expose> {
     private final List<Consumer<Sink<Expose>>> operations;
+    private boolean waitingForSubscription;
     private Sink<Expose> subscriber;
 
     public TestSource() {
         this.operations = new ArrayList<>();
+        this.waitingForSubscription = false;
     }
 
     public void flush() {
-        operations.forEach(c -> c.accept(subscriber));
-        operations.clear();
+        if (subscriber == null) {
+            this.waitingForSubscription = true;
+        } else {
+            operations.forEach(c -> c.accept(subscriber));
+            operations.clear();
+            this.waitingForSubscription = false;
+        }
     }
 
     @Override
@@ -38,5 +45,8 @@ public class TestSource<Expose> implements Source<Expose> {
     @Override
     public void subscribe(Sink<Expose> subscriber) {
         this.subscriber = subscriber;
+        if (waitingForSubscription) {
+            flush();
+        }
     }
 }
