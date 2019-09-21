@@ -196,6 +196,11 @@ public class BasicCompletes<T> implements Completes<T> {
     return (Completes<O>) this;
   }
 
+  @Override
+  public Completes<T> ready() {
+    return this;
+  }
+
   private BasicCompletes(final BasicActiveState<T> parent) {
     this.state = new BasicActiveState<T>(parent.scheduler(), parent);
   }

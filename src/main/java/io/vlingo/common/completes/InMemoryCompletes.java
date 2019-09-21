@@ -164,6 +164,8 @@ public class InMemoryCompletes<T> implements Completes<T> {
 
     @Override
     public <O> O await(long timeout) {
+        source.activate();
+
         try {
             Optional<T> value = sink.await(timeout);
             if (value.isPresent()) {
@@ -208,14 +210,19 @@ public class InMemoryCompletes<T> implements Completes<T> {
 
     @Override
     public Completes<T> repeat() {
+        sink.repeat();
+        return this;
+    }
+
+    @Override
+    public Completes<T> ready() {
+        source.activate();
         return this;
     }
 
     @Override
     public <O> Completes<O> with(O outcome) {
         source.emitOutcome(outcome);
-        source.activate();
-
         return (Completes<O>) this;
     }
 }

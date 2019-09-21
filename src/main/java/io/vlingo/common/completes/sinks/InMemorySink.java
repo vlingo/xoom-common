@@ -15,26 +15,31 @@ import io.vlingo.common.completes.Sink;
 import java.util.ArrayDeque;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class InMemorySink<Exposes> implements Sink<Exposes> {
-    private AtomicReference<Queue<Outcome<Exception, Exposes>>> outcomes;
+    private Queue<Outcome<Exception, Exposes>> outcomes;
     private AtomicBoolean hasBeenCompleted;
+    private CountDownLatch latch;
 
     public InMemorySink() {
-        this.outcomes = new AtomicReference<>(new ArrayDeque<>());
+        this.outcomes = new ArrayDeque<>();
         this.hasBeenCompleted = new AtomicBoolean(false);
+        this.latch = new CountDownLatch(1);
     }
 
     @Override
     public void onOutcome(Exposes exposes) {
-        outcomes.get().add(Success.of(exposes));
+        outcomes.add(Success.of(exposes));
+        latch.countDown();
     }
 
     @Override
     public void onError(Exception cause) {
-        outcomes.get().add(Failure.of(cause));
+        outcomes.add(Failure.of(cause));
+        latch.countDown();
     }
 
     @Override
@@ -48,22 +53,22 @@ public class InMemorySink<Exposes> implements Sink<Exposes> {
     }
 
     public boolean hasOutcome() {
-        return outcomes.get().size() > 0 && outcomes.get().peek().resolve(e -> false, e -> true);
+        return outcomes.size() > 0 && outcomes.peek().resolve(e -> false, e -> true);
     }
 
     public boolean hasFailed() {
-        return outcomes.get().size() > 0 && outcomes.get().peek().resolve(e -> true, e -> false);
+        return outcomes.size() > 0 && outcomes.peek().resolve(e -> true, e -> false);
     }
 
     public Optional<Exposes> await() throws Exception {
         try {
             waitUntilOutcomeOrTimeout(Long.MAX_VALUE);
-            Outcome<Exception, Exposes> currentOutcome = outcomes.get().peek();
+            Outcome<Exception, Exposes> currentOutcome = outcomes.peek();
             if (currentOutcome == null) {
                 return Optional.empty();
             }
 
-            return Optional.ofNullable(currentOutcome.get());
+            return currentOutcome.asOptional();
         } catch (InterruptedException e) {
             return Optional.empty();
         }
@@ -72,23 +77,22 @@ public class InMemorySink<Exposes> implements Sink<Exposes> {
     public Optional<Exposes> await(long timeout) throws Exception {
         try {
             waitUntilOutcomeOrTimeout(timeout);
-            Outcome<Exception, Exposes> currentOutcome = outcomes.get().peek();
+            Outcome<Exception, Exposes> currentOutcome = outcomes.peek();
             if (currentOutcome == null) {
                 return Optional.empty();
             }
 
-            return Optional.ofNullable(currentOutcome.get());
+            return currentOutcome.asOptional();
         } catch (InterruptedException e) {
             return Optional.empty();
         }
     }
 
+    public void repeat() {
+        latch = new CountDownLatch(1);
+    }
+
     private void waitUntilOutcomeOrTimeout(long timeout) throws Exception {
-        final long startTime = System.currentTimeMillis();
-        do {
-            if (!outcomes.get().isEmpty()) {
-                return;
-            }
-        } while ((System.currentTimeMillis() - startTime) < timeout);
+        latch.await(timeout, TimeUnit.MILLISECONDS);
     }
 }

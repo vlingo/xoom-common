@@ -19,14 +19,15 @@ public class InMemoryCompletesTest {
 
     @Test
     public void testCompletesWith() {
-        final Completes<Integer> completes = newCompletesWithOutcome(5);
+        final Completes<Integer> completes = newCompletesWithOutcome(5).ready();
         assertEquals(5, completes.outcome().intValue());
     }
 
     @Test
     public void testCompletesAfterFunction() {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class)
-                .andThen((value) -> value * 2);
+                .andThen((value) -> value * 2)
+                .ready();
 
         completes.with(5);
         assertEquals(10, completes.outcome().intValue());
@@ -34,9 +35,10 @@ public class InMemoryCompletesTest {
 
     @Test
     public void testCompletesAfterConsumer() {
-        final Completes<Integer> completes = newEmptyCompletes(Integer.class);
+        final Completes<Integer> completes = newEmptyCompletes(Integer.class)
+                .andThen((value) -> andThenValue = value)
+                .ready();
 
-        completes.andThen((value) -> andThenValue = value);
         completes.with(5);
 
         assertEquals(5, completes.outcome().intValue());
@@ -44,11 +46,10 @@ public class InMemoryCompletesTest {
 
     @Test
     public void testCompletesAfterAndThen() {
-        final Completes<Integer> completes = newEmptyCompletes(Integer.class);
-
-        completes
+        final Completes<Integer> completes = newEmptyCompletes(Integer.class)
                 .andThen((value) -> value * 2)
-                .andThen((value) -> andThenValue = value);
+                .andThen((value) -> andThenValue = value)
+                .ready();
 
         completes.with(5);
 
@@ -107,7 +108,8 @@ public class InMemoryCompletesTest {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class)
                 .andThen(null, (value) -> (Integer) null)
                 .andThen((Integer value) -> andThenValue = value)
-                .otherwiseConsume((failedValue) -> failureValue = 1000);
+                .otherwiseConsume((failedValue) -> failureValue = 1000)
+                .ready();
 
         completes.with(null);
 
@@ -169,7 +171,8 @@ public class InMemoryCompletesTest {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class)
                 .andThen((value) -> value * 2)
                 .andThen((Integer value) -> andThenValue = value)
-                .repeat();
+                .repeat()
+                .ready();
 
         completes.with(5);
         assertEquals(10, andThenValue.intValue());

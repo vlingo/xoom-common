@@ -441,6 +441,13 @@ public interface Completes<T> {
   Completes<T> repeat();
 
   /**
+   * Answer myself after I am ready to process all outcomes.
+   *
+   * @return {@code Completes<T>}
+   */
+  Completes<T> ready();
+
+  /**
    * Answer myself after setting my {@code outcome}. This should normally be used only
    * by internal operations or when available through an actor for its results.
    * @param outcome the O typed outcome to set as my outcome
