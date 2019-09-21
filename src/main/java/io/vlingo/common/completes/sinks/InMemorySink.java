@@ -9,31 +9,32 @@ package io.vlingo.common.completes.sinks;
 
 import io.vlingo.common.Failure;
 import io.vlingo.common.Outcome;
-import io.vlingo.common.Scheduler;
 import io.vlingo.common.Success;
 import io.vlingo.common.completes.Sink;
 
+import java.util.ArrayDeque;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class InMemorySink<Exposes> implements Sink<Exposes> {
-    private ConcurrentLinkedQueue<Outcome<Exception, Exposes>> outcomes;
+    private AtomicReference<Queue<Outcome<Exception, Exposes>>> outcomes;
     private AtomicBoolean hasBeenCompleted;
 
-    public InMemorySink(Scheduler scheduler) {
-        this.outcomes = new ConcurrentLinkedQueue<>();
+    public InMemorySink() {
+        this.outcomes = new AtomicReference<>(new ArrayDeque<>());
         this.hasBeenCompleted = new AtomicBoolean(false);
     }
 
     @Override
     public void onOutcome(Exposes exposes) {
-        outcomes.add(Success.of(exposes));
+        outcomes.get().add(Success.of(exposes));
     }
 
     @Override
     public void onError(Exception cause) {
-        outcomes.add(Failure.of(cause));
+        outcomes.get().add(Failure.of(cause));
     }
 
     @Override
@@ -47,17 +48,17 @@ public class InMemorySink<Exposes> implements Sink<Exposes> {
     }
 
     public boolean hasOutcome() {
-        return outcomes.size() > 0 && outcomes.peek().resolve(e -> false, e -> true);
+        return outcomes.get().size() > 0 && outcomes.get().peek().resolve(e -> false, e -> true);
     }
 
     public boolean hasFailed() {
-        return outcomes.size() > 0 && outcomes.peek().resolve(e -> true, e -> false);
+        return outcomes.get().size() > 0 && outcomes.get().peek().resolve(e -> true, e -> false);
     }
 
     public Optional<Exposes> await() throws Exception {
         try {
             waitUntilOutcomeOrTimeout(Long.MAX_VALUE);
-            Outcome<Exception, Exposes> currentOutcome = outcomes.peek();
+            Outcome<Exception, Exposes> currentOutcome = outcomes.get().peek();
             if (currentOutcome == null) {
                 return Optional.empty();
             }
@@ -71,7 +72,7 @@ public class InMemorySink<Exposes> implements Sink<Exposes> {
     public Optional<Exposes> await(long timeout) throws Exception {
         try {
             waitUntilOutcomeOrTimeout(timeout);
-            Outcome<Exception, Exposes> currentOutcome = outcomes.peek();
+            Outcome<Exception, Exposes> currentOutcome = outcomes.get().peek();
             if (currentOutcome == null) {
                 return Optional.empty();
             }
@@ -85,7 +86,7 @@ public class InMemorySink<Exposes> implements Sink<Exposes> {
     private void waitUntilOutcomeOrTimeout(long timeout) throws Exception {
         final long startTime = System.currentTimeMillis();
         do {
-            if (!outcomes.isEmpty()) {
+            if (!outcomes.get().isEmpty()) {
                 return;
             }
         } while ((System.currentTimeMillis() - startTime) < timeout);

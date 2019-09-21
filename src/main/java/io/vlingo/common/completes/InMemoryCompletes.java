@@ -34,7 +34,7 @@ public class InMemoryCompletes<T> implements Completes<T> {
 
     public static <T> InMemoryCompletes<T> withScheduler(Scheduler scheduler) {
         InMemorySource<T> source = new InMemorySource<>();
-        InMemorySink<T> sink = new InMemorySink<>(scheduler);
+        InMemorySink<T> sink = new InMemorySink<>();
 
         source.subscribe(sink);
 
