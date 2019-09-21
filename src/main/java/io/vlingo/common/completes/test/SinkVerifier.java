@@ -8,9 +8,9 @@ public interface SinkVerifier<Outcome> {
     SinkVerifier<Outcome> outcomeIs(Outcome outcome);
     SinkVerifier<Outcome> outcomeIs(Predicate<Outcome> predicate);
 
-    SinkVerifier<Outcome> failedWith(Throwable ex);
-    SinkVerifier<Outcome> failedWith(Class<? extends Throwable> exClass);
-    SinkVerifier<Outcome> failedWith(Predicate<Throwable> predicate);
+    SinkVerifier<Outcome> failedWith(Exception ex);
+    SinkVerifier<Outcome> failedWith(Class<? extends Exception> exClass);
+    SinkVerifier<Outcome> failedWith(Predicate<Exception> predicate);
 
     Sink<Outcome> asSink();
 }

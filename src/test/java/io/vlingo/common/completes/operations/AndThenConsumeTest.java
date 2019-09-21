@@ -25,7 +25,7 @@ public class AndThenConsumeTest extends OperationTest {
 
     @Test
     public void shouldPassThroughErrors() {
-        Throwable cause = new RuntimeException("Yay!");
+        Exception cause = new RuntimeException("Yay!");
 
         verifier().failedWith(cause);
 

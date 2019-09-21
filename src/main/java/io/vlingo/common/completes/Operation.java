@@ -6,7 +6,7 @@ public abstract class Operation<Receives, Exposes> implements Sink<Receives>, So
     private Sink<Exposes> subscriber;
 
     @Override
-    public void onError(Throwable cause) {
+    public void onError(Exception cause) {
         emitError(cause);
     }
 
@@ -21,7 +21,7 @@ public abstract class Operation<Receives, Exposes> implements Sink<Receives>, So
     }
 
     @Override
-    public void emitError(Throwable cause) {
+    public void emitError(Exception cause) {
         subscriber.onError(cause);
     }
 

@@ -16,7 +16,7 @@ public class AndThenConsume<Receives> extends Operation<Receives, Receives> {
         try {
             consumer.accept(receives);
             emitOutcome(receives);
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             emitError(ex);
         }
     }

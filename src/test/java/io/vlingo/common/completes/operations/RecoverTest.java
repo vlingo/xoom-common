@@ -2,7 +2,7 @@ package io.vlingo.common.completes.operations;
 
 import org.junit.Test;
 
-public class OtherwiseTest extends OperationTest {
+public class RecoverTest extends OperationTest {
     @Test
     public void shouldRecoverFromAnError() {
         verifier().outcomeIs(4);
@@ -10,7 +10,7 @@ public class OtherwiseTest extends OperationTest {
         source().emitError(new NullPointerException());
         source().emitCompletion();
 
-        Otherwise<Integer> operation = new Otherwise<>(cause -> 4);
+        Recover<Integer> operation = new Recover<>(cause -> 4);
         operation.subscribe(verifier().asSink());
 
         source().subscribe(operation);
@@ -24,7 +24,7 @@ public class OtherwiseTest extends OperationTest {
         source().emitError(new IllegalArgumentException());
         source().emitCompletion();
 
-        Otherwise<Integer> operation = new Otherwise<>(cause -> { throw new NullPointerException(); });
+        Recover<Integer> operation = new Recover<>(cause -> { throw new NullPointerException(); });
         operation.subscribe(verifier().asSink());
 
         source().subscribe(operation);

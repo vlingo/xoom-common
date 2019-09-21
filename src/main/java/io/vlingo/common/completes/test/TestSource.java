@@ -33,7 +33,7 @@ public class TestSource<Expose> implements Source<Expose> {
     }
 
     @Override
-    public void emitError(Throwable cause) {
+    public void emitError(Exception cause) {
         operations.add(s -> s.onError(cause));
     }
 

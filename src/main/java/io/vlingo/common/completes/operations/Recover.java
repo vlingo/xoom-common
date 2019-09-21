@@ -4,10 +4,10 @@ import io.vlingo.common.completes.Operation;
 
 import java.util.function.Function;
 
-public class Otherwise<Receives> extends Operation<Receives, Receives> {
-    private final Function<Throwable, Receives> recovery;
+public class Recover<Receives> extends Operation<Receives, Receives> {
+    private final Function<Exception, Receives> recovery;
 
-    public Otherwise(Function<Throwable, Receives> recovery) {
+    public Recover(Function<Exception, Receives> recovery) {
         this.recovery = recovery;
     }
 
@@ -17,11 +17,11 @@ public class Otherwise<Receives> extends Operation<Receives, Receives> {
     }
 
     @Override
-    public void onError(Throwable cause) {
+    public void onError(Exception cause) {
         try {
             Receives result = recovery.apply(cause);
             emitOutcome(result);
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             ex.addSuppressed(cause);
             emitError(ex);
         }

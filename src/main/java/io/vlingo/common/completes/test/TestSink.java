@@ -10,9 +10,9 @@ import java.util.stream.Stream;
 
 public class TestSink<Receives> implements Sink<Receives>, SinkVerifier<Receives> {
     private List<Predicate<Receives>> outcomeVerifications;
-    private List<Predicate<Throwable>> errorCausePredicates;
+    private List<Predicate<Exception>> errorCausePredicates;
     private List<Receives> receivedOutcome;
-    private List<Throwable> receivedErrorCause;
+    private List<Exception> receivedErrorCause;
 
     public TestSink() {
         outcomeVerifications = new ArrayList<>();
@@ -28,7 +28,7 @@ public class TestSink<Receives> implements Sink<Receives>, SinkVerifier<Receives
     }
 
     @Override
-    public void onError(Throwable cause) {
+    public void onError(Exception cause) {
         this.receivedErrorCause.add(cause);
     }
 
@@ -61,8 +61,8 @@ public class TestSink<Receives> implements Sink<Receives>, SinkVerifier<Receives
             }
 
             for (int i = 0; i < errorCausePredicates.size(); i++) {
-                Throwable outcome = receivedErrorCause.get(i);
-                Predicate<Throwable> verification = errorCausePredicates.get(i);
+                Exception outcome = receivedErrorCause.get(i);
+                Predicate<Exception> verification = errorCausePredicates.get(i);
 
                 if (!verification.test(outcome)) {
                     throw new AssertionError("Sink received an error but did not fulfill expectations. The received value was:" + outcome);
@@ -84,19 +84,19 @@ public class TestSink<Receives> implements Sink<Receives>, SinkVerifier<Receives
     }
 
     @Override
-    public SinkVerifier<Receives> failedWith(Throwable ex) {
+    public SinkVerifier<Receives> failedWith(Exception ex) {
         errorCausePredicates.add(ex::equals);
         return this;
     }
 
     @Override
-    public SinkVerifier<Receives> failedWith(Class<? extends Throwable> exClass) {
+    public SinkVerifier<Receives> failedWith(Class<? extends Exception> exClass) {
         errorCausePredicates.add(exClass::isInstance);
         return this;
     }
 
     @Override
-    public SinkVerifier<Receives> failedWith(Predicate<Throwable> predicate) {
+    public SinkVerifier<Receives> failedWith(Predicate<Exception> predicate) {
         errorCausePredicates.add(predicate);
         return this;
     }

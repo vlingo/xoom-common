@@ -24,7 +24,7 @@ public class AndThenToSource<Receives, Exposes> extends Operation<Receives, Expo
                 }
 
                 @Override
-                public void onError(Throwable cause) {
+                public void onError(Exception cause) {
                     emitError(cause);
                 }
 
@@ -33,7 +33,7 @@ public class AndThenToSource<Receives, Exposes> extends Operation<Receives, Expo
                     // this completion does not trigger the parent completion
                 }
             });
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             emitError(ex);
         }
     }

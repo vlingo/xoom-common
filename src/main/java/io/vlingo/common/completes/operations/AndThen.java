@@ -16,7 +16,7 @@ public class AndThen<Receives, Exposes> extends Operation<Receives, Exposes> {
         try {
             Exposes outcome = mapper.apply(receives);
             emitOutcome(outcome);
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             emitError(ex);
         }
     }
