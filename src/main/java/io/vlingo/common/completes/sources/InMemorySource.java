@@ -57,6 +57,10 @@ public class InMemorySource<Exposes> implements LazySource<Exposes> {
             throw new UnsupportedOperationException("Source must have a subscriber before being able to activate it.");
         }
 
+        if (this.active) {
+            return;
+        }
+
         this.active = true;
         if (!this.queue.isEmpty()) {
             this.queue.forEach(e -> e.accept(subscriber));

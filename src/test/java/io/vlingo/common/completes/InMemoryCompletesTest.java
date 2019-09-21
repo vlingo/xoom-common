@@ -157,6 +157,21 @@ public class InMemoryCompletesTest {
         assertEquals(5, completed.intValue());
     }
 
+    @Test
+    public void testThatCompletesRepeats() {
+        final Completes<Integer> completes = newEmptyCompletes(Integer.class)
+                .andThen((value) -> value * 2)
+                .andThen((Integer value) -> andThenValue = value)
+                .repeat();
+
+        completes.with(5);
+        assertEquals(10, andThenValue.intValue());
+        completes.with(10);
+        assertEquals(20, andThenValue.intValue());
+        completes.with(20);
+        assertEquals(40, andThenValue.intValue());
+    }
+
     private class Holder {
         private void hold(final Integer value) {
             andThenValue = value;
