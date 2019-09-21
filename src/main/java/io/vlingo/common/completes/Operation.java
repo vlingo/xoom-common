@@ -31,6 +31,11 @@ public abstract class Operation<Receives, Exposes> implements Sink<Receives>, So
     }
 
     @Override
+    public boolean hasBeenCompleted() {
+        return subscriber.hasBeenCompleted();
+    }
+
+    @Override
     public void subscribe(Sink<Exposes> subscriber) {
         if (this.subscriber != null) {
             throw new AlreadySubscribedSinkException();

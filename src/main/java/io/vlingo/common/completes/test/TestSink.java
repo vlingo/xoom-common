@@ -4,15 +4,14 @@ import io.vlingo.common.completes.Sink;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 public class TestSink<Receives> implements Sink<Receives>, SinkVerifier<Receives> {
     private List<Predicate<Receives>> outcomeVerifications;
     private List<Predicate<Exception>> errorCausePredicates;
     private List<Receives> receivedOutcome;
     private List<Exception> receivedErrorCause;
+    private boolean hasBeenCompleted;
 
     public TestSink() {
         outcomeVerifications = new ArrayList<>();
@@ -20,6 +19,7 @@ public class TestSink<Receives> implements Sink<Receives>, SinkVerifier<Receives
 
         receivedOutcome = new ArrayList<>();
         receivedErrorCause = new ArrayList<>();
+        hasBeenCompleted = false;
     }
 
     @Override
@@ -34,6 +34,8 @@ public class TestSink<Receives> implements Sink<Receives>, SinkVerifier<Receives
 
     @Override
     public void onCompletion() {
+        hasBeenCompleted = true;
+
         if (!outcomeVerifications.isEmpty()) {
             if (outcomeVerifications.size() != receivedOutcome.size()) {
                 int numberOfVerifications = outcomeVerifications.size();
@@ -104,5 +106,10 @@ public class TestSink<Receives> implements Sink<Receives>, SinkVerifier<Receives
     @Override
     public Sink<Receives> asSink() {
         return this;
+    }
+
+    @Override
+    public boolean hasBeenCompleted() {
+        return hasBeenCompleted;
     }
 }

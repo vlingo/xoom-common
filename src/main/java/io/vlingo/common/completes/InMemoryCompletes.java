@@ -7,18 +7,23 @@ import io.vlingo.common.completes.operations.Recover;
 import io.vlingo.common.completes.sinks.InMemorySink;
 import io.vlingo.common.completes.sources.InMemorySource;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class InMemoryCompletes<T> implements Completes<T> {
-    private final InMemorySource<?> source;
+    private final InMemorySource<Object> source;
     private final Source<T> currentOperation;
     private final InMemorySink<T> sink;
 
-    private InMemoryCompletes(InMemorySource<?> source, Source<T> currentOperation, InMemorySink<T> sink) {
+    private InMemoryCompletes(InMemorySource<Object> source, Source<T> currentOperation, InMemorySink<T> sink) {
         this.source = source;
         this.sink = sink;
         this.currentOperation = currentOperation;
+    }
+
+    public static boolean isToggleActive() {
+        return Boolean.parseBoolean(System.getProperty("vlingo.InMemoryCompletes", "false"));
     }
 
     @Override
@@ -104,46 +109,71 @@ public class InMemoryCompletes<T> implements Completes<T> {
 
     @Override
     public <O> O await() {
+        try {
+            Optional<T> value = sink.await();
+            if (value.isPresent()) {
+                return (O) value.get();
+            }
+
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+
         return null;
     }
 
     @Override
     public <O> O await(long timeout) {
+        try {
+            Optional<T> value = sink.await(timeout);
+            if (value.isPresent()) {
+                return (O) value.get();
+            }
+
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+
         return null;
     }
 
     @Override
     public boolean isCompleted() {
-        return false;
+        return sink.hasBeenCompleted();
     }
 
     @Override
     public boolean hasFailed() {
-        return false;
+        return sink.hasFailed();
     }
 
     @Override
     public void failed() {
-
+        source.emitError(new IllegalStateException("Forced failure in Completes"));
     }
 
     @Override
     public boolean hasOutcome() {
-        return false;
+        return sink.hasOutcome();
     }
 
     @Override
     public T outcome() {
-        return null;
+        try {
+            return sink.await().get();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override
     public Completes<T> repeat() {
-        return null;
+        return this;
     }
 
     @Override
     public <O> Completes<O> with(O outcome) {
-        return null;
+        source.emitOutcome(outcome);
+        return (Completes<O>) this;
     }
 }

@@ -32,6 +32,11 @@ public class AndThenToSource<Receives, Exposes> extends Operation<Receives, Expo
                 public void onCompletion() {
                     // this completion does not trigger the parent completion
                 }
+
+                @Override
+                public boolean hasBeenCompleted() {
+                    return false;
+                }
             });
         } catch (Exception ex) {
             emitError(ex);
