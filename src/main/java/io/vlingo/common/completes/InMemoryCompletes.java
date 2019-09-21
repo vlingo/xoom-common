@@ -97,7 +97,9 @@ public class InMemoryCompletes<T> implements Completes<T> {
 
     @Override
     public Completes<T> recoverFrom(Function<Exception, T> function) {
-        return null;
+        Operation<T, T> newSource = new Recover<>(function);
+        currentOperation.subscribe(newSource);
+        return new InMemoryCompletes<>(source, newSource, sink);
     }
 
     @Override
