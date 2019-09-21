@@ -1,7 +1,5 @@
 package io.vlingo.common.completes;
 
-import io.vlingo.common.completes.exceptions.AlreadySubscribedSinkException;
-
 public abstract class Operation<Receives, Exposes> implements Sink<Receives>, Source<Exposes> {
     private Sink<Exposes> subscriber;
 
@@ -37,10 +35,6 @@ public abstract class Operation<Receives, Exposes> implements Sink<Receives>, So
 
     @Override
     public void subscribe(Sink<Exposes> subscriber) {
-        if (this.subscriber != null) {
-            throw new AlreadySubscribedSinkException();
-        }
-
         this.subscriber = subscriber;
     }
 }

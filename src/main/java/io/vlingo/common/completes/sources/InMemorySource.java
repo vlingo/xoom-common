@@ -1,5 +1,6 @@
 package io.vlingo.common.completes.sources;
 
+import io.vlingo.common.Completes;
 import io.vlingo.common.completes.LazySource;
 import io.vlingo.common.completes.Sink;
 
@@ -61,5 +62,13 @@ public class InMemorySource<Exposes> implements LazySource<Exposes> {
             this.queue.forEach(e -> e.accept(subscriber));
             this.queue = null;
         }
+    }
+
+    public static <E> InMemorySource<E> fromCompletes(Completes<E> completes) {
+        InMemorySource<E> source = new InMemorySource<>();
+        completes.andThenConsume(source::emitOutcome);
+        completes.andThenConsume(s -> source.emitCompletion());
+
+        return source;
     }
 }

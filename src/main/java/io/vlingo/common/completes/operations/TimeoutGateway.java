@@ -33,11 +33,11 @@ public class TimeoutGateway<Receives> extends Operation<Receives, Receives> impl
     @Override
     public void intervalSignal(Scheduled<Void> scheduled, Void data) {
         emitError(new TimeoutException());
-        emitCompletion();
         didTimeout.set(true);
     }
 
     private void startTimer() {
         this.cancellable = scheduler.scheduleOnce(this, null, 0, timeout);
+        this.didTimeout.set(false);
     }
 }
