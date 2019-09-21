@@ -1,62 +1,49 @@
 package io.vlingo.common.completes.operations;
 
-import io.vlingo.common.completes.test.SinkVerifier;
-import io.vlingo.common.completes.test.TestSink;
-import io.vlingo.common.completes.test.TestSource;
-import org.junit.Before;
 import org.junit.Test;
 
-public class AndThenTest {
-    private SinkVerifier<Integer> verifier;
-    private TestSource<Integer> source;
-
-    @Before
-    public void setUp() {
-        verifier = new TestSink<>();
-        source = new TestSource<>();
-    }
-
+public class AndThenTest extends OperationTest {
     @Test
     public void shouldMapAValueAndExposeTheOutcome() {
-        verifier.outcomeIs(420);
+        verifier().outcomeIs(420);
 
-        source.emitOutcome(42);
-        source.emitCompletion();
+        source().emitOutcome(42);
+        source().emitCompletion();
 
         AndThen<Integer, Integer> operation = new AndThen<>(a -> a * 10);
-        operation.subscribe(verifier.asSink());
+        operation.subscribe(verifier().asSink());
 
-        source.subscribe(operation);
-        source.flush();
+        source().subscribe(operation);
+        source().flush();
     }
 
     @Test
     public void shouldPassThroughErrors() {
         Throwable cause = new RuntimeException("Yay!");
 
-        verifier.failedWith(cause);
+        verifier().failedWith(cause);
 
-        source.emitError(cause);
-        source.emitCompletion();
+        source().emitError(cause);
+        source().emitCompletion();
 
         AndThen<Integer, Integer> operation = new AndThen<>(a -> a * 10);
-        operation.subscribe(verifier.asSink());
+        operation.subscribe(verifier().asSink());
 
-        source.subscribe(operation);
-        source.flush();
+        source().subscribe(operation);
+        source().flush();
     }
 
     @Test
     public void shouldEmitAnErrorIfTheMapperFails() {
-        verifier.failedWith(NullPointerException.class);
+        verifier().failedWith(NullPointerException.class);
 
-        source.emitOutcome(null);
-        source.emitCompletion();
+        source().emitOutcome(null);
+        source().emitCompletion();
 
         AndThen<Integer, Integer> operation = new AndThen<>(a -> a * 10);
-        operation.subscribe(verifier.asSink());
+        operation.subscribe(verifier().asSink());
 
-        source.subscribe(operation);
-        source.flush();
+        source().subscribe(operation);
+        source().flush();
     }
 }
