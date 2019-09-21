@@ -1,0 +1,42 @@
+package io.vlingo.common.completes.test;
+
+import io.vlingo.common.completes.Sink;
+import io.vlingo.common.completes.Source;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
+public class TestSource<Expose> implements Source<Expose> {
+    private final List<Consumer<Sink<Expose>>> operations;
+    private Sink<Expose> subscriber;
+
+    public TestSource() {
+        this.operations = new ArrayList<>();
+    }
+
+    public void flush() {
+        operations.forEach(c -> c.accept(subscriber));
+        operations.clear();
+    }
+
+    @Override
+    public void emitOutcome(Expose outcome) {
+        operations.add(s -> s.onOutcome(outcome));
+    }
+
+    @Override
+    public void emitError(Throwable cause) {
+        operations.add(s -> s.onError(cause));
+    }
+
+    @Override
+    public void emitCompletion() {
+        operations.add(Sink::onCompletion);
+    }
+
+    @Override
+    public void subscribe(Sink<Expose> subscriber) {
+        this.subscriber = subscriber;
+    }
+}
