@@ -83,7 +83,7 @@ public class InMemoryCompletes<T> implements Completes<T> {
         newSource.subscribe(failureGateway);
         failureGateway.subscribe(sink);
 
-        return new InMemoryCompletes<>(scheduler, source, failureGateway, sink);
+        return new InMemoryCompletes<>(scheduler, source, failureGateway, sink).ready();
     }
 
     @Override
@@ -201,11 +201,7 @@ public class InMemoryCompletes<T> implements Completes<T> {
 
     @Override
     public T outcome() {
-        try {
-            return sink.await(DEFAULT_TIMEOUT).get();
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
+        return await();
     }
 
     @Override
