@@ -88,11 +88,11 @@ public interface Completes<T> {
    */
   static <T> Completes<T> withFailure(final T outcome) {
     if (SinkAndSourceBasedCompletes.isToggleActive()) {
-      Completes<T> completes = SinkAndSourceBasedCompletes.withScheduler(new Scheduler())
-              .with(outcome);
+      Completes<T> completes = SinkAndSourceBasedCompletes
+              .withScheduler(new Scheduler());
 
       completes.failed();
-      return completes;
+      return completes.ready();
     }
 
     return new BasicCompletes<T>(outcome, false);
