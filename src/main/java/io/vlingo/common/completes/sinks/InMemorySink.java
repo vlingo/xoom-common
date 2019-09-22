@@ -12,20 +12,19 @@ import io.vlingo.common.Outcome;
 import io.vlingo.common.Success;
 import io.vlingo.common.completes.Sink;
 
-import java.util.ArrayDeque;
 import java.util.Optional;
-import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class InMemorySink<Exposes> implements Sink<Exposes> {
-    private Queue<Outcome<Exception, Exposes>> outcomes;
+    private ConcurrentLinkedQueue<Outcome<Exception, Exposes>> outcomes;
     private AtomicBoolean hasBeenCompleted;
     private CountDownLatch latch;
 
     public InMemorySink() {
-        this.outcomes = new ArrayDeque<>();
+        this.outcomes = new ConcurrentLinkedQueue<>();
         this.hasBeenCompleted = new AtomicBoolean(false);
         this.latch = new CountDownLatch(1);
     }
