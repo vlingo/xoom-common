@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class InMemoryCompletes<T> implements Completes<T> {
+public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     private static final long DEFAULT_TIMEOUT = Long.MAX_VALUE;
 
     private final Scheduler scheduler;
@@ -25,20 +25,20 @@ public class InMemoryCompletes<T> implements Completes<T> {
     private final Source<T> currentOperation;
     private final InMemorySink<T> sink;
 
-    private InMemoryCompletes(Scheduler scheduler, InMemorySource<Object> source, Source<T> currentOperation, InMemorySink<T> sink) {
+    private SinkAndSourceBasedCompletes(Scheduler scheduler, InMemorySource<Object> source, Source<T> currentOperation, InMemorySink<T> sink) {
         this.scheduler = scheduler;
         this.source = source;
         this.sink = sink;
         this.currentOperation = currentOperation;
     }
 
-    public static <T> InMemoryCompletes<T> withScheduler(Scheduler scheduler) {
+    public static <T> SinkAndSourceBasedCompletes<T> withScheduler(Scheduler scheduler) {
         InMemorySource<T> source = new InMemorySource<>();
         InMemorySink<T> sink = new InMemorySink<>();
 
         source.subscribe(sink);
 
-        return new InMemoryCompletes<>(scheduler, (InMemorySource<Object>) source, source, sink);
+        return new SinkAndSourceBasedCompletes<>(scheduler, (InMemorySource<Object>) source, source, sink);
     }
 
     public static boolean isToggleActive() {
@@ -55,7 +55,7 @@ public class InMemoryCompletes<T> implements Completes<T> {
         newSource.subscribe(failureGateway);
         failureGateway.subscribe((InMemorySink<O>) sink);
 
-        return new InMemoryCompletes<>(scheduler, source, failureGateway, (InMemorySink<O>) sink);
+        return new SinkAndSourceBasedCompletes<>(scheduler, source, failureGateway, (InMemorySink<O>) sink);
     }
 
     @Override
@@ -83,7 +83,7 @@ public class InMemoryCompletes<T> implements Completes<T> {
         newSource.subscribe(failureGateway);
         failureGateway.subscribe(sink);
 
-        return new InMemoryCompletes<>(scheduler, source, failureGateway, sink).ready();
+        return new SinkAndSourceBasedCompletes<>(scheduler, source, failureGateway, sink).ready();
     }
 
     @Override
@@ -112,7 +112,7 @@ public class InMemoryCompletes<T> implements Completes<T> {
         newSource.subscribe(failureGateway);
         failureGateway.subscribe((InMemorySink<O>) sink);
 
-        return (O) new InMemoryCompletes<>(scheduler, source, failureGateway, (InMemorySink<O>) sink);
+        return (O) new SinkAndSourceBasedCompletes<>(scheduler, source, failureGateway, (InMemorySink<O>) sink);
     }
 
     @Override
@@ -136,7 +136,7 @@ public class InMemoryCompletes<T> implements Completes<T> {
         currentOperation.subscribe(otherwise);
         otherwise.subscribe(sink);
 
-        return new InMemoryCompletes<>(scheduler, source, otherwise, sink);
+        return new SinkAndSourceBasedCompletes<>(scheduler, source, otherwise, sink);
     }
 
     @Override
@@ -145,7 +145,7 @@ public class InMemoryCompletes<T> implements Completes<T> {
         currentOperation.subscribe(otherwise);
         otherwise.subscribe(sink);
 
-        return new InMemoryCompletes<>(scheduler, source, otherwise, sink);
+        return new SinkAndSourceBasedCompletes<>(scheduler, source, otherwise, sink);
     }
 
     @Override
@@ -154,7 +154,7 @@ public class InMemoryCompletes<T> implements Completes<T> {
         currentOperation.subscribe(newSource);
         newSource.subscribe(sink);
 
-        return new InMemoryCompletes<>(scheduler, source, newSource, sink);
+        return new SinkAndSourceBasedCompletes<>(scheduler, source, newSource, sink);
     }
 
     @Override

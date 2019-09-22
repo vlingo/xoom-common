@@ -7,7 +7,7 @@
 
 package io.vlingo.common;
 
-import io.vlingo.common.completes.InMemoryCompletes;
+import io.vlingo.common.completes.SinkAndSourceBasedCompletes;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -53,8 +53,8 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> using(final Scheduler scheduler) {
-    if (InMemoryCompletes.isToggleActive()) {
-      return InMemoryCompletes.withScheduler(scheduler);
+    if (SinkAndSourceBasedCompletes.isToggleActive()) {
+      return SinkAndSourceBasedCompletes.withScheduler(scheduler);
     }
 
     return new BasicCompletes<T>(scheduler);
@@ -70,8 +70,8 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> withSuccess(final T outcome) {
-    if (InMemoryCompletes.isToggleActive()) {
-      return InMemoryCompletes.withScheduler(new Scheduler()).with(outcome);
+    if (SinkAndSourceBasedCompletes.isToggleActive()) {
+      return SinkAndSourceBasedCompletes.withScheduler(new Scheduler()).with(outcome);
     }
 
     return new BasicCompletes<T>(outcome, true);
@@ -87,8 +87,8 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> withFailure(final T outcome) {
-    if (InMemoryCompletes.isToggleActive()) {
-      Completes<T> completes = InMemoryCompletes.withScheduler(new Scheduler())
+    if (SinkAndSourceBasedCompletes.isToggleActive()) {
+      Completes<T> completes = SinkAndSourceBasedCompletes.withScheduler(new Scheduler())
               .with(outcome);
 
       completes.failed();
@@ -122,8 +122,8 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> repeatableUsing(final Scheduler scheduler) {
-    if (InMemoryCompletes.isToggleActive()) {
-      return InMemoryCompletes.withScheduler(scheduler);
+    if (SinkAndSourceBasedCompletes.isToggleActive()) {
+      return SinkAndSourceBasedCompletes.withScheduler(scheduler);
     }
 
     return new RepeatableCompletes<T>(scheduler);
@@ -141,8 +141,8 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> repeatableWithSuccess(final T outcome) {
-    if (InMemoryCompletes.isToggleActive()) {
-      return InMemoryCompletes.withScheduler(new Scheduler()).with(outcome);
+    if (SinkAndSourceBasedCompletes.isToggleActive()) {
+      return SinkAndSourceBasedCompletes.withScheduler(new Scheduler()).with(outcome);
     }
 
     return new RepeatableCompletes<T>(outcome, true);
@@ -160,8 +160,8 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> repeatableWithFailure(final T outcome) {
-    if (InMemoryCompletes.isToggleActive()) {
-      Completes<T> failure = InMemoryCompletes.withScheduler(new Scheduler()).with(outcome);
+    if (SinkAndSourceBasedCompletes.isToggleActive()) {
+      Completes<T> failure = SinkAndSourceBasedCompletes.withScheduler(new Scheduler()).with(outcome);
       failure.failed();
       return failure;
     }

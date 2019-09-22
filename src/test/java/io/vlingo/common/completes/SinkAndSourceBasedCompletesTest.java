@@ -13,7 +13,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class InMemoryCompletesTest {
+public class SinkAndSourceBasedCompletesTest {
     private Integer andThenValue;
     private Integer failureValue;
 
@@ -189,13 +189,13 @@ public class InMemoryCompletesTest {
     }
 
     private <T> Completes<T> newCompletesWithOutcome(T outcome) {
-        InMemoryCompletes<T> completes = InMemoryCompletes.withScheduler(new Scheduler());
+        SinkAndSourceBasedCompletes<T> completes = SinkAndSourceBasedCompletes.withScheduler(new Scheduler());
         completes.with(outcome);
 
         return completes;
     }
 
     private <T> Completes<T> newEmptyCompletes(Class<T> _class) {
-        return InMemoryCompletes.withScheduler(new Scheduler());
+        return SinkAndSourceBasedCompletes.withScheduler(new Scheduler());
     }
 }
