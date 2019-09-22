@@ -21,7 +21,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     private static final long DEFAULT_TIMEOUT = Long.MAX_VALUE;
 
     private final Scheduler scheduler;
-    private final InMemorySource<Object> source;
+    public final InMemorySource<Object> source;
     private final Source<T> currentOperation;
     private final InMemorySink<T> sink;
 

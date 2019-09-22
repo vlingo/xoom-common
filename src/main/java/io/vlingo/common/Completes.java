@@ -8,6 +8,7 @@
 package io.vlingo.common;
 
 import io.vlingo.common.completes.SinkAndSourceBasedCompletes;
+import io.vlingo.common.completes.exceptions.FailedOperationException;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -92,10 +93,10 @@ public interface Completes<T> {
    */
   static <T> Completes<T> withFailure(final T outcome) {
     if (SinkAndSourceBasedCompletes.isToggleActive()) {
-      Completes<T> completes = SinkAndSourceBasedCompletes
+      SinkAndSourceBasedCompletes<T> completes = SinkAndSourceBasedCompletes
               .withScheduler(new Scheduler());
 
-      completes.failed();
+      completes.source.emitError(new FailedOperationException(outcome));
       return completes;
     }
 
