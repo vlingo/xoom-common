@@ -61,17 +61,7 @@ public class InMemorySink<Exposes> implements Sink<Exposes> {
     }
 
     public Optional<Exposes> await() throws Exception {
-        try {
-            waitUntilOutcomeOrTimeout(Long.MAX_VALUE);
-            Outcome<Exception, Exposes> currentOutcome = outcomes.peek();
-            if (currentOutcome == null) {
-                return Optional.empty();
-            }
-
-            return currentOutcome.asOptional();
-        } catch (InterruptedException e) {
-            return Optional.empty();
-        }
+        return await(Long.MAX_VALUE);
     }
 
     public Optional<Exposes> await(long timeout) throws Exception {
