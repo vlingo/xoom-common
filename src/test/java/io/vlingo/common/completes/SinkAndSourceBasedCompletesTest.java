@@ -19,15 +19,14 @@ public class SinkAndSourceBasedCompletesTest {
 
     @Test
     public void testCompletesWith() {
-        final Completes<Integer> completes = newCompletesWithOutcome(5).ready();
+        final Completes<Integer> completes = newCompletesWithOutcome(5);
         assertEquals(5, completes.outcome().intValue());
     }
 
     @Test
     public void testCompletesAfterFunction() {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class)
-                .andThen((value) -> value * 2)
-                .ready();
+                .andThen((value) -> value * 2);
 
         completes.with(5);
         assertEquals(10, completes.outcome().intValue());
@@ -36,8 +35,7 @@ public class SinkAndSourceBasedCompletesTest {
     @Test
     public void testCompletesAfterConsumer() {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class)
-                .andThen((value) -> andThenValue = value)
-                .ready();
+                .andThen((value) -> andThenValue = value);
 
         completes.with(5);
 
@@ -48,13 +46,12 @@ public class SinkAndSourceBasedCompletesTest {
     public void testCompletesAfterAndThen() {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class)
                 .andThen((value) -> value * 2)
-                .andThen((value) -> andThenValue = value)
-                .ready();
+                .andThen((value) -> andThenValue = value);
 
         completes.with(5);
 
-        assertEquals(10, andThenValue.intValue());
         assertEquals(10, completes.outcome().intValue());
+        assertEquals(10, andThenValue.intValue());
     }
 
     @Test
@@ -108,10 +105,10 @@ public class SinkAndSourceBasedCompletesTest {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class)
                 .andThen(null, (value) -> (Integer) null)
                 .andThen((Integer value) -> andThenValue = value)
-                .otherwiseConsume((failedValue) -> failureValue = 1000)
-                .ready();
+                .otherwiseConsume((failedValue) -> failureValue = 1000);
 
         completes.with(null);
+        completes.await();
 
         assertTrue(completes.hasFailed());
         assertNull(andThenValue);
@@ -171,8 +168,9 @@ public class SinkAndSourceBasedCompletesTest {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class)
                 .andThen((value) -> value * 2)
                 .andThen((Integer value) -> andThenValue = value)
-                .repeat()
-                .ready();
+                .repeat();
+
+        completes.andFinallyConsume(e -> {});
 
         completes.with(5);
         assertEquals(10, andThenValue.intValue());

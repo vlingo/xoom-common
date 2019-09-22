@@ -197,8 +197,8 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   @Override
-  public Completes<T> ready() {
-    return this;
+  public void andFinallyConsume(Consumer<T> consumer) {
+    otherwiseConsume(consumer);
   }
 
   private BasicCompletes(final BasicActiveState<T> parent) {

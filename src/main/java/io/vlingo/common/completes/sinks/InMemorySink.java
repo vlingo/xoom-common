@@ -11,6 +11,7 @@ import io.vlingo.common.Failure;
 import io.vlingo.common.Outcome;
 import io.vlingo.common.Success;
 import io.vlingo.common.completes.Sink;
+import io.vlingo.common.completes.exceptions.FailedOperationException;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -52,7 +53,7 @@ public class InMemorySink<Exposes> implements Sink<Exposes> {
     }
 
     public boolean hasOutcome() {
-        return outcomes.size() > 0 && outcomes.peek().resolve(e -> false, e -> true);
+        return outcomes.size() > 0 && outcomes.peek().resolve(e -> e instanceof FailedOperationException, e -> true);
     }
 
     public boolean hasFailed() {
@@ -71,7 +72,7 @@ public class InMemorySink<Exposes> implements Sink<Exposes> {
                 return Optional.empty();
             }
 
-            return currentOutcome.asOptional();
+            return currentOutcome.resolve(this::unpackFailureValueIfAny, Optional::ofNullable);
         } catch (InterruptedException e) {
             return Optional.empty();
         }
@@ -83,5 +84,11 @@ public class InMemorySink<Exposes> implements Sink<Exposes> {
 
     private void waitUntilOutcomeOrTimeout(long timeout) throws Exception {
         latch.await(timeout, TimeUnit.MILLISECONDS);
+    }
+
+    private Optional<Exposes> unpackFailureValueIfAny(Exception exception) {
+        return (exception instanceof FailedOperationException)
+                ? Optional.ofNullable((Exposes) ((FailedOperationException) exception).failureValue)
+                : Optional.empty();
     }
 }

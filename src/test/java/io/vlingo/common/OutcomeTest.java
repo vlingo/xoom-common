@@ -195,7 +195,10 @@ public class OutcomeTest {
 
     @Test
     public void testThatAFailedOutcomeIsTransformedToAFailedCompletes() {
-        assertTrue(Failure.of(randomException()).asCompletes().hasFailed());
+        Completes<Object> completes = Failure.of(randomException()).asCompletes();
+        completes.await();
+
+        assertTrue(completes.hasFailed());
     }
 
     @Test
