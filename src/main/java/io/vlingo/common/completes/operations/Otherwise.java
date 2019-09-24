@@ -7,10 +7,10 @@
 
 package io.vlingo.common.completes.operations;
 
+import java.util.function.Function;
+
 import io.vlingo.common.completes.Operation;
 import io.vlingo.common.completes.exceptions.FailedOperationException;
-
-import java.util.function.Function;
 
 public class Otherwise<Receives> extends Operation<Receives, Receives> {
     private final Function<Receives, Receives> recoveryFunction;
@@ -25,6 +25,7 @@ public class Otherwise<Receives> extends Operation<Receives, Receives> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onError(Exception cause) {
         if (cause instanceof FailedOperationException) {
             Object failureValue = ((FailedOperationException) cause).failureValue;
