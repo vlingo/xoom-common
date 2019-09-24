@@ -7,10 +7,10 @@
 
 package io.vlingo.common.completes.operations;
 
+import java.util.function.Consumer;
+
 import io.vlingo.common.completes.Operation;
 import io.vlingo.common.completes.exceptions.FailedOperationException;
-
-import java.util.function.Consumer;
 
 public class OtherwiseConsume<Receives> extends Operation<Receives, Receives> {
     private final Consumer<Receives> consumer;
@@ -25,6 +25,7 @@ public class OtherwiseConsume<Receives> extends Operation<Receives, Receives> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onError(Exception cause) {
         if (cause instanceof FailedOperationException) {
             Object failureValue = ((FailedOperationException) cause).failureValue;
