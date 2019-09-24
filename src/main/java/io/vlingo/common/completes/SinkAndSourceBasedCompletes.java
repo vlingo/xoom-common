@@ -7,15 +7,22 @@
 
 package io.vlingo.common.completes;
 
-import io.vlingo.common.Completes;
-import io.vlingo.common.Scheduler;
-import io.vlingo.common.completes.operations.*;
-import io.vlingo.common.completes.sinks.InMemorySink;
-import io.vlingo.common.completes.sources.InMemorySource;
-
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import io.vlingo.common.Completes;
+import io.vlingo.common.Scheduler;
+import io.vlingo.common.completes.operations.AndThen;
+import io.vlingo.common.completes.operations.AndThenConsume;
+import io.vlingo.common.completes.operations.AndThenToSource;
+import io.vlingo.common.completes.operations.FailureGateway;
+import io.vlingo.common.completes.operations.Otherwise;
+import io.vlingo.common.completes.operations.OtherwiseConsume;
+import io.vlingo.common.completes.operations.Recover;
+import io.vlingo.common.completes.operations.TimeoutGateway;
+import io.vlingo.common.completes.sinks.InMemorySink;
+import io.vlingo.common.completes.sources.InMemorySource;
 
 public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     private static final long DEFAULT_TIMEOUT = Long.MAX_VALUE;
@@ -32,6 +39,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
         this.currentOperation = currentOperation;
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> SinkAndSourceBasedCompletes<T> withScheduler(Scheduler scheduler) {
         InMemorySource<T> source = new InMemorySource<>();
         InMemorySink<T> sink = new InMemorySink<>();
@@ -46,6 +54,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <O> SinkAndSourceBasedCompletes<O> andThen(long timeout, O failedOutcomeValue, Function<T, O> function) {
         FailureGateway<O> failureGateway = new FailureGateway<>(failedOutcomeValue);
         TimeoutGateway<T> timeoutGateway = new TimeoutGateway<>(scheduler, timeout);
@@ -102,6 +111,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <F, O> O andThenTo(long timeout, F failedOutcomeValue, Function<T, O> function) {
         FailureGateway<O> failureGateway = new FailureGateway<>((O) failedOutcomeValue);
         TimeoutGateway<T> timeoutGateway = new TimeoutGateway<>(scheduler, timeout);
@@ -163,6 +173,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <O> O await(long timeout) {
         source.activate();
 
@@ -217,6 +228,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <O> SinkAndSourceBasedCompletes<O> with(O outcome) {
         source.emitOutcome(outcome);
         return (SinkAndSourceBasedCompletes<O>) this;
