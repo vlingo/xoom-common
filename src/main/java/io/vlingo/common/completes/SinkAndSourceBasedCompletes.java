@@ -21,7 +21,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     private static final long DEFAULT_TIMEOUT = Long.MAX_VALUE;
 
     private final Scheduler scheduler;
-    private final InMemorySource<Object> source;
+    public final InMemorySource<Object> source;
     private final Source<T> currentOperation;
     private final InMemorySink<T> sink;
 
@@ -46,7 +46,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
-    public <O> Completes<O> andThen(long timeout, O failedOutcomeValue, Function<T, O> function) {
+    public <O> SinkAndSourceBasedCompletes<O> andThen(long timeout, O failedOutcomeValue, Function<T, O> function) {
         FailureGateway<O> failureGateway = new FailureGateway<>(failedOutcomeValue);
         TimeoutGateway<T> timeoutGateway = new TimeoutGateway<>(scheduler, timeout);
         Operation<T, O> newSource = new AndThen<>(function);
@@ -59,22 +59,22 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
-    public <O> Completes<O> andThen(O failedOutcomeValue, Function<T, O> function) {
+    public <O> SinkAndSourceBasedCompletes<O> andThen(O failedOutcomeValue, Function<T, O> function) {
         return andThen(DEFAULT_TIMEOUT, failedOutcomeValue, function);
     }
 
     @Override
-    public <O> Completes<O> andThen(long timeout, Function<T, O> function) {
+    public <O> SinkAndSourceBasedCompletes<O> andThen(long timeout, Function<T, O> function) {
         return andThen(timeout, null, function);
     }
 
     @Override
-    public <O> Completes<O> andThen(Function<T, O> function) {
+    public <O> SinkAndSourceBasedCompletes<O> andThen(Function<T, O> function) {
         return andThen(DEFAULT_TIMEOUT, null, function);
     }
 
     @Override
-    public Completes<T> andThenConsume(long timeout, T failedOutcomeValue, Consumer<T> consumer) {
+    public SinkAndSourceBasedCompletes<T> andThenConsume(long timeout, T failedOutcomeValue, Consumer<T> consumer) {
         FailureGateway<T> failureGateway = new FailureGateway<>(failedOutcomeValue);
         TimeoutGateway<T> timeoutGateway = new TimeoutGateway<>(scheduler, timeout);
         Operation<T, T> newSource = new AndThenConsume<>(consumer);
@@ -83,21 +83,21 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
         newSource.subscribe(failureGateway);
         failureGateway.subscribe(sink);
 
-        return new SinkAndSourceBasedCompletes<>(scheduler, source, failureGateway, sink).ready();
+        return new SinkAndSourceBasedCompletes<>(scheduler, source, failureGateway, sink);
     }
 
     @Override
-    public Completes<T> andThenConsume(T failedOutcomeValue, Consumer<T> consumer) {
+    public SinkAndSourceBasedCompletes<T> andThenConsume(T failedOutcomeValue, Consumer<T> consumer) {
         return andThenConsume(DEFAULT_TIMEOUT, failedOutcomeValue, consumer);
     }
 
     @Override
-    public Completes<T> andThenConsume(long timeout, Consumer<T> consumer) {
+    public SinkAndSourceBasedCompletes<T> andThenConsume(long timeout, Consumer<T> consumer) {
         return andThenConsume(timeout, null, consumer);
     }
 
     @Override
-    public Completes<T> andThenConsume(Consumer<T> consumer) {
+    public SinkAndSourceBasedCompletes<T> andThenConsume(Consumer<T> consumer) {
         return andThenConsume(DEFAULT_TIMEOUT, null, consumer);
     }
 
@@ -105,7 +105,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     public <F, O> O andThenTo(long timeout, F failedOutcomeValue, Function<T, O> function) {
         FailureGateway<O> failureGateway = new FailureGateway<>((O) failedOutcomeValue);
         TimeoutGateway<T> timeoutGateway = new TimeoutGateway<>(scheduler, timeout);
-        Operation<T, O> newSource = new AndThenToSource<>(function.andThen(e -> (Completes<O>) e).andThen(InMemorySource::fromCompletes));
+        Operation<T, O> newSource = new AndThenToSource<>(function.andThen(e -> (SinkAndSourceBasedCompletes<O>) e).andThen(InMemorySource::fromCompletes));
 
         currentOperation.subscribe(timeoutGateway);
         timeoutGateway.subscribe(newSource);
@@ -131,7 +131,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
-    public Completes<T> otherwise(Function<T, T> function) {
+    public SinkAndSourceBasedCompletes<T> otherwise(Function<T, T> function) {
         Operation<T, T> otherwise = new Otherwise<>(function);
         currentOperation.subscribe(otherwise);
         otherwise.subscribe(sink);
@@ -140,7 +140,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
-    public Completes<T> otherwiseConsume(Consumer<T> consumer) {
+    public SinkAndSourceBasedCompletes<T> otherwiseConsume(Consumer<T> consumer) {
         Operation<T, T> otherwise = new OtherwiseConsume<>(consumer);
         currentOperation.subscribe(otherwise);
         otherwise.subscribe(sink);
@@ -149,7 +149,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
-    public Completes<T> recoverFrom(Function<Exception, T> function) {
+    public SinkAndSourceBasedCompletes<T> recoverFrom(Function<Exception, T> function) {
         Operation<T, T> newSource = new Recover<>(function);
         currentOperation.subscribe(newSource);
         newSource.subscribe(sink);
@@ -211,14 +211,14 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
-    public Completes<T> ready() {
-        source.activate();
-        return this;
+    public void andFinallyConsume(Consumer<T> consumer) {
+        SinkAndSourceBasedCompletes<T> edge = andThenConsume(consumer);
+        edge.source.activate();
     }
 
     @Override
-    public <O> Completes<O> with(O outcome) {
+    public <O> SinkAndSourceBasedCompletes<O> with(O outcome) {
         source.emitOutcome(outcome);
-        return (Completes<O>) this;
+        return (SinkAndSourceBasedCompletes<O>) this;
     }
 }

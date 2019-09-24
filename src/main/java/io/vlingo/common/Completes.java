@@ -8,6 +8,7 @@
 package io.vlingo.common;
 
 import io.vlingo.common.completes.SinkAndSourceBasedCompletes;
+import io.vlingo.common.completes.exceptions.FailedOperationException;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -41,6 +42,10 @@ import java.util.function.Function;
  * instance, making it possible for the registered {@code Function<T,O>} to send an asynchronous
  * message to an actor with without damaging the parent {@code Completes<T>}. Using {@code andThen()}
  * to send an asynchronous message to an actor will have undefined results.
+ *
+ * Note that the {@code Completes<T>} doesn't necessarily need to be executed when there is an outcome
+ * if there is no subscription to it. Deciding when to run is implementation dependent, and is encouraged
+ * to subscribe to the {@code Completes<T>} using the {@code andFinallyConsume} method.
  *
  * @param <T> the type that is expected as the outcome (return value)
  */
@@ -88,11 +93,11 @@ public interface Completes<T> {
    */
   static <T> Completes<T> withFailure(final T outcome) {
     if (SinkAndSourceBasedCompletes.isToggleActive()) {
-      Completes<T> completes = SinkAndSourceBasedCompletes
+      SinkAndSourceBasedCompletes<T> completes = SinkAndSourceBasedCompletes
               .withScheduler(new Scheduler());
 
-      completes.failed();
-      return completes.ready();
+      completes.source.emitError(new FailedOperationException(outcome));
+      return completes;
     }
 
     return new BasicCompletes<T>(outcome, false);
@@ -386,6 +391,12 @@ public interface Completes<T> {
   Completes<T> recoverFrom(final Function<Exception,T> function);
 
   /**
+   * Subscribes to the current {@code Completes<T>} and runs if the outcome is successful.
+   * @param consumer the {@code Consumer<T>} that will receive the successful value, if any.
+   */
+  void andFinallyConsume(final Consumer<T> consumer);
+
+  /**
    * Answer the {@code O} outcome after blocking indefinitely for completion.
    * @param <O> the O type of outcome
    * @return O
@@ -439,13 +450,6 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   Completes<T> repeat();
-
-  /**
-   * Answer myself after I am ready to process all outcomes.
-   *
-   * @return {@code Completes<T>}
-   */
-  Completes<T> ready();
 
   /**
    * Answer myself after setting my {@code outcome}. This should normally be used only
