@@ -8,6 +8,8 @@
 package io.vlingo.common.completes.exceptions;
 
 public class FailedOperationException extends Exception {
+    private static final long serialVersionUID = 3012801263219711L;
+
     public final Object failureValue;
 
     public FailedOperationException(Object failureValue) {
