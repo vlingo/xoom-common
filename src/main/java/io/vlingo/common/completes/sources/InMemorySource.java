@@ -7,28 +7,28 @@
 
 package io.vlingo.common.completes.sources;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+
 import io.vlingo.common.Completes;
 import io.vlingo.common.completes.LazySource;
 import io.vlingo.common.completes.Sink;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-
 public class InMemorySource<Exposes> implements LazySource<Exposes> {
-    private List<Consumer<Sink<Exposes>>> queue;
+    private ConcurrentLinkedQueue<Consumer<Sink<Exposes>>> queue;
     private Sink<Exposes> subscriber;
-    private boolean active;
+    private AtomicBoolean active;
 
     public InMemorySource() {
-        this.queue = new ArrayList<>();
+        this.queue = new ConcurrentLinkedQueue<>();
         this.subscriber = null;
-        this.active = false;
+        this.active = new AtomicBoolean(false);
     }
 
     @Override
     public void emitOutcome(Exposes outcome) {
-        if (active) {
+        if (active.get()) {
             this.subscriber.onOutcome(outcome);
         } else {
             this.queue.add(e -> e.onOutcome(outcome));
@@ -37,7 +37,7 @@ public class InMemorySource<Exposes> implements LazySource<Exposes> {
 
     @Override
     public void emitError(Exception cause) {
-        if (active) {
+        if (active.get()) {
             this.subscriber.onError(cause);
         } else {
             this.queue.add(e -> e.onError(cause));
@@ -46,7 +46,7 @@ public class InMemorySource<Exposes> implements LazySource<Exposes> {
 
     @Override
     public void emitCompletion() {
-        if (active) {
+        if (active.get()) {
             this.subscriber.onCompletion();
         } else {
             this.queue.add(Sink::onCompletion);
@@ -64,11 +64,11 @@ public class InMemorySource<Exposes> implements LazySource<Exposes> {
             throw new UnsupportedOperationException("Source must have a subscriber before being able to activate it.");
         }
 
-        if (this.active) {
+        if (this.active.get()) {
             return;
         }
 
-        this.active = true;
+        this.active.set(true);
         if (!this.queue.isEmpty()) {
             this.queue.forEach(e -> e.accept(subscriber));
             this.queue = null;
