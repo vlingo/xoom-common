@@ -7,11 +7,14 @@
 
 package io.vlingo.common.completes;
 
-import io.vlingo.common.Completes;
-import io.vlingo.common.Scheduler;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import io.vlingo.common.Completes;
+import io.vlingo.common.Scheduler;
 
 public class SinkAndSourceBasedCompletesTest {
     private Integer andThenValue;
@@ -26,7 +29,7 @@ public class SinkAndSourceBasedCompletesTest {
     @Test
     public void testCompletesAfterFunction() {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class)
-                .andThen((value) -> value * 2);
+                .andFinally((value) -> value * 2);
 
         completes.with(5);
         assertEquals(10, completes.outcome().intValue());
@@ -35,7 +38,8 @@ public class SinkAndSourceBasedCompletesTest {
     @Test
     public void testCompletesAfterConsumer() {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class)
-                .andThen((value) -> andThenValue = value);
+                .andThen((value) -> andThenValue = value)
+                .andFinally();
 
         completes.with(5);
 
@@ -46,7 +50,7 @@ public class SinkAndSourceBasedCompletesTest {
     public void testCompletesAfterAndThen() {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class)
                 .andThen((value) -> value * 2)
-                .andThen((value) -> andThenValue = value);
+                .andFinally((value) -> andThenValue = value);
 
         completes.with(5);
 
@@ -62,7 +66,7 @@ public class SinkAndSourceBasedCompletesTest {
 
         completes
                 .andThen((value) -> value * 2)
-                .andThen((value) -> {
+                .andFinally((value) -> {
                     holder.hold(value);
                     return value;
                 });
@@ -77,7 +81,7 @@ public class SinkAndSourceBasedCompletesTest {
     public void testOutcomeBeforeTimeout() {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class)
                 .andThen(1000, (value) -> value * 2)
-                .andThen((value) -> andThenValue = value);
+                .andFinally((value) -> andThenValue = value);
 
         completes.with(5);
         completes.await(10);
@@ -89,7 +93,7 @@ public class SinkAndSourceBasedCompletesTest {
     public void testTimeoutBeforeOutcome() throws Exception {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class)
                 .andThen(1, 0, (value) -> value * 2)
-                .andThen((value) -> andThenValue = value);
+                .andFinally((value) -> andThenValue = value);
 
         Thread.sleep(100);
 
@@ -104,8 +108,8 @@ public class SinkAndSourceBasedCompletesTest {
     public void testThatFailureOutcomeFails() {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class)
                 .andThen(null, (value) -> (Integer) null)
-                .andThen((Integer value) -> andThenValue = value)
-                .otherwiseConsume((failedValue) -> failureValue = 1000);
+                .otherwiseConsume((failedValue) -> failureValue = 1000)
+                .andFinally((Integer value) -> andThenValue = value);
 
         completes.with(null);
         completes.await();
@@ -120,7 +124,7 @@ public class SinkAndSourceBasedCompletesTest {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class)
                 .andThen(null, (value) -> value * 2)
                 .andThenConsume((Integer value) -> {
-                    throw new IllegalStateException("" + (value * 2));
+                  throw new IllegalStateException("" + (value * 2));
                 })
                 .recoverFrom((e) -> {
                     failureValue = Integer.parseInt(e.getMessage());
