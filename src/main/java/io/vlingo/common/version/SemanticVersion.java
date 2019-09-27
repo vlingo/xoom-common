@@ -97,6 +97,10 @@ public class SemanticVersion {
     return false;
   }
 
+  public boolean isNonZero() {
+    return !(major == 0 && minor == 0 && patch == 0);
+  }
+
   public SemanticVersion withIncrementedMajor() {
     return new SemanticVersion(major + 1, minor, patch);
   }
