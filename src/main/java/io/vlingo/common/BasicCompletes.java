@@ -197,7 +197,18 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   @Override
-  public void andFinallyConsume(Consumer<T> consumer) {
+  @SuppressWarnings("unchecked")
+  public <O> Completes<O> andFinally() {
+    return andFinally(value -> (O) value);
+  }
+
+  @Override
+  public <O> Completes<O> andFinally(final Function<T,O> function) {
+    return andThen(function);
+  }
+
+  @Override
+  public void andFinallyConsume(final Consumer<T> consumer) {
     andThenConsume(consumer);
   }
 
