@@ -7,11 +7,11 @@
 
 package io.vlingo.common;
 
-import io.vlingo.common.completes.SinkAndSourceBasedCompletes;
-import io.vlingo.common.completes.exceptions.FailedOperationException;
-
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import io.vlingo.common.completes.SinkAndSourceBasedCompletes;
+import io.vlingo.common.completes.exceptions.FailedOperationException;
 
 /**
  * {@code Completes<T>} models the eventual completion of an asynchronous operation
@@ -391,7 +391,36 @@ public interface Completes<T> {
   Completes<T> recoverFrom(final Function<Exception,T> function);
 
   /**
+   * Answer the {@code O} outcome as the final implicit function in a pipeline.
    * Subscribes to the current {@code Completes<T>} and runs if the outcome is successful.
+   * <p>
+   * Note that you must have either {@code andFinally()} or {@code andFinallyConsume()} as
+   * a terminator for your pipeline, or the {@code Completes<T>} will never run.
+   *
+   * @param <O> the O type of outcome from the function
+   * @return {@code Completes<O>}
+   */
+  <O> Completes<O> andFinally();
+
+  /**
+   * Answer the {@code O} outcome as the final function in a pipeline.
+   * Subscribes to the current {@code Completes<T>} and runs if the outcome is successful.
+   * <p>
+   * Note that you must have either {@code andFinally()} or {@code andFinallyConsume()} as
+   * a terminator for your pipeline, or the {@code Completes<T>} will never run.
+   *
+   * @param function the {@code Function<T,O>} that will receive the successful value, if any.
+   * @param <O> the O type of outcome from the function
+   * @return {@code Completes<O>}
+   */
+  <O> Completes<O> andFinally(final Function<T,O> function);
+
+  /**
+   * Subscribes to the current {@code Completes<T>} and runs if the outcome is successful.
+   * <p>
+   * Note that you must have either {@code andFinally()} or {@code andFinallyConsume()} as
+   * a terminator for your pipeline, or the {@code Completes<T>} will never run.
+   *
    * @param consumer the {@code Consumer<T>} that will receive the successful value, if any.
    */
   void andFinallyConsume(final Consumer<T> consumer);
