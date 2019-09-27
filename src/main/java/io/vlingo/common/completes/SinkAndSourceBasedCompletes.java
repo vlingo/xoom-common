@@ -222,6 +222,19 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public <O> SinkAndSourceBasedCompletes<O> andFinally() {
+      return andFinally(value -> (O) value);
+    }
+
+    @Override
+    public <O> SinkAndSourceBasedCompletes<O> andFinally(final Function<T,O> function) {
+        final SinkAndSourceBasedCompletes<O> edge = andThen(function);
+        edge.source.activate();
+        return edge;
+    }
+
+    @Override
     public void andFinallyConsume(Consumer<T> consumer) {
         SinkAndSourceBasedCompletes<T> edge = andThenConsume(consumer);
         edge.source.activate();
