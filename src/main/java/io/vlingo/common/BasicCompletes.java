@@ -536,6 +536,10 @@ public class BasicCompletes<T> implements Completes<T> {
     @Override
     @SuppressWarnings("unchecked")
     public <F> void failedValue(final F failedOutcomeValue) {
+      final T failureValue = this.failedOutcomeValue.get();
+      if (failedOutcomeValue == null && failureValue != null && failureValue != UnfailedValue) {
+        return;
+      }
       this.failedOutcomeValue.set((T) failedOutcomeValue);
     }
 
