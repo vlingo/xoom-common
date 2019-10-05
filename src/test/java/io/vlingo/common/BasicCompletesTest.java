@@ -131,6 +131,25 @@ public class BasicCompletesTest {
   }
 
   @Test
+  public void testThatNonNullFailureOutcomeFails() {
+    final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
+
+    completes
+            .andThen(new Integer(-100), (value) -> 2 * value)
+            .andThen((x) -> andThenValue = x)
+            .otherwise((x) -> failureValue = 1000);
+
+    completes.with(-100);
+
+    final Integer completed = completes.await();
+
+    assertTrue(completes.hasFailed());
+    assertEquals(new Integer(1000), completed);
+    assertEquals(null, andThenValue);
+    assertEquals(new Integer(1000), failureValue);
+  }
+
+  @Test
   public void testThatExceptionOutcomeFails() {
     final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
 
