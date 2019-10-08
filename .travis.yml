@@ -6,7 +6,7 @@ deploy:
   provider: bintray
   file: bintray.json
   skip_cleanup: true
-  user: d-led
+  user: vaughnvernon
   on:
     branch: master
   key:
