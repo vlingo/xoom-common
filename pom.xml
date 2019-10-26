@@ -95,6 +95,21 @@
       <artifactId>java-uuid-generator</artifactId>
       <version>3.1.5</version>
     </dependency>
+    <dependency>
+      <groupId>com.lambdaworks</groupId>
+      <artifactId>scrypt</artifactId>
+      <version>1.4.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mindrot</groupId>
+      <artifactId>jbcrypt</artifactId>
+      <version>0.4</version>
+    </dependency>
+    <dependency>
+      <groupId>de.mkammerer</groupId>
+      <artifactId>argon2-jvm</artifactId>
+      <version>2.4</version>
+    </dependency>
   </dependencies>
   <distributionManagement>
     <repository>
