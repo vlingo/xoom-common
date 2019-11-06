@@ -33,7 +33,6 @@ public class ElasticResourcePool<Resource, Arguments> extends AbstractResourcePo
   private final AtomicInteger idle = new AtomicInteger(0);
   private final AtomicInteger allocations = new AtomicInteger(0);
   private final AtomicInteger evictions = new AtomicInteger(0);
-  private final AtomicInteger misses = new AtomicInteger(0);
 
   private final ConcurrentLinkedQueue<Resource> cache = new ConcurrentLinkedQueue<>();
 
@@ -86,7 +85,6 @@ public class ElasticResourcePool<Resource, Arguments> extends AbstractResourcePo
     Resource resource = cache.poll();
     if (resource == null) {
       allocations.incrementAndGet();
-      misses.incrementAndGet();
       resource = factory.create(arguments);
     } else {
       idle.decrementAndGet();
@@ -148,7 +146,7 @@ public class ElasticResourcePool<Resource, Arguments> extends AbstractResourcePo
   @Override
   public ResourcePoolStats stats() {
     return new ResourcePoolStats(
-        allocations.get(), evictions.get(), idle.get(), misses.get());
+        allocations.get(), evictions.get(), idle.get());
   }
 
   /**
