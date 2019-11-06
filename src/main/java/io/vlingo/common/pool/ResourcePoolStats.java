@@ -35,11 +35,6 @@ public final class ResourcePoolStats {
   public final int inUse;
 
   /**
-   * number of failures to acquire a resource from the pool
-   */
-  public final int misses;
-
-  /**
    * The idle to inUse ratio
    */
   public final float idleToInUse;
@@ -48,14 +43,12 @@ public final class ResourcePoolStats {
    * @param allocations number of resource allocations
    * @param evictions   number of evicted resources
    * @param idle        number of idle resources
-   * @param misses      number of failures to acquire a resource from the pool
    */
-  public ResourcePoolStats(int allocations, int evictions, int idle, int misses) {
+  public ResourcePoolStats(int allocations, int evictions, int idle) {
     this.allocations = allocations;
     this.evictions = evictions;
     this.idle = idle;
     this.inUse = allocations - evictions - idle;
-    this.misses = misses;
     this.idleToInUse = (float) idle / Math.max(1, inUse);
   }
 
@@ -66,18 +59,17 @@ public final class ResourcePoolStats {
     ResourcePoolStats that = (ResourcePoolStats) o;
     return allocations == that.allocations &&
         evictions == that.evictions &&
-        idle == that.idle &&
-        misses == that.misses;
+        idle == that.idle;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(allocations, evictions, idle, misses);
+    return Objects.hash(allocations, evictions, idle);
   }
 
   @Override
   public String toString() {
-    return String.format("ResourcePoolStats(allocations: %d, evictions: %d, idle: %d, misses: %d, inUse: %d, idleToInUse: %f)",
-        allocations, evictions, idle, misses, inUse, idleToInUse);
+    return String.format("ResourcePoolStats(allocations: %d, evictions: %d, idle: %d, inUse: %d, idleToInUse: %f)",
+        allocations, evictions, idle, inUse, idleToInUse);
   }
 }
