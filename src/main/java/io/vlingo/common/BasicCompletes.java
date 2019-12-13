@@ -607,6 +607,8 @@ public class BasicCompletes<T> implements Completes<T> {
       } else if (parent != null) {
         // bubble up
         parent.handleException(e);
+      } else {
+        throw new RuntimeException("Following exception doesn't have appropriate exceptionAction specified!", e);
       }
     }
 
