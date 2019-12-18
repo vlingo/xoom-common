@@ -22,7 +22,7 @@ public class InMemorySource<Exposes> implements LazySource<Exposes> {
     private AtomicBoolean active;
 
     public InMemorySource() {
-        this.queue = new ArrayDeque<>(1);
+        this.queue = new ArrayDeque<>();
         this.subscriber = null;
         this.active = new AtomicBoolean(false);
     }
@@ -65,13 +65,10 @@ public class InMemorySource<Exposes> implements LazySource<Exposes> {
             throw new UnsupportedOperationException("Source must have a subscriber before being able to activate it.");
         }
 
-        while (true) {
-            if (this.active.compareAndSet(false, true)) {
-                if (!this.queue.isEmpty()) {
-                    this.queue.forEach(e -> e.accept(subscriber));
-                    this.queue = null;
-                }
-                break;
+        if (this.active.compareAndSet(false, true)) {
+            if (!this.queue.isEmpty()) {
+                this.queue.forEach(e -> e.accept(subscriber));
+                this.queue = null;
             }
         }
 

@@ -223,14 +223,14 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     @Override
     public <O> SinkAndSourceBasedCompletes<O> andFinally(final Function<T,O> function) {
         final SinkAndSourceBasedCompletes<O> edge = andThen(function);
-        edge.source.activate();
+        source.activate();
         return edge;
     }
 
     @Override
     public void andFinallyConsume(Consumer<T> consumer) {
-        SinkAndSourceBasedCompletes<T> edge = andThenConsume(consumer);
-        edge.source.activate();
+        andThenConsume(consumer);
+        source.activate();
     }
 
     @Override

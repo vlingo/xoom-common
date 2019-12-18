@@ -12,8 +12,8 @@ import io.vlingo.common.Scheduler;
 import org.junit.Test;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -65,12 +65,10 @@ public class SinkAndSourceBasedCompletesTest {
     public void testCompletesAfterAndThenMessageOut() {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class);
 
-        final Holder holder = new Holder();
-
         completes
                 .andThen((value) -> value * 2)
                 .andFinally((value) -> {
-                    holder.hold(value);
+                    andThenValue = value;
                     return value;
                 });
 
@@ -189,19 +187,18 @@ public class SinkAndSourceBasedCompletesTest {
     }
 
     @Test
-    public void testOnClientAndServerSetup() throws InterruptedException {
-        ConcurrentLinkedQueue<Integer> ints = new ConcurrentLinkedQueue<>();
-        Completes<Integer> completeInteger = newEmptyCompletes(Integer.class);
+    public void testOnClientAndServerSetupWhenClientIsFaster() throws InterruptedException {
+        List<Integer> ints = new LinkedList<>();
         List<Integer> expected = IntStream.range(0, 10000).boxed().collect(Collectors.toList());
+        Completes<Object> completeInteger = newEmptyCompletes(Integer.class)
+            .andThenConsume(ints::add)
+            .andFinally()
+            .repeat();
 
         Thread server = new Thread(() -> expected.forEach(completeInteger::with));
-        Thread client = new Thread(() -> completeInteger.andFinally(ints::add).repeat());
 
         server.start();
-        client.start();
-
         server.join();
-        client.join();
 
         HashSet<Integer> intHashSet = new HashSet<>(ints);
         HashSet<Integer> expectedHashSet = new HashSet<>(expected);
@@ -210,10 +207,29 @@ public class SinkAndSourceBasedCompletesTest {
         assertEquals("Completes was: " + completeInteger.toString() + " | HashSet was: " + expectedHashSet.toString(), 0, expectedHashSet.size());
     }
 
-    private class Holder {
-        private void hold(final Integer value) {
-            andThenValue = value;
-        }
+    @Test
+    public void testOnClientAndServerSetupWhenServerIsFaster() throws InterruptedException {
+        List<Integer> ints = new LinkedList<>();
+        List<Integer> expected = IntStream.range(0, 10000).boxed().collect(Collectors.toList());
+        Completes<Integer> completeInteger = newEmptyCompletes(Integer.class);
+
+        Thread server = new Thread(() -> expected.forEach(completeInteger::with));
+        Thread client = new Thread(() -> completeInteger
+                .andThenConsume(ints::add)
+                .andFinally()
+                .repeat());
+
+        server.start();
+        Thread.sleep(10);
+        client.start();
+        server.join();
+        client.join();
+
+        HashSet<Integer> intHashSet = new HashSet<>(ints);
+        HashSet<Integer> expectedHashSet = new HashSet<>(expected);
+
+        expectedHashSet.removeAll(intHashSet);
+        assertEquals("Completes was: " + completeInteger.toString() + " | HashSet was: " + expectedHashSet.toString(), 0, expectedHashSet.size());
     }
 
     private <T> Completes<T> newCompletesWithOutcome(T outcome) {
