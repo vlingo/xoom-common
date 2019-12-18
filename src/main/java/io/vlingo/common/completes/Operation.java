@@ -44,4 +44,9 @@ public abstract class Operation<Receives, Exposes> implements Sink<Receives>, So
     public void subscribe(Sink<Exposes> subscriber) {
         this.subscriber = subscriber;
     }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName();
+    }
 }

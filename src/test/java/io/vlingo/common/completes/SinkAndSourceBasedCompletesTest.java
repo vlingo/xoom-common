@@ -7,14 +7,17 @@
 
 package io.vlingo.common.completes;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
-
 import io.vlingo.common.Completes;
 import io.vlingo.common.Scheduler;
+import org.junit.Test;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static org.junit.Assert.*;
 
 public class SinkAndSourceBasedCompletesTest {
     private Integer andThenValue;
@@ -174,7 +177,8 @@ public class SinkAndSourceBasedCompletesTest {
                 .andThen((Integer value) -> andThenValue = value)
                 .repeat();
 
-        completes.andFinallyConsume(e -> {});
+        completes.andFinallyConsume(e -> {
+        });
 
         completes.with(5);
         assertEquals(10, andThenValue.intValue());
@@ -182,6 +186,28 @@ public class SinkAndSourceBasedCompletesTest {
         assertEquals(20, andThenValue.intValue());
         completes.with(20);
         assertEquals(40, andThenValue.intValue());
+    }
+
+    @Test
+    public void testOnClientAndServerSetup() throws InterruptedException {
+        ConcurrentLinkedQueue<Integer> ints = new ConcurrentLinkedQueue<>();
+        Completes<Integer> completeInteger = newEmptyCompletes(Integer.class);
+        List<Integer> expected = IntStream.range(0, 10000).boxed().collect(Collectors.toList());
+
+        Thread server = new Thread(() -> expected.forEach(completeInteger::with));
+        Thread client = new Thread(() -> completeInteger.andFinally(ints::add).repeat());
+
+        server.start();
+        client.start();
+
+        server.join();
+        client.join();
+
+        HashSet<Integer> intHashSet = new HashSet<>(ints);
+        HashSet<Integer> expectedHashSet = new HashSet<>(expected);
+
+        expectedHashSet.removeAll(intHashSet);
+        assertEquals("Completes was: " + completeInteger.toString() + " | HashSet was: " + expectedHashSet.toString(), 0, expectedHashSet.size());
     }
 
     private class Holder {

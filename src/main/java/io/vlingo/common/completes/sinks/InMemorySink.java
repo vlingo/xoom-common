@@ -7,17 +7,17 @@
 
 package io.vlingo.common.completes.sinks;
 
-import java.util.Optional;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import io.vlingo.common.Failure;
 import io.vlingo.common.Outcome;
 import io.vlingo.common.Success;
 import io.vlingo.common.completes.Sink;
 import io.vlingo.common.completes.exceptions.FailedOperationException;
+
+import java.util.Optional;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class InMemorySink<Exposes> implements Sink<Exposes> {
     private ConcurrentLinkedQueue<Outcome<Exception, Exposes>> outcomes;
@@ -91,5 +91,14 @@ public class InMemorySink<Exposes> implements Sink<Exposes> {
         return (exception instanceof FailedOperationException)
                 ? Optional.ofNullable((Exposes) ((FailedOperationException) exception).failureValue)
                 : Optional.empty();
+    }
+
+    @Override
+    public String toString() {
+        return "InMemorySink{" +
+                "outcomes=" + outcomes +
+                ", hasBeenCompleted=" + hasBeenCompleted +
+                ", latch=" + latch +
+                '}';
     }
 }
