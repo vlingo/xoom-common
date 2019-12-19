@@ -7,6 +7,8 @@
 
 package io.vlingo.common.completes;
 
+import java.util.Optional;
+
 public abstract class Operation<Receives, Exposes> implements Sink<Receives>, Source<Exposes> {
     private Sink<Exposes> subscriber;
 
@@ -48,6 +50,26 @@ public abstract class Operation<Receives, Exposes> implements Sink<Receives>, So
     @Override
     public void activate() {
 
+    }
+
+    @Override
+    public Optional<Receives> await(long timeout) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean hasFailed() {
+        return false;
+    }
+
+    @Override
+    public boolean hasOutcome() {
+        return false;
+    }
+
+    @Override
+    public void repeat() {
+        throw new UnsupportedOperationException();
     }
 
     @Override

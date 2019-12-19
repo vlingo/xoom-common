@@ -11,6 +11,7 @@ import io.vlingo.common.completes.Operation;
 import io.vlingo.common.completes.Sink;
 import io.vlingo.common.completes.Source;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 public class AndThenToSource<Receives, Exposes> extends Operation<Receives, Exposes> {
@@ -43,6 +44,26 @@ public class AndThenToSource<Receives, Exposes> extends Operation<Receives, Expo
                 @Override
                 public boolean hasBeenCompleted() {
                     return false;
+                }
+
+                @Override
+                public Optional<Exposes> await(long timeout) throws Exception {
+                    return Optional.empty();
+                }
+
+                @Override
+                public boolean hasFailed() {
+                    return false;
+                }
+
+                @Override
+                public boolean hasOutcome() {
+                    return false;
+                }
+
+                @Override
+                public void repeat() {
+
                 }
             });
 
