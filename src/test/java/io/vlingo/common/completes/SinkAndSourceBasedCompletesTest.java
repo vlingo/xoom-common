@@ -7,6 +7,7 @@
 
 package io.vlingo.common.completes;
 
+import io.vlingo.common.BasicCompletes;
 import io.vlingo.common.Completes;
 import io.vlingo.common.Scheduler;
 import org.junit.Test;
@@ -76,6 +77,30 @@ public class SinkAndSourceBasedCompletesTest {
         completes.await();
 
         assertEquals(10, andThenValue.intValue());
+    }
+
+    @Test
+    public void testAndThenTo() {
+        final Completes<Integer> completes = newEmptyCompletes(Integer.class);
+        completes.andThenTo(this::newCompletesWithOutcome)
+                .andThen(e -> e * 10)
+                .andFinally();
+
+        completes.with(10);
+
+        assertEquals(100, (int) completes.await());
+    }
+
+    @Test
+    public void testAndThenToWithBasicCompletes() {
+        final Completes<Integer> completes = newEmptyCompletes(Integer.class);
+        completes.andThenTo(this::newBasicCompletesWithOutcome)
+                .andThen(e -> e * 10)
+                .andFinally();
+
+        completes.with(10);
+
+        assertEquals(100, (int) completes.await());
     }
 
     @Test
@@ -241,5 +266,9 @@ public class SinkAndSourceBasedCompletesTest {
 
     private <T> Completes<T> newEmptyCompletes(Class<T> _class) {
         return SinkAndSourceBasedCompletes.withScheduler(new Scheduler());
+    }
+
+    private <O> Completes<O> newBasicCompletesWithOutcome(O data) {
+        return new BasicCompletes<>(new Scheduler()).with(data);
     }
 }

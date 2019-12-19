@@ -76,8 +76,10 @@ public class InMemorySource<Exposes> implements LazySource<Exposes> {
 
     public static <E> InMemorySource<E> fromCompletes(Completes<E> completes) {
         InMemorySource<E> source = new InMemorySource<>();
-        completes.andThenConsume(source::emitOutcome);
-        completes.andFinallyConsume(s -> source.emitCompletion());
+        completes.andFinallyConsume(s -> {
+            source.emitOutcome(s);
+            source.emitCompletion();
+        });
 
         return source;
     }

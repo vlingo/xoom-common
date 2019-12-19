@@ -56,4 +56,9 @@ public class TestSource<Expose> implements Source<Expose> {
             flush();
         }
     }
+
+    @Override
+    public void activate() {
+
+    }
 }

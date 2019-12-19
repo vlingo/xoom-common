@@ -46,6 +46,11 @@ public abstract class Operation<Receives, Exposes> implements Sink<Receives>, So
     }
 
     @Override
+    public void activate() {
+
+    }
+
+    @Override
     public String toString() {
         return this.getClass().getSimpleName();
     }

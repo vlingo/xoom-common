@@ -13,4 +13,5 @@ public interface Source<Exposes> {
     void emitCompletion();
 
     void subscribe(Sink<Exposes> subscriber);
+    void activate();
 }

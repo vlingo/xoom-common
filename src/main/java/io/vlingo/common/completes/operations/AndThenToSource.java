@@ -45,6 +45,8 @@ public class AndThenToSource<Receives, Exposes> extends Operation<Receives, Expo
                     return false;
                 }
             });
+
+            sourceToSubscribe.activate();
         } catch (Exception ex) {
             emitError(ex);
         }

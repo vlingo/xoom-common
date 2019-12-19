@@ -108,7 +108,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     public <F, O> O andThenTo(long timeout, F failedOutcomeValue, Function<T, O> function) {
         FailureGateway<O> failureGateway = new FailureGateway<>((O) failedOutcomeValue);
         TimeoutGateway<T> timeoutGateway = new TimeoutGateway<>(scheduler, timeout);
-        Operation<T, O> newSource = new AndThenToSource<>(function.andThen(e -> (SinkAndSourceBasedCompletes<O>) e).andThen(InMemorySource::fromCompletes));
+        Operation<T, O> newSource = new AndThenToSource<>(function.andThen(e -> (Completes<O>) e).andThen(InMemorySource::fromCompletes));
 
         currentOperation.subscribe(timeoutGateway);
         timeoutGateway.subscribe(newSource);
