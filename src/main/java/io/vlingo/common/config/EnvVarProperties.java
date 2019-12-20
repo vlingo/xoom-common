@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * variable values.
  *
  * <br>
- * Value syntax: <code>${<env var name>[:<default value>]}</code>
+ * Value syntax: <code>${&lt;env var name&gt;[:&lt;default value&gt;]}</code>
  *
  * <br>
  * Examples:
@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
  *     <li><code>a=${FOO}; FOO=bar -> a=bar</code></li>
  *     <li><code>a=${FOO}trag${BAZ}; FOO=un; BAZ=bar -> a=untragbar</code></li>
  *     <li><code>a=${FOO:qux}; FOO=bar; -> a=bar</code></li>
- *     <li><code>a=${FOO:qux}; FOO=<not net>; -> a=qux</code></li>
+ *     <li><code>a=${FOO:qux}; FOO=&lt;not set&gt;; -> a=qux</code></li>
  * </ul>
  */
 public class EnvVarProperties extends Properties {
