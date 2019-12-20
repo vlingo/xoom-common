@@ -22,10 +22,10 @@ import java.util.regex.Pattern;
  * Examples:
  *
  * <ul>
- *     <li><code>a=${FOO}; FOO=bar -> a=bar</code></li>
- *     <li><code>a=${FOO}trag${BAZ}; FOO=un; BAZ=bar -> a=untragbar</code></li>
- *     <li><code>a=${FOO:qux}; FOO=bar; -> a=bar</code></li>
- *     <li><code>a=${FOO:qux}; FOO=&lt;not set&gt;; -> a=qux</code></li>
+ *     <li><code>a=${FOO}; FOO=bar -&gt; a=bar</code></li>
+ *     <li><code>a=${FOO}trag${BAZ}; FOO=un; BAZ=bar -&gt; a=untragbar</code></li>
+ *     <li><code>a=${FOO:qux}; FOO=bar; -&gt; a=bar</code></li>
+ *     <li><code>a=${FOO:qux}; FOO=&lt;not set&gt; -&gt; a=qux</code></li>
  * </ul>
  */
 public class EnvVarProperties extends Properties {
