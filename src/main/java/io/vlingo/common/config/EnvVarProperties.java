@@ -11,6 +11,23 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Properties implementation that supports interpolating properties from environment
+ * variable values.
+ *
+ * <br>
+ * Value syntax: <code>${<env var name>[:<default value>]}</code>
+ *
+ * <br>
+ * Examples:
+ *
+ * <ul>
+ *     <li><code>a=${FOO}; FOO=bar -> a=bar</code></li>
+ *     <li><code>a=${FOO}trag${BAZ}; FOO=un; BAZ=bar -> a=untragbar</code></li>
+ *     <li><code>a=${FOO:qux}; FOO=bar; -> a=bar</code></li>
+ *     <li><code>a=${FOO:qux}; FOO=<not net>; -> a=qux</code></li>
+ * </ul>
+ */
 public class EnvVarProperties extends Properties {
     private static final Pattern envVarPattern = Pattern.compile("\\$\\{(?<envVar>[0-9a-zA-Z_]+)(:(?<default>[^\\}]+))?\\}");
 
