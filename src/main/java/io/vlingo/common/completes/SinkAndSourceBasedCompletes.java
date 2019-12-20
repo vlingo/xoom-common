@@ -7,36 +7,39 @@
 
 package io.vlingo.common.completes;
 
+import io.vlingo.common.Completes;
+import io.vlingo.common.Scheduler;
+import io.vlingo.common.completes.operations.*;
+import io.vlingo.common.completes.sinks.InMemorySink;
+import io.vlingo.common.completes.sources.InMemorySource;
+
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import io.vlingo.common.Completes;
-import io.vlingo.common.Scheduler;
-import io.vlingo.common.completes.operations.AndThen;
-import io.vlingo.common.completes.operations.AndThenConsume;
-import io.vlingo.common.completes.operations.AndThenToSource;
-import io.vlingo.common.completes.operations.FailureGateway;
-import io.vlingo.common.completes.operations.Otherwise;
-import io.vlingo.common.completes.operations.OtherwiseConsume;
-import io.vlingo.common.completes.operations.Recover;
-import io.vlingo.common.completes.operations.TimeoutGateway;
-import io.vlingo.common.completes.sinks.InMemorySink;
-import io.vlingo.common.completes.sources.InMemorySource;
 
 public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     private static final long DEFAULT_TIMEOUT = Long.MAX_VALUE;
 
     private final Scheduler scheduler;
-    public final InMemorySource<Object> source;
+    public final Source<Object> source;
     private final Source<T> currentOperation;
-    private final InMemorySink<T> sink;
+    private final Sink<T> sink;
 
-    private SinkAndSourceBasedCompletes(Scheduler scheduler, InMemorySource<Object> source, Source<T> currentOperation, InMemorySink<T> sink) {
+    protected SinkAndSourceBasedCompletes(Scheduler scheduler, Source<Object> source, Source<T> currentOperation, Sink<T> sink) {
         this.scheduler = scheduler;
         this.source = source;
         this.sink = sink;
         this.currentOperation = currentOperation;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected SinkAndSourceBasedCompletes(Scheduler scheduler) {
+        this.scheduler = scheduler;
+        this.source = new InMemorySource<>();
+        this.sink = new InMemorySink<>();
+        this.currentOperation = (Source<T>) source;
+
+        source.subscribe((Sink) sink);
     }
 
     @SuppressWarnings("unchecked")
@@ -46,7 +49,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
 
         source.subscribe(sink);
 
-        return new SinkAndSourceBasedCompletes<>(scheduler, (InMemorySource<Object>) source, source, sink);
+        return new SinkAndSourceBasedCompletes<>(scheduler, (Source<Object>) source, source, sink);
     }
 
     public static boolean isToggleActive() {
@@ -55,7 +58,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <O> SinkAndSourceBasedCompletes<O> andThen(long timeout, O failedOutcomeValue, Function<T, O> function) {
+    public <O> Completes<O> andThen(long timeout, O failedOutcomeValue, Function<T, O> function) {
         FailureGateway<O> failureGateway = new FailureGateway<>(failedOutcomeValue);
         TimeoutGateway<T> timeoutGateway = new TimeoutGateway<>(scheduler, timeout);
         Operation<T, O> newSource = new AndThen<>(function);
@@ -68,22 +71,22 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
-    public <O> SinkAndSourceBasedCompletes<O> andThen(O failedOutcomeValue, Function<T, O> function) {
+    public <O> Completes<O> andThen(O failedOutcomeValue, Function<T, O> function) {
         return andThen(DEFAULT_TIMEOUT, failedOutcomeValue, function);
     }
 
     @Override
-    public <O> SinkAndSourceBasedCompletes<O> andThen(long timeout, Function<T, O> function) {
+    public <O> Completes<O> andThen(long timeout, Function<T, O> function) {
         return andThen(timeout, null, function);
     }
 
     @Override
-    public <O> SinkAndSourceBasedCompletes<O> andThen(Function<T, O> function) {
+    public <O> Completes<O> andThen(Function<T, O> function) {
         return andThen(DEFAULT_TIMEOUT, null, function);
     }
 
     @Override
-    public SinkAndSourceBasedCompletes<T> andThenConsume(long timeout, T failedOutcomeValue, Consumer<T> consumer) {
+    public Completes<T> andThenConsume(long timeout, T failedOutcomeValue, Consumer<T> consumer) {
         FailureGateway<T> failureGateway = new FailureGateway<>(failedOutcomeValue);
         TimeoutGateway<T> timeoutGateway = new TimeoutGateway<>(scheduler, timeout);
         Operation<T, T> newSource = new AndThenConsume<>(consumer);
@@ -92,21 +95,21 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
         newSource.subscribe(failureGateway);
         failureGateway.subscribe(sink);
 
-        return new SinkAndSourceBasedCompletes<>(scheduler, source, failureGateway, sink);
+        return new SinkAndSourceBasedCompletes<T>(scheduler, source, failureGateway, sink);
     }
 
     @Override
-    public SinkAndSourceBasedCompletes<T> andThenConsume(T failedOutcomeValue, Consumer<T> consumer) {
+    public Completes<T> andThenConsume(T failedOutcomeValue, Consumer<T> consumer) {
         return andThenConsume(DEFAULT_TIMEOUT, failedOutcomeValue, consumer);
     }
 
     @Override
-    public SinkAndSourceBasedCompletes<T> andThenConsume(long timeout, Consumer<T> consumer) {
+    public Completes<T> andThenConsume(long timeout, Consumer<T> consumer) {
         return andThenConsume(timeout, null, consumer);
     }
 
     @Override
-    public SinkAndSourceBasedCompletes<T> andThenConsume(Consumer<T> consumer) {
+    public Completes<T> andThenConsume(Consumer<T> consumer) {
         return andThenConsume(DEFAULT_TIMEOUT, null, consumer);
     }
 
@@ -115,7 +118,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     public <F, O> O andThenTo(long timeout, F failedOutcomeValue, Function<T, O> function) {
         FailureGateway<O> failureGateway = new FailureGateway<>((O) failedOutcomeValue);
         TimeoutGateway<T> timeoutGateway = new TimeoutGateway<>(scheduler, timeout);
-        Operation<T, O> newSource = new AndThenToSource<>(function.andThen(e -> (SinkAndSourceBasedCompletes<O>) e).andThen(InMemorySource::fromCompletes));
+        Operation<T, O> newSource = new AndThenToSource<>(function.andThen(e -> (Completes<O>) e).andThen(InMemorySource::fromCompletes));
 
         currentOperation.subscribe(timeoutGateway);
         timeoutGateway.subscribe(newSource);
@@ -141,7 +144,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
-    public SinkAndSourceBasedCompletes<T> otherwise(Function<T, T> function) {
+    public Completes<T> otherwise(Function<T, T> function) {
         Operation<T, T> otherwise = new Otherwise<>(function);
         currentOperation.subscribe(otherwise);
         otherwise.subscribe(sink);
@@ -150,7 +153,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
-    public SinkAndSourceBasedCompletes<T> otherwiseConsume(Consumer<T> consumer) {
+    public Completes<T> otherwiseConsume(Consumer<T> consumer) {
         Operation<T, T> otherwise = new OtherwiseConsume<>(consumer);
         currentOperation.subscribe(otherwise);
         otherwise.subscribe(sink);
@@ -159,7 +162,7 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
-    public SinkAndSourceBasedCompletes<T> recoverFrom(Function<Exception, T> function) {
+    public Completes<T> recoverFrom(Function<Exception, T> function) {
         Operation<T, T> newSource = new Recover<>(function);
         currentOperation.subscribe(newSource);
         newSource.subscribe(sink);
@@ -223,27 +226,37 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <O> SinkAndSourceBasedCompletes<O> andFinally() {
+    public <O> Completes<O> andFinally() {
       return andFinally(value -> (O) value);
     }
 
     @Override
-    public <O> SinkAndSourceBasedCompletes<O> andFinally(final Function<T,O> function) {
-        final SinkAndSourceBasedCompletes<O> edge = andThen(function);
-        edge.source.activate();
+    public <O> Completes<O> andFinally(final Function<T,O> function) {
+        final Completes<O> edge = andThen(function);
+        source.activate();
         return edge;
     }
 
     @Override
     public void andFinallyConsume(Consumer<T> consumer) {
-        SinkAndSourceBasedCompletes<T> edge = andThenConsume(consumer);
-        edge.source.activate();
+        andThenConsume(consumer);
+        source.activate();
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <O> SinkAndSourceBasedCompletes<O> with(O outcome) {
+    public <O> Completes<O> with(O outcome) {
         source.emitOutcome(outcome);
         return (SinkAndSourceBasedCompletes<O>) this;
+    }
+
+    @Override
+    public String toString() {
+        return "SinkAndSourceBasedCompletes{" +
+                "scheduler=" + scheduler +
+                ", source=" + source +
+                ", currentOperation=" + currentOperation +
+                ", sink=" + sink +
+                '}';
     }
 }

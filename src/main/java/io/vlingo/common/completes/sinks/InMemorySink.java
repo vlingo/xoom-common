@@ -7,25 +7,26 @@
 
 package io.vlingo.common.completes.sinks;
 
-import java.util.Optional;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import io.vlingo.common.Failure;
 import io.vlingo.common.Outcome;
 import io.vlingo.common.Success;
 import io.vlingo.common.completes.Sink;
 import io.vlingo.common.completes.exceptions.FailedOperationException;
 
+import java.util.ArrayDeque;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class InMemorySink<Exposes> implements Sink<Exposes> {
-    private ConcurrentLinkedQueue<Outcome<Exception, Exposes>> outcomes;
+    private Queue<Outcome<Exception, Exposes>> outcomes;
     private AtomicBoolean hasBeenCompleted;
     private CountDownLatch latch;
 
     public InMemorySink() {
-        this.outcomes = new ConcurrentLinkedQueue<>();
+        this.outcomes = new ArrayDeque<>();
         this.hasBeenCompleted = new AtomicBoolean(false);
         this.latch = new CountDownLatch(1);
     }
@@ -45,6 +46,7 @@ public class InMemorySink<Exposes> implements Sink<Exposes> {
     @Override
     public void onCompletion() {
         hasBeenCompleted.set(true);
+        latch.countDown();
     }
 
     @Override
@@ -79,7 +81,7 @@ public class InMemorySink<Exposes> implements Sink<Exposes> {
     }
 
     public void repeat() {
-        latch = new CountDownLatch(1);
+        latch = new CountDownLatch(1 + (int) latch.getCount());
     }
 
     private void waitUntilOutcomeOrTimeout(long timeout) throws Exception {
@@ -91,5 +93,14 @@ public class InMemorySink<Exposes> implements Sink<Exposes> {
         return (exception instanceof FailedOperationException)
                 ? Optional.ofNullable((Exposes) ((FailedOperationException) exception).failureValue)
                 : Optional.empty();
+    }
+
+    @Override
+    public String toString() {
+        return "InMemorySink{" +
+                "outcomes=" + outcomes +
+                ", hasBeenCompleted=" + hasBeenCompleted +
+                ", latch=" + latch +
+                '}';
     }
 }

@@ -7,21 +7,22 @@
 
 package io.vlingo.common.completes.sources;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
-
 import io.vlingo.common.Completes;
 import io.vlingo.common.completes.LazySource;
 import io.vlingo.common.completes.Sink;
 
+import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+
 public class InMemorySource<Exposes> implements LazySource<Exposes> {
-    private ConcurrentLinkedQueue<Consumer<Sink<Exposes>>> queue;
+    private Queue<Consumer<Sink<Exposes>>> queue;
     private Sink<Exposes> subscriber;
     private AtomicBoolean active;
 
     public InMemorySource() {
-        this.queue = new ConcurrentLinkedQueue<>();
+        this.queue = new ArrayDeque<>();
         this.subscriber = null;
         this.active = new AtomicBoolean(false);
     }
@@ -64,22 +65,31 @@ public class InMemorySource<Exposes> implements LazySource<Exposes> {
             throw new UnsupportedOperationException("Source must have a subscriber before being able to activate it.");
         }
 
-        if (this.active.get()) {
-            return;
+        if (this.active.compareAndSet(false, true)) {
+            if (!this.queue.isEmpty()) {
+                this.queue.forEach(e -> e.accept(subscriber));
+                this.queue = null;
+            }
         }
 
-        this.active.set(true);
-        if (!this.queue.isEmpty()) {
-            this.queue.forEach(e -> e.accept(subscriber));
-            this.queue = null;
-        }
     }
 
     public static <E> InMemorySource<E> fromCompletes(Completes<E> completes) {
         InMemorySource<E> source = new InMemorySource<>();
-        completes.andThenConsume(source::emitOutcome);
-        completes.andThenConsume(s -> source.emitCompletion());
+        completes.andFinallyConsume(s -> {
+            source.emitOutcome(s);
+            source.emitCompletion();
+        });
 
         return source;
+    }
+
+    @Override
+    public String toString() {
+        return "InMemorySource{" +
+                "queue=" + queue +
+                ", subscriber=" + subscriber +
+                ", active=" + active +
+                '}';
     }
 }

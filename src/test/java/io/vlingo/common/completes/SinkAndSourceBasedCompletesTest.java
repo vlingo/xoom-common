@@ -7,14 +7,18 @@
 
 package io.vlingo.common.completes;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
-
+import io.vlingo.common.BasicCompletes;
 import io.vlingo.common.Completes;
 import io.vlingo.common.Scheduler;
+import org.junit.Test;
+
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static org.junit.Assert.*;
 
 public class SinkAndSourceBasedCompletesTest {
     private Integer andThenValue;
@@ -62,12 +66,10 @@ public class SinkAndSourceBasedCompletesTest {
     public void testCompletesAfterAndThenMessageOut() {
         final Completes<Integer> completes = newEmptyCompletes(Integer.class);
 
-        final Holder holder = new Holder();
-
         completes
                 .andThen((value) -> value * 2)
                 .andFinally((value) -> {
-                    holder.hold(value);
+                    andThenValue = value;
                     return value;
                 });
 
@@ -75,6 +77,30 @@ public class SinkAndSourceBasedCompletesTest {
         completes.await();
 
         assertEquals(10, andThenValue.intValue());
+    }
+
+    @Test
+    public void testAndThenTo() {
+        final Completes<Integer> completes = newEmptyCompletes(Integer.class);
+        completes.andThenTo(this::newCompletesWithOutcome)
+                .andThen(e -> e * 10)
+                .andFinally();
+
+        completes.with(10);
+
+        assertEquals(100, (int) completes.await());
+    }
+
+    @Test
+    public void testAndThenToWithBasicCompletes() {
+        final Completes<Integer> completes = newEmptyCompletes(Integer.class);
+        completes.andThenTo(this::newBasicCompletesWithOutcome)
+                .andThen(e -> e * 10)
+                .andFinally();
+
+        completes.with(10);
+
+        assertEquals(100, (int) completes.await());
     }
 
     @Test
@@ -174,7 +200,8 @@ public class SinkAndSourceBasedCompletesTest {
                 .andThen((Integer value) -> andThenValue = value)
                 .repeat();
 
-        completes.andFinallyConsume(e -> {});
+        completes.andFinallyConsume(e -> {
+        });
 
         completes.with(5);
         assertEquals(10, andThenValue.intValue());
@@ -184,10 +211,50 @@ public class SinkAndSourceBasedCompletesTest {
         assertEquals(40, andThenValue.intValue());
     }
 
-    private class Holder {
-        private void hold(final Integer value) {
-            andThenValue = value;
-        }
+    @Test
+    public void testOnClientAndServerSetupWhenClientIsFaster() throws InterruptedException {
+        List<Integer> ints = new LinkedList<>();
+        List<Integer> expected = IntStream.range(0, 10000).boxed().collect(Collectors.toList());
+        Completes<Object> completeInteger = newEmptyCompletes(Integer.class)
+            .andThenConsume(ints::add)
+            .andFinally()
+            .repeat();
+
+        Thread server = new Thread(() -> expected.forEach(completeInteger::with));
+
+        server.start();
+        server.join();
+
+        HashSet<Integer> intHashSet = new HashSet<>(ints);
+        HashSet<Integer> expectedHashSet = new HashSet<>(expected);
+
+        expectedHashSet.removeAll(intHashSet);
+        assertEquals("Completes was: " + completeInteger.toString() + " | HashSet was: " + expectedHashSet.toString(), 0, expectedHashSet.size());
+    }
+
+    @Test
+    public void testOnClientAndServerSetupWhenServerIsFaster() throws InterruptedException {
+        List<Integer> ints = new LinkedList<>();
+        List<Integer> expected = IntStream.range(0, 10000).boxed().collect(Collectors.toList());
+        Completes<Integer> completeInteger = newEmptyCompletes(Integer.class);
+
+        Thread server = new Thread(() -> expected.forEach(completeInteger::with));
+        Thread client = new Thread(() -> completeInteger
+                .andThenConsume(ints::add)
+                .andFinally()
+                .repeat());
+
+        server.start();
+        Thread.sleep(10);
+        client.start();
+        server.join();
+        client.join();
+
+        HashSet<Integer> intHashSet = new HashSet<>(ints);
+        HashSet<Integer> expectedHashSet = new HashSet<>(expected);
+
+        expectedHashSet.removeAll(intHashSet);
+        assertEquals("Completes was: " + completeInteger.toString() + " | HashSet was: " + expectedHashSet.toString(), 0, expectedHashSet.size());
     }
 
     private <T> Completes<T> newCompletesWithOutcome(T outcome) {
@@ -199,5 +266,9 @@ public class SinkAndSourceBasedCompletesTest {
 
     private <T> Completes<T> newEmptyCompletes(Class<T> _class) {
         return SinkAndSourceBasedCompletes.withScheduler(new Scheduler());
+    }
+
+    private <O> Completes<O> newBasicCompletesWithOutcome(O data) {
+        return new BasicCompletes<>(new Scheduler()).with(data);
     }
 }

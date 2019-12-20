@@ -11,6 +11,7 @@ import io.vlingo.common.completes.Sink;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 public class TestSink<Receives> implements Sink<Receives>, SinkVerifier<Receives> {
@@ -118,5 +119,25 @@ public class TestSink<Receives> implements Sink<Receives>, SinkVerifier<Receives
     @Override
     public boolean hasBeenCompleted() {
         return hasBeenCompleted;
+    }
+
+    @Override
+    public Optional<Receives> await(long timeout) throws Exception {
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean hasFailed() {
+        return false;
+    }
+
+    @Override
+    public boolean hasOutcome() {
+        return false;
+    }
+
+    @Override
+    public void repeat() {
+
     }
 }
