@@ -608,7 +608,10 @@ public class BasicCompletes<T> implements Completes<T> {
         // bubble up
         parent.handleException(e);
       } else {
-        throw new RuntimeException("Following exception doesn't have appropriate exceptionAction specified!", e);
+        System.out.println("[WARN] Exception doesn't have (yet?) appropriate exceptionAction specified!" +
+                " Exception type: " + e.getClass().getName() + "." +
+                " Exception message: " + e.getMessage() + "." +
+                " Exception thrown from: " + e.getStackTrace()[0].toString());
       }
     }
 
