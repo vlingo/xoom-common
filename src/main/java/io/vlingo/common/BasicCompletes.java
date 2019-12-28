@@ -607,6 +607,11 @@ public class BasicCompletes<T> implements Completes<T> {
       } else if (parent != null) {
         // bubble up
         parent.handleException(e);
+      } else {
+        System.out.println("[WARN] Exception doesn't have (yet?) appropriate exceptionAction specified!" +
+                " Exception type: " + e.getClass().getName() + "." +
+                " Exception message: " + e.getMessage() + "." +
+                " Exception thrown from: " + e.getStackTrace()[0].toString());
       }
     }
 
