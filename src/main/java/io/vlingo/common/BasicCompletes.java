@@ -23,6 +23,10 @@ public class BasicCompletes<T> implements Completes<T> {
     this(new BasicActiveState<T>(scheduler));
   }
 
+  public BasicCompletes(final Scheduler scheduler, ActiveState<T> parent) {
+    this(new BasicActiveState<T>(scheduler, parent));
+  }
+
   public BasicCompletes(final T outcome, final boolean succeeded) {
     this(new BasicActiveState<T>(), outcome, succeeded);
   }
@@ -98,7 +102,7 @@ public class BasicCompletes<T> implements Completes<T> {
   @Override
   @SuppressWarnings("unchecked")
   public <F,O> O andThenTo(final long timeout, final F failedOutcomeValue, final Function<T, O> function) {
-    final BasicCompletes<O> nestedCompletes = new BasicCompletes<>(state.scheduler());
+    final BasicCompletes<O> nestedCompletes = new BasicCompletes<>(state.scheduler(), (ActiveState<O>) state);
     nestedCompletes.state.failedValue(failedOutcomeValue);
     nestedCompletes.state.failureAction((Action<O>) state.failureActionFunction());
     state.registerWithExecution((Action<T>) Action.with(function, nestedCompletes), timeout, state);
@@ -434,12 +438,12 @@ public class BasicCompletes<T> implements Completes<T> {
     private Function<Exception,?> exceptionAction;
     private final AtomicReference<Object> outcome;
     private CountDownLatch outcomeKnown;
-    private final BasicActiveState<T> parent;
+    private final ActiveState<T> parent;
     private Scheduler scheduler;
     private final AtomicBoolean timedOut;
 
     @SuppressWarnings("unchecked")
-    protected BasicActiveState(final Scheduler scheduler, final BasicActiveState<T> parent) {
+    protected BasicActiveState(final Scheduler scheduler, final ActiveState<T> parent) {
       this.scheduler = scheduler;
       this.parent = parent;
       this.executables = new Executables<>();
