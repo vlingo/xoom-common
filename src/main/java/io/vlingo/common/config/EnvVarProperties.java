@@ -29,6 +29,8 @@ import java.util.regex.Pattern;
  * </ul>
  */
 public class EnvVarProperties extends Properties {
+    private static final long serialVersionUID = 1L;
+
     private static final Pattern envVarPattern = Pattern.compile("\\$\\{(?<envVar>[0-9a-zA-Z_]+)(:(?<default>[^\\}]+))?\\}");
 
     /**
