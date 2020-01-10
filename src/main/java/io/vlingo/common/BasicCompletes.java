@@ -450,6 +450,7 @@ public class BasicCompletes<T> implements Completes<T> {
       this.failed = new AtomicBoolean(false);
       this.failedOutcomeValue = new AtomicReference<>((T) UnfailedValue);
       this.exception = new AtomicReference<>(null);
+      this.exceptionAction = (e) -> null;
       this.outcome = new AtomicReference<>(null);
       this.outcomeKnown = new CountDownLatch(1);
       this.timedOut = new AtomicBoolean(false);
