@@ -27,14 +27,14 @@ The vlingo-common project consists of a minimal toolset used across various othe
   <dependency>
     <groupId>io.vlingo</groupId>
     <artifactId>vlingo-common</artifactId>
-    <version>0.9.3-RC4</version>
+    <version>1.0.0</version>
     <type>pom</type>
   </dependency>
 ```
 
 ```gradle
 dependencies {
-    compile 'io.vlingo:vlingo-common:0.9.3-RC4'
+    compile 'io.vlingo:vlingo-common:1.0.0'
 }
 
 repositories {
@@ -44,7 +44,7 @@ repositories {
 
 License (See LICENSE file for full license)
 -------------------------------------------
-Copyright © 2012-2018 Vaughn Vernon. All rights reserved.
+Copyright © 2012-2020 VLINGO LABS. All rights reserved.
 
 This Source Code Form is subject to the terms of the
 Mozilla Public License, v. 2.0. If a copy of the MPL
