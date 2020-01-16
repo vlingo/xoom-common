@@ -93,9 +93,18 @@ public class ElasticResourcePool<Resource, Arguments> extends AbstractResourcePo
     return resource;
   }
 
+  @Override
+  public ResourceLease<Resource> borrow(Arguments arguments) {
+    return new ResourceLease<>(acquire(arguments), this::release);
+  }
+
   /**
    * Releases the object back into the pool, or evicts it when the idle to inUse ratio
    * is higher than the desired minimum number of resources.
+   *
+   * This method is not idempotent. Releasing the same resource reference twice will cause unexpected behaviour.
+   *
+   * Use {@link ResourceLease} acquired via {@link ResourcePool#borrow()} to overcome this limitation.
    *
    * @param resource the resource object
    * @see ResourceFactory#destroy(Object)

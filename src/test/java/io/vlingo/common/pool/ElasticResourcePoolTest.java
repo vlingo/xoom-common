@@ -2,6 +2,10 @@ package io.vlingo.common.pool;
 
 import org.junit.Test;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.IntStream;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -11,7 +15,7 @@ public class ElasticResourcePoolTest extends ResourcePoolTest {
   private static final int threads = minIdle * 10;
   private static final int clients = threads * 2;
 
-  private final ResourcePool<Integer, Void> pool =
+  private final ResourcePool<TestResourceFactory.TestResource, Void> pool =
       new ElasticResourcePool<>(minIdle, new TestResourceFactory());
 
   @Test
@@ -46,5 +50,16 @@ public class ElasticResourcePoolTest extends ResourcePoolTest {
         stats.idle >= minIdle);
     assertTrue("the pool didn't count evictions",
         0 < stats.evictions);
+  }
+
+  @Test
+  public void testReleaseIdempotenceWithResourceLease() {
+    ResourcePool<TestResourceFactory.TestResource, Void> pool =
+        new ElasticResourcePool<>(200, new TestResourceFactory());
+    releaseIdempotenceForResourceLeaseReleaseTest(pool);
+    Set<TestResourceFactory.TestResource> unique = new HashSet<>(pool.size());
+    IntStream.range(0, pool.size()).forEach((i) ->
+      assertTrue("ResourcePool::release is not idempotent", unique.add(pool.acquire()))
+    );
   }
 }

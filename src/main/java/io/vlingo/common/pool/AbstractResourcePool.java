@@ -25,11 +25,22 @@ abstract class AbstractResourcePool<Resource, Arguments> implements ResourcePool
   /**
    * Uses {@link ResourceFactory#defaultArguments()} to {@link ResourcePool#acquire(Object)} a resource object.
    *
-   * @return a resource object with default arguments
+   * @return a resource object with the default arguments
    * @see ResourceFactory#defaultArguments()
    */
   @Override
   public Resource acquire() {
     return acquire(factory.defaultArguments());
+  }
+
+  /**
+   * Uses {@link ResourceFactory#defaultArguments()} to {@link ResourcePool#borrow(Object)} a {@link ResourceLease}.
+   *
+   * @return a ResourceLease with resource object acquired with the default arguments
+   * @see ResourceFactory#defaultArguments()
+   */
+  @Override
+  public ResourceLease<Resource> borrow() {
+    return borrow(factory.defaultArguments());
   }
 }

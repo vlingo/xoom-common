@@ -2,18 +2,18 @@ package io.vlingo.common.pool;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-class TestResourceFactory implements ResourceFactory<Integer, Void> {
+class TestResourceFactory implements ResourceFactory<TestResourceFactory.TestResource, Void> {
 
   private static ThreadLocalRandom Random = ThreadLocalRandom.current();
 
   @Override
-  public Class<Integer> type() {
-    return Integer.class;
+  public Class<TestResource> type() {
+    return TestResource.class;
   }
 
   @Override
-  public Integer create(Void arguments) {
-    return Random.nextInt();
+  public TestResource create(Void arguments) {
+    return new TestResource();
   }
 
   @Override
@@ -22,11 +22,16 @@ class TestResourceFactory implements ResourceFactory<Integer, Void> {
   }
 
   @Override
-  public Integer reset(Integer resource, Void arguments) {
+  public TestResource reset(TestResource resource, Void arguments) {
     return resource;
   }
 
   @Override
-  public void destroy(Integer integer) {
+  public void destroy(TestResource integer) {
+  }
+
+  static class TestResource {
+    public TestResource() {
+    }
   }
 }
