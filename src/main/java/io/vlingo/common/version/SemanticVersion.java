@@ -109,9 +109,13 @@ public class SemanticVersion {
     return new SemanticVersion(major, minor + 1, patch);
   }
 
-  public SemanticVersion withIncrementedPatch() {
-    return new SemanticVersion(major, minor, patch + 1);
-  }
+  public SemanticVersion withIncrementedPatch() { return new SemanticVersion(major, minor, patch + 1); }
+
+  public SemanticVersion nextPatch() { return withIncrementedPatch(); }
+
+  public SemanticVersion nextMinor() { return new SemanticVersion(major, minor + 1, 0); }
+
+  public SemanticVersion nextMajor() { return new SemanticVersion(major + 1, 0, 0); }
 
   @Override
   public int hashCode() {
