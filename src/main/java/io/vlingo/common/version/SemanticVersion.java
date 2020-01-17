@@ -109,7 +109,9 @@ public class SemanticVersion {
     return new SemanticVersion(major, minor + 1, patch);
   }
 
-  public SemanticVersion withIncrementedPatch() { return new SemanticVersion(major, minor, patch + 1); }
+  public SemanticVersion withIncrementedPatch() {
+    return new SemanticVersion(major, minor, patch + 1);
+  }
 
   public SemanticVersion nextPatch() { return withIncrementedPatch(); }
 
