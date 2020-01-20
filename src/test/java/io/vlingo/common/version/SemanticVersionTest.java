@@ -92,6 +92,15 @@ public class SemanticVersionTest {
   }
 
   @Test
+  public void testVersionIncrements() {
+    final SemanticVersion version = SemanticVersion.from(1, 2, 3);
+
+    assertEquals(version.nextPatch(), SemanticVersion.from(1, 2, 4));
+    assertEquals(version.nextMinor(), SemanticVersion.from(1, 3, 0));
+    assertEquals(version.nextMajor(), SemanticVersion.from(2, 0, 0));
+  }
+
+  @Test
   public void testVersionIncompatibility() {
     final SemanticVersion version = SemanticVersion.from(1, 0, 0);
 
