@@ -65,6 +65,10 @@ public interface Completes<T> {
     return new BasicCompletes<T>(scheduler);
   }
 
+  static <T> Completes<T> noTimeout() {
+    return new BasicCompletes<T>((Scheduler) null);
+  }
+
   /**
    * Answer a new {@code Completes<T>} that has a successful {@code outcome}.
    * The instance has already completed at the time of creation,
