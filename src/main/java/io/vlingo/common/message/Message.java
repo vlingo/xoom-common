@@ -7,5 +7,17 @@
 
 package io.vlingo.common.message;
 
+import java.util.Date;
+
+import io.vlingo.common.version.SemanticVersion;
+
 public interface Message {
+  String id();
+  Date occurredOn();
+  <T> T payload();
+  String type();
+  String version();
+  default SemanticVersion semanticVersion() {
+    return SemanticVersion.from(version());
+  }
 }
