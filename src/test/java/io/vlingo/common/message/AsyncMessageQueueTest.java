@@ -11,6 +11,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,32 +28,32 @@ public class AsyncMessageQueueTest {
 
   @Test
   public void testEnqueue() {
-    queue.enqueue(new Message() {});
-    queue.enqueue(new Message() {});
-    queue.enqueue(new Message() {});
-    
+    queue.enqueue(new EmptyMessage());
+    queue.enqueue(new EmptyMessage());
+    queue.enqueue(new EmptyMessage());
+
     while (!queue.isEmpty()) ;
-    
+
     assertEquals(3, deliveredMessages.size());
   }
 
   @Test
   public void testFlush() {
     for (int idx = 0; idx < 1000; ++idx) {
-      queue.enqueue(new Message() {});
+      queue.enqueue(new EmptyMessage());
     }
-    
+
     queue.flush();
-    
+
     assertEquals(1000, deliveredMessages.size());
   }
 
   @Test
   public void testIsEmptyWithFlush() {
     for (int idx = 0; idx < 100000; ++idx) {
-      queue.enqueue(new Message() {});
+      queue.enqueue(new EmptyMessage());
     }
-    
+
     assertEquals(false, queue.isEmpty());
     queue.flush();
     assertEquals(true, queue.isEmpty());
@@ -61,15 +62,15 @@ public class AsyncMessageQueueTest {
   @Test
   public void testClose() {
     for (int idx = 0; idx < 1000; ++idx) {
-      queue.enqueue(new Message() {});
+      queue.enqueue(new EmptyMessage());
     }
-    
+
     queue.close();
-    
-    queue.enqueue(new Message() {});
-    
+
+    queue.enqueue(new EmptyMessage());
+
     queue.flush();
-    
+
     assertNotEquals(1001, deliveredMessages.size());
     assertEquals(1000, deliveredMessages.size());
   }
@@ -77,18 +78,18 @@ public class AsyncMessageQueueTest {
   @Test
   public void testDeadLettersQueue() throws Exception {
     final int expected = 5;
-    
+
     for (int idx = 0; idx < expected; ++idx) {
-      exceptionsQueue.enqueue(new Message() {});
+      exceptionsQueue.enqueue(new EmptyMessage());
     }
-    
+
     exceptionsQueue.close();
-    
+
     while (countingDeadLettersQueue.hasNotCompleted(expected) ||
             countingDeadLettersListener.hasNotCompleted(expected)) {
       Thread.sleep(5);
     }
-    
+
     assertEquals(5, countingDeadLettersQueue.enqueuedCount());
     assertEquals(5, countingDeadLettersListener.handledCount());
   }
@@ -96,14 +97,14 @@ public class AsyncMessageQueueTest {
   @Before
   public void setUp() {
     deliveredMessages = new ArrayList<Message>();
-    
+
     queue = new AsyncMessageQueue();
     queue.registerListener(new ExceptionThrowingListener(false));
-    
+
     countingDeadLettersListener = new CountingDeadLettersListener();
     countingDeadLettersQueue = new CountingDeadLettersQueue();
     countingDeadLettersQueue.registerListener(countingDeadLettersListener);
-    
+
     exceptionsQueue = new AsyncMessageQueue(countingDeadLettersQueue);
     exceptionsQueue.registerListener(new ExceptionThrowingListener(true));
   }
@@ -122,12 +123,12 @@ public class AsyncMessageQueueTest {
     @Override
     public void handleMessage(final Message message) throws Exception {
       handledCount.incrementAndGet();
-    }    
+    }
   }
 
   private class ExceptionThrowingListener implements MessageQueueListener {
     private final boolean throwException;
-    
+
     private ExceptionThrowingListener(final boolean throwException) {
       this.throwException = throwException;
     }
@@ -139,7 +140,7 @@ public class AsyncMessageQueueTest {
       } else {
         deliveredMessages.add(message);
       }
-    }    
+    }
   }
 
   private class CountingDeadLettersQueue extends AsyncMessageQueue {
@@ -157,6 +158,34 @@ public class AsyncMessageQueueTest {
     public void enqueue(final Message message) {
       enqueuedCount.incrementAndGet();
       super.enqueue(message);
+    }
+  }
+
+  public static class EmptyMessage implements Message {
+
+    @Override
+    public String id() {
+      return null;
+    }
+
+    @Override
+    public Date occurredOn() {
+      return null;
+    }
+
+    @Override
+    public Object payload() {
+      return null;
+    }
+
+    @Override
+    public String type() {
+      return null;
+    }
+
+    @Override
+    public String version() {
+      return null;
     }
   }
 }
