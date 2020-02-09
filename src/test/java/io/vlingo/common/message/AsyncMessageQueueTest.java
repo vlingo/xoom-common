@@ -174,7 +174,7 @@ public class AsyncMessageQueueTest {
     }
 
     @Override
-    public Object payload() {
+    public <T> T payload() {
       return null;
     }
 
