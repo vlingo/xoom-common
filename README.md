@@ -27,14 +27,14 @@ The vlingo-common project consists of a minimal toolset used across various othe
   <dependency>
     <groupId>io.vlingo</groupId>
     <artifactId>vlingo-common</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
     <type>pom</type>
   </dependency>
 ```
 
 ```gradle
 dependencies {
-    compile 'io.vlingo:vlingo-common:1.1.0'
+    compile 'io.vlingo:vlingo-common:1.2.0'
 }
 
 repositories {
