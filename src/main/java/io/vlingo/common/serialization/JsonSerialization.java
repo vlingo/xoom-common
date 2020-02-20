@@ -110,14 +110,15 @@ public class JsonSerialization {
   private static class OffsetDateTimeSerializer implements JsonSerializer<OffsetDateTime> {
     @Override
     public JsonElement serialize(OffsetDateTime source, Type typeOfSource, JsonSerializationContext context) {
-        return new JsonPrimitive(Long.toString(source.toInstant().toEpochMilli()));
+        return new JsonPrimitive(Long.toString(source.toInstant().toEpochMilli()) + ";" + source.getOffset().toString());
     }
   }
 
   private static class OffsetDateTimeDeserializer implements JsonDeserializer<OffsetDateTime> {
     @Override
     public OffsetDateTime deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
-        final Date date = new Date(Long.parseLong(json.getAsJsonPrimitive().getAsString()));
-        return date.toInstant().atOffset(ZoneOffset.UTC);
+        final String[] encoding = json.getAsJsonPrimitive().getAsString().split(";");
+        final Date date = new Date(Long.parseLong(encoding[0]));
+        return date.toInstant().atOffset(ZoneOffset.of(encoding[1]));
     }
   }}
