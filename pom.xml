@@ -117,6 +117,7 @@
       <version>2.4</version>
     </dependency>
   </dependencies>
+  
   <distributionManagement>
     <repository>
       <id>bintray-vlingo-vlingo-platform-java</id>
