@@ -35,19 +35,18 @@ public final class CompletesOutcomeT<E extends Throwable, T> {
     public final <O> CompletesOutcomeT<E, O> andThenTo(
         Function<T, CompletesOutcomeT<E, O>> function) {
 
-        return new CompletesOutcomeT<>(value.andThenTo(outcome -> {
-            if (outcome instanceof Failure) {
-                return Completes.withSuccess(outcome.andThenTo(null));
-            }
-            else {
-                try {
-                    return function.apply(outcome.get()).value();
-                } catch (Throwable t) {
-                    throw new RuntimeException(
-                        "Unexpected exception thrown getting the value out of a successful Outcome!", t);
-                }
-            }
-        }));
+        return new CompletesOutcomeT<>(value.andThenTo(outcome ->
+            outcome.resolve(
+                f -> Completes.withSuccess(Failure.of(f)),
+                s -> {
+                    try {
+                        return function.apply(outcome.get()).value();
+                    } catch (Throwable t) {
+                        throw new RuntimeException(
+                            "Unexpected exception thrown getting the value out of a successful Outcome!", t);
+                    }
+                })
+        ));
     }
 
     public final Completes<Outcome<E, T>> value() {
