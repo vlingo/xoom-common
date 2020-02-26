@@ -14,7 +14,6 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 
 import static org.junit.Assert.*;
 
@@ -260,77 +259,5 @@ public class OutcomeTest {
 
     private RuntimeException randomException() {
         return new RuntimeException();
-    }
-
-    @Test
-    public void withoutTransformerExample() {
-        Completes<Outcome<Exception, Integer>> out0 = addsOne(1);
-        // Completes<Outcome<Exception, Integer>> out1 =
-        //      out0.andThenTo(i -> addsTwo(i)); <--- does not compile because `i` is not of type Integer
-        Completes<Outcome<Exception, Integer>> out1 = out0.andThenTo(outcome -> {
-            if (outcome instanceof Failure) {
-                return Completes.withSuccess(outcome.andThenTo(null));
-            }
-            else {
-                try {
-                    return addsTwo(outcome.get());
-                } catch (Throwable ignored) {
-                    return null; // should never happen
-                }
-            }
-        });
-        out1.andFinallyConsume(o ->
-            assertEquals(4L, (long)o.getOrNull()));
-    }
-
-    private Completes<Outcome<Exception, Integer>> addsOne(Integer x) {
-        return Completes.withSuccess(Success.of(x + 1));
-    }
-
-    private Completes<Outcome<Exception, Integer>> addsTwo(Integer x) {
-        return Completes.withSuccess(Success.of(x + 2));
-    }
-
-    @Test
-    public void withTransformerExample() throws Exception {
-        CompletesOutcome<Exception, Integer> out0 =
-            new CompletesOutcome<>(addsOne(1));
-        CompletesOutcome<Exception, Integer> out1 = out0.andThenTo(i ->
-            new CompletesOutcome<>(addsTwo(i)));
-        out1.value().andFinallyConsume(o ->
-            assertEquals(4L, (long)o.getOrNull()));
-    }
-
-    static class CompletesOutcome<E extends Throwable, T> {
-        private final Completes<Outcome<E, T>> value;
-
-        public CompletesOutcome(Completes<Outcome<E, T>> value) {
-            this.value = value;
-        }
-
-        public <O> CompletesOutcome<E, O> andThen(Function<T, O> function) {
-            return new CompletesOutcome<>(
-                value.andThen(outcome ->
-                    outcome.andThen(function)));
-        }
-
-        public <O> CompletesOutcome<E, O> andThenTo(Function<T, CompletesOutcome<E, O>> function) {
-            return new CompletesOutcome<>(value.andThenTo(outcome -> {
-                if (outcome instanceof Failure) {
-                    return Completes.withSuccess(outcome.andThenTo(null));
-                }
-                else {
-                    try {
-                        return function.apply(outcome.get()).value();
-                    } catch (Throwable ignored) {
-                        return null; // should never happen
-                    }
-                }
-            }));
-        }
-
-        public Completes<Outcome<E, T>> value() {
-            return value;
-        }
     }
 }

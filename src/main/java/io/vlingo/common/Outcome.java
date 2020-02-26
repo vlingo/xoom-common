@@ -13,10 +13,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * Represents a outcome of a process that can fail with an unexpected exception. Outcomes can be
- * mapped and composed safely, converted to Java standard Optional, to null and to a vlingo Completes.
+ * Represents the outcome of a process that can fail in an expected way. Outcomes can be
+ * mapped and composed safely, converted to Java standard Optional, to null or to a vlingo Completes.
  *
- * @param <FailureT> Type of an unexpected exception.
+ * @param <FailureT> Type of expected error.
  * @param <SuccessT> Type of expected value.
  */
 public interface Outcome<FailureT extends Throwable, SuccessT> {
@@ -143,7 +143,7 @@ public interface Outcome<FailureT extends Throwable, SuccessT> {
      * Maps a failed outcome to another failed outcome.
      *
      * @param action the function to map a failed outcome to another failed outcome
-     * @param <NextFailureT> the type of the next falure
+     * @param <NextFailureT> the type of the next failure
      * @return The new failed outcome
      */
     <NextFailureT extends Throwable>
