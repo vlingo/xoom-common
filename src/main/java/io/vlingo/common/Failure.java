@@ -60,6 +60,10 @@ public class Failure<CauseT extends Throwable, ValueT> implements Outcome<CauseT
         return null;
     }
 
+    public CauseT cause() {
+        return cause;
+    }
+
     @Override
     public <NextSuccessT> NextSuccessT resolve(final Function<CauseT, NextSuccessT> onFailedOutcome, final Function<ValueT, NextSuccessT> onSuccessfulOutcome) {
         return onFailedOutcome.apply(cause);
