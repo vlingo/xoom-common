@@ -176,6 +176,11 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   @Override
+  public void failed(final Exception exception) {
+    state.handleException(exception);
+  }
+
+  @Override
   public boolean hasOutcome() {
     return state.hasOutcome();
   }

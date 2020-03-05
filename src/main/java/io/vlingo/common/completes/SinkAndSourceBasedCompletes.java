@@ -216,6 +216,11 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
+    public void failed(final Exception exception) {
+      source.emitError(exception);
+    }
+
+    @Override
     public boolean hasOutcome() {
         return sink.hasOutcome();
     }

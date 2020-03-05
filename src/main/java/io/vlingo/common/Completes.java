@@ -463,6 +463,11 @@ public interface Completes<T> {
   void failed();
 
   /**
+   * Cause this {@code Completes<T>} to fail with {@code exception}, unless it has already completed.
+   */
+  void failed(final Exception exception);
+
+  /**
    * Answer whether or not this {@code Completes<T>} has an available outcome,
    * which will be true for either success or failure.
    * @return boolean
