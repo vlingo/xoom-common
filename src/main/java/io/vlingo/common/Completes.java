@@ -464,6 +464,7 @@ public interface Completes<T> {
 
   /**
    * Cause this {@code Completes<T>} to fail with {@code exception}, unless it has already completed.
+   * @param exception the Exception the caused the failure
    */
   void failed(final Exception exception);
 
