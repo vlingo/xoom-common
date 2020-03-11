@@ -193,6 +193,12 @@ public interface Completes<T> {
     return repeatableWithFailure(null);
   }
 
+  static <E extends Throwable, A> Completes<Outcome<E, A>> interchange(final Outcome<E, Completes<A>> outcome) {
+    return outcome.resolve(
+        e -> Completes.withSuccess(Failure.of(e)),
+        s -> s.andThen(Success::of));
+  }
+
   /**
    * Answer the {@code Completes<O>} instance after registering the {@code function} to be used to
    * apply the value of type {@code O} when it is available, along with the {@code timeout} and
