@@ -221,11 +221,11 @@ public class BasicCompletesTest {
   }
 
   @Test
-  public void testInterchangeWithFailedOutcome() throws InterruptedException {
+  public void testInvertWithFailedOutcome() throws InterruptedException {
     final Outcome<RuntimeException, Completes<String>> failed = Failure.of(new RuntimeException("boom"));
-    Completes<Outcome<RuntimeException, String>> interchange = Completes.interchange(failed);
+    Completes<Outcome<RuntimeException, String>> inverted = Completes.invert(failed);
     CountDownLatch latch = new CountDownLatch(1);
-    interchange.andThenConsume(outcome -> {
+    inverted.andThenConsume(outcome -> {
       assertTrue("was not Failure", outcome instanceof Failure);
       assertNull("was not null", outcome.getOrNull());
       assertEquals("was not the expected error message", "boom", outcome.otherwise(Throwable::getMessage).get());
@@ -235,11 +235,11 @@ public class BasicCompletesTest {
   }
 
   @Test
-  public void testInterchangeWithSuccessOutcomeOfSuccessCompletes() throws InterruptedException {
+  public void testInvertWithSuccessOutcomeOfSuccessCompletes() throws InterruptedException {
     final Outcome<RuntimeException, Completes<String>> success = Success.of(Completes.withSuccess("YAY"));
-    Completes<Outcome<RuntimeException, String>> interchange = Completes.interchange(success);
+    Completes<Outcome<RuntimeException, String>> inverted = Completes.invert(success);
     CountDownLatch latch = new CountDownLatch(1);
-    interchange.andThenConsume(outcome -> {
+    inverted.andThenConsume(outcome -> {
       assertTrue("was not Success", outcome instanceof Success);
       assertNotNull("was null", outcome.getOrNull());
       assertEquals("was not the expected value", "YAY", outcome.get());
@@ -249,15 +249,14 @@ public class BasicCompletesTest {
   }
 
   @Test
-  public void testInterchangeWithSuccessOutcomeOfFailedCompletes() throws InterruptedException {
+  public void testInvertWithSuccessOutcomeOfFailedCompletes() throws InterruptedException {
     final Outcome<RuntimeException, Completes<String>> successfulFailure = Success.of(Completes.withFailure("ERROR"));
-    Completes<Outcome<RuntimeException, String>> interchange = Completes.interchange(successfulFailure);
-    assertTrue("hasn't failed", interchange.hasFailed());
+    Completes<Outcome<RuntimeException, String>> inverted = Completes.invert(successfulFailure);
+    assertTrue("hasn't failed", inverted.hasFailed());
     CountDownLatch latch = new CountDownLatch(1);
-    interchange.andThenConsume(outcome -> latch.countDown());
+    inverted.andThenConsume(outcome -> latch.countDown());
     assertFalse("din't timeout", latch.await(1, TimeUnit.MILLISECONDS));
   }
-
   
   private class Holder {
     private void hold(final Integer value) {

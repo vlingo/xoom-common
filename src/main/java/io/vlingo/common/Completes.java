@@ -193,7 +193,16 @@ public interface Completes<T> {
     return repeatableWithFailure(null);
   }
 
-  static <E extends Throwable, A> Completes<Outcome<E, A>> interchange(final Outcome<E, Completes<A>> outcome) {
+  /**
+   * Inverts an {@code Outcome} of {@code Completes}
+   * to a {@code Completes} of {@code Outcome}.
+   *
+   * @param outcome
+   * @param <E> the type of the Failure
+   * @param <A> the type of the Success
+   * @return
+   */
+  static <E extends Throwable, A> Completes<Outcome<E, A>> invert(final Outcome<E, Completes<A>> outcome) {
     return outcome.resolve(
         e -> Completes.withSuccess(Failure.of(e)),
         s -> s.andThen(Success::of));
