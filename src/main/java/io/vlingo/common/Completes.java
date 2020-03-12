@@ -194,6 +194,21 @@ public interface Completes<T> {
   }
 
   /**
+   * Inverts an {@code Outcome} of {@code Completes}
+   * to a {@code Completes} of {@code Outcome}.
+   *
+   * @param outcome
+   * @param <E> the type of the Failure
+   * @param <A> the type of the Success
+   * @return
+   */
+  static <E extends Throwable, A> Completes<Outcome<E, A>> invert(final Outcome<E, Completes<A>> outcome) {
+    return outcome.resolve(
+        e -> Completes.withSuccess(Failure.of(e)),
+        s -> s.andThen(Success::of));
+  }
+
+  /**
    * Answer the {@code Completes<O>} instance after registering the {@code function} to be used to
    * apply the value of type {@code O} when it is available, along with the {@code timeout} and
    * {@code failedOutcomeValue}. Note that failure is different from exceptional outcomes,

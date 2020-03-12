@@ -7,12 +7,12 @@
 
 package io.vlingo.common;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Test;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.*;
 
 public class BasicCompletesTest {
   private Integer andThenValue;
@@ -220,6 +220,44 @@ public class BasicCompletesTest {
     assertEquals(new Integer(5), completed);
   }
 
+  @Test
+  public void testInvertWithFailedOutcome() throws InterruptedException {
+    final Outcome<RuntimeException, Completes<String>> failed = Failure.of(new RuntimeException("boom"));
+    Completes<Outcome<RuntimeException, String>> inverted = Completes.invert(failed);
+    CountDownLatch latch = new CountDownLatch(1);
+    inverted.andThenConsume(outcome -> {
+      assertTrue("was not Failure", outcome instanceof Failure);
+      assertNull("was not null", outcome.getOrNull());
+      assertEquals("was not the expected error message", "boom", outcome.otherwise(Throwable::getMessage).get());
+      latch.countDown();
+    });
+    assertTrue("timed out", latch.await(1, TimeUnit.SECONDS));
+  }
+
+  @Test
+  public void testInvertWithSuccessOutcomeOfSuccessCompletes() throws InterruptedException {
+    final Outcome<RuntimeException, Completes<String>> success = Success.of(Completes.withSuccess("YAY"));
+    Completes<Outcome<RuntimeException, String>> inverted = Completes.invert(success);
+    CountDownLatch latch = new CountDownLatch(1);
+    inverted.andThenConsume(outcome -> {
+      assertTrue("was not Success", outcome instanceof Success);
+      assertNotNull("was null", outcome.getOrNull());
+      assertEquals("was not the expected value", "YAY", outcome.get());
+      latch.countDown();
+    });
+    assertTrue("timed out", latch.await(1, TimeUnit.SECONDS));
+  }
+
+  @Test
+  public void testInvertWithSuccessOutcomeOfFailedCompletes() throws InterruptedException {
+    final Outcome<RuntimeException, Completes<String>> successfulFailure = Success.of(Completes.withFailure("ERROR"));
+    Completes<Outcome<RuntimeException, String>> inverted = Completes.invert(successfulFailure);
+    assertTrue("hasn't failed", inverted.hasFailed());
+    CountDownLatch latch = new CountDownLatch(1);
+    inverted.andThenConsume(outcome -> latch.countDown());
+    assertFalse("din't timeout", latch.await(1, TimeUnit.MILLISECONDS));
+  }
+  
   private class Holder {
     private void hold(final Integer value) {
       andThenValue = value;
