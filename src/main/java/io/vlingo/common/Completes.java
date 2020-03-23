@@ -197,10 +197,10 @@ public interface Completes<T> {
    * Inverts an {@code Outcome} of {@code Completes}
    * to a {@code Completes} of {@code Outcome}.
    *
-   * @param outcome
+   * @param outcome the {@code Outcome<E, Completes<A>>} that will be inverted
    * @param <E> the type of the Failure
    * @param <A> the type of the Success
-   * @return
+   * @return {@code Completes<Outcome<E, A>>}
    */
   static <E extends Throwable, A> Completes<Outcome<E, A>> invert(final Outcome<E, Completes<A>> outcome) {
     return outcome.resolve(
@@ -504,6 +504,29 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   Completes<T> repeat();
+
+  /**
+   * Answer myself after registering the {@code timeout}.
+   * <p>
+   * WARNING: If you use this method along with {@code useFailedOutcomeOf(F)}, you must
+   * use this one after to register the {@code timeout} threshold. Otherwise the timeout
+   * may occur prior to knowing the proper {@code failedOutcomeValue} to set.
+   * @param timeout the long number of milliseconds until this {@code Completes<T>} is considered timed out
+   * @return {@code Completes<T>}
+   */
+  Completes<T> timeoutWithin(final long timeout);
+
+  /**
+   * Answer myself after registering the {@code failedOutcomeValue}.
+   * <p>
+   * WARNING: If you use this method along with {@code timeoutWithin(long)}, you must
+   * use this one first to register the {@code failedOutcomeValue}. Otherwise the timeout
+   * may occur prior to knowing the proper {@code failedOutcomeValue} to set.
+   * @param failedOutcomeValue the F outcome to use when a failure occurs
+   * @param <F> the type of the failedOutcomeValue
+   * @return {@code Completes<T>}
+   */
+  <F> Completes<T> useFailedOutcomeOf(final F failedOutcomeValue);
 
   /**
    * Answer myself after setting my {@code outcome}. This should normally be used only
