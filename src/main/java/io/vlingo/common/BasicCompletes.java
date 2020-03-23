@@ -196,6 +196,18 @@ public class BasicCompletes<T> implements Completes<T> {
   }
 
   @Override
+  public Completes<T> timeoutWithin(final long timeout) {
+    state.startTimer(timeout);
+    return this;
+  }
+
+  @Override
+  public <F> Completes<T> useFailedOutcomeOf(final F failedOutcomeValue) {
+    state.failedValue(failedOutcomeValue);
+    return this;
+  }
+
+  @Override
   @SuppressWarnings("unchecked")
   public <O> Completes<O> with(final O outcome) {
     if (!state.handleFailure((T) outcome)) {
@@ -697,7 +709,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
     @Override
     public void startTimer(final long timeout) {
-      if (timeout > 0 && scheduler != null) {
+      if (timeout > 0 && scheduler != null && cancellable == null) {
         // 2L delayBefore prevents timeout until after return from here
         cancellable = scheduler.scheduleOnce(this, null, 2L, timeout);
       }
