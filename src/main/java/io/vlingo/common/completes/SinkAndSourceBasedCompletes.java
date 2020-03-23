@@ -237,6 +237,18 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
+    public Completes<T> timeoutWithin(final long timeout) {
+      // TODO: Implement
+      return this;
+    }
+
+    @Override
+    public <F> Completes<T> useFailedOutcomeOf(final F failedOutcomeValue) {
+      // TODO: Implement
+      return this;
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public <O> Completes<O> andFinally() {
       return andFinally(value -> (O) value);
