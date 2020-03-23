@@ -7,12 +7,17 @@
 
 package io.vlingo.common;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class BasicCompletesTest {
   private Integer andThenValue;
@@ -150,6 +155,26 @@ public class BasicCompletesTest {
   }
 
   @Test
+  public void testThatFluentTimeoutWithNonNullFailureTimesout() throws Exception {
+    final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
+
+    completes
+      .useFailedOutcomeOf(new Integer(-100))
+      .timeoutWithin(1)
+      .andThen(value -> 2 * value)
+      .otherwise(failedValue -> failedValue.intValue() - 100);
+
+    Thread.sleep(100);
+
+    completes.with(5);
+
+    final Integer failureOutcome = completes.await();
+
+    assertTrue(completes.hasFailed());
+    assertEquals(new Integer(-200), failureOutcome);
+  }
+
+  @Test
   public void testThatExceptionOutcomeFails() {
     final Completes<Integer> completes = new BasicCompletes<>(new Scheduler());
 
@@ -257,7 +282,7 @@ public class BasicCompletesTest {
     inverted.andThenConsume(outcome -> latch.countDown());
     assertFalse("din't timeout", latch.await(1, TimeUnit.MILLISECONDS));
   }
-  
+
   private class Holder {
     private void hold(final Integer value) {
       andThenValue = value;
