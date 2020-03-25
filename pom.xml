@@ -103,6 +103,14 @@
       <version>2.4</version>
     </dependency>
   </dependencies>
+
+  <repositories>
+    <repository>
+      <id>jcenter</id>
+      <url>https://jcenter.bintray.com/</url>
+    </repository>
+  </repositories>
+
   <distributionManagement>
     <repository>
       <id>bintray-vlingo-vlingo-platform-java</id>
