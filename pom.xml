@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.vlingo</groupId>
   <artifactId>vlingo-common</artifactId>
-  <version>1.2.9</version>
+  <version>1.2.10-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>vlingo-common</name>
   <description>These are just a few common tools shared across various vlingo projects.</description>
@@ -109,13 +109,29 @@
       <id>jcenter</id>
       <url>https://jcenter.bintray.com/</url>
     </repository>
+
+    <repository>
+      <id>oss-jfrog-snapshot</id>
+      <url>https://oss.jfrog.org/artifactory/oss-snapshot-local</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
   </repositories>
 
   <distributionManagement>
     <repository>
-      <id>bintray-vlingo-vlingo-platform-java</id>
+      <id>bintray-deploy</id>
       <name>vlingo-vlingo-platform-java</name>
       <url>https://api.bintray.com/maven/vlingo/vlingo-platform-java/vlingo-common/;publish=1</url>
     </repository>
+
+    <snapshotRepository>
+      <id>oss-jfrog-snapshot-deploy</id>
+      <url>https://oss.jfrog.org/artifactory/oss-snapshot-local</url>
+    </snapshotRepository>
   </distributionManagement>
 </project>
