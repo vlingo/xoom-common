@@ -11,9 +11,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import io.vlingo.common.Completes;
-import io.vlingo.common.RepeatableCompletes;
-
 public class RepeatableCompletesTest {
   private Integer andThenValue;
 
@@ -25,7 +22,7 @@ public class RepeatableCompletesTest {
       .andThen((value) -> value * 2)
       .andThen((Integer value) -> andThenValue = value)
       .repeat();
-    
+
     completes.with(5);
     assertEquals(new Integer(10), andThenValue);
     completes.with(10);
