@@ -388,10 +388,11 @@ public interface Completes<T> {
   /**
    * Answer the {@code Completes<T>} after registering the {@code function} to be used to
    * apply the failure outcome if such occurs.
-   * @param function the {@code Function<T,T>} to receive the {@code Completes<T>} of the async operation and to produce the {@code Completes<T>} of the next operation
+   * @param function the {@code Function<E,T>} to receive the {@code Completes<T>} of the async operation and to produce the {@code Completes<T>} of the next operation
+   * @param <E> the expected error type
    * @return {@code Completes<T>}
    */
-  Completes<T> otherwise(final Function<T,T> function);
+  <E> Completes<T> otherwise(final Function<E,T> function);
 
   /**
    * Answer the {@code Completes<T>} after registering the {@code consumer} to be used to
