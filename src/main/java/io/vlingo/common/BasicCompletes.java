@@ -113,20 +113,11 @@ public class BasicCompletes<T> implements Completes<T> {
   public <F,O> O andThenTo(final long timeout, final F failedOutcomeValue, final Function<T, O> function) {
     debug("ATT FV3: " + state.id() + ": " + failedOutcomeValue);
 
-    // don't assume nested
-    if (state.isExecutable()) {
-      debug("ATT FV3 NESTING: " + state.id());
+    debug("ATT FV3 NESTING: " + state.id());
 
-      final BasicCompletes<O> nestedCompletes = new BasicCompletes<>((BasicActiveState<O>) state, false);
-      state.registerWithExecution((Action<T>) Action.with(function, nestedCompletes), timeout, state);
-      return (O) nestedCompletes;
-    } else {
-      debug("ATT FV3 FLAT: "  + state.id());
-
-      state.failedValue(failedOutcomeValue);
-      state.registerWithExecution(Action.with(function), timeout, state);
-      return (O) this;
-    }
+    final BasicCompletes<O> nestedCompletes = new BasicCompletes<>((BasicActiveState<O>) state, false);
+    state.registerWithExecution((Action<T>) Action.with(function, nestedCompletes), timeout, state);
+    return (O) nestedCompletes;
   }
 
   @Override
