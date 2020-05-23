@@ -151,8 +151,9 @@ public class SinkAndSourceBasedCompletes<T> implements Completes<T> {
     }
 
     @Override
-    public Completes<T> otherwise(Function<T, T> function) {
-        Operation<T, T> otherwise = new Otherwise<>(function);
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public <E> Completes<T> otherwise(Function<E, T> function) {
+        Operation<T, T> otherwise = new Otherwise(function);
         currentOperation.subscribe(otherwise);
         otherwise.subscribe(sink);
 
