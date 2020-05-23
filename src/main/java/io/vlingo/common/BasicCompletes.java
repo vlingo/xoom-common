@@ -7,24 +7,29 @@
 
 package io.vlingo.common;
 
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class BasicCompletes<T> implements Completes<T> {
+  private static boolean DEBUG = false;
+
   protected final ActiveState<T> state;
 
   public BasicCompletes(final Scheduler scheduler) {
-    this(new BasicActiveState<T>(scheduler));
+    this(new BasicActiveState<T>(scheduler), true);
   }
 
   public BasicCompletes(final Scheduler scheduler, ActiveState<T> parent) {
-    this(new BasicActiveState<T>(scheduler, parent));
+    this(new BasicActiveState<T>(scheduler, parent), true);
   }
 
   public BasicCompletes(final T outcome, final boolean succeeded) {
@@ -57,6 +62,7 @@ public class BasicCompletes<T> implements Completes<T> {
   @Override
   @SuppressWarnings("unchecked")
   public <O> Completes<O> andThen(final long timeout, final O failedOutcomeValue, final Function<T,O> function) {
+    debug("AT3-TO-FO-FN: " + state.id() + ": " + failedOutcomeValue);
     state.failedValue(failedOutcomeValue);
     state.registerWithExecution(Action.with(function), timeout, state);
     return (Completes<O>) this;
@@ -64,16 +70,19 @@ public class BasicCompletes<T> implements Completes<T> {
 
   @Override
   public <O> Completes<O> andThen(final O failedOutcomeValue, final Function<T,O> function) {
+    debug("AT2-FO-FN: " + state.id() + ": " + failedOutcomeValue);
     return andThen(-1L, failedOutcomeValue, function);
   }
 
   @Override
   public <O> Completes<O> andThen(final long timeout, final Function<T,O> function) {
+    debug("AT2-TO-FN: " + state.id());
     return andThen(timeout, null, function);
   }
 
   @Override
   public <O> Completes<O> andThen(final Function<T,O> function) {
+    debug("AT1-FN: " + state.id());
     return andThen(-1L, null, function);
   }
 
@@ -102,32 +111,47 @@ public class BasicCompletes<T> implements Completes<T> {
   @Override
   @SuppressWarnings("unchecked")
   public <F,O> O andThenTo(final long timeout, final F failedOutcomeValue, final Function<T, O> function) {
-    final BasicCompletes<O> nestedCompletes = new BasicCompletes<>(state.scheduler(), (ActiveState<O>) state);
-    nestedCompletes.state.failedValue(failedOutcomeValue);
-    nestedCompletes.state.failureAction((Action<O>) state.failureActionFunction());
-    state.registerWithExecution((Action<T>) Action.with(function, nestedCompletes), timeout, state);
-    return (O) nestedCompletes;
+    debug("ATT FV3: " + state.id() + ": " + failedOutcomeValue);
+
+    // don't assume nested
+    if (state.isExecutable()) {
+      debug("ATT FV3 NESTING: " + state.id());
+
+      final BasicCompletes<O> nestedCompletes = new BasicCompletes<>((BasicActiveState<O>) state, false);
+      state.registerWithExecution((Action<T>) Action.with(function, nestedCompletes), timeout, state);
+      return (O) nestedCompletes;
+    } else {
+      debug("ATT FV3 FLAT: "  + state.id());
+
+      state.failedValue(failedOutcomeValue);
+      state.registerWithExecution(Action.with(function), timeout, state);
+      return (O) this;
+    }
   }
 
   @Override
   public <F,O> O andThenTo(final F failedOutcomeValue, final Function<T,O> function) {
+    debug("ATT2-FO-FN FV2: " + state.id() + ": " + failedOutcomeValue);
     return andThenTo(-1, failedOutcomeValue, function);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public <O> O andThenTo(final long timeout, final Function<T,O> function) {
+    debug("ATT2-TO-FN FV: " + state.id());
     return andThenTo(timeout, (O) BasicActiveState.UnfailedValue, function);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public <O> O andThenTo(final Function<T,O> function) {
+    debug("ATT1-FN: " + state.id());
     return andThenTo(-1, (O) BasicActiveState.UnfailedValue, function);
   }
 
   @Override
-  public Completes<T> otherwise(final Function<T,T> function) {
+  public <E> Completes<T> otherwise(final Function<E,T> function) {
+    debug("OW-FN: " + state.id() + ": " + printLimitedTrace(new Exception(), 7));
     state.failureAction(Action.with(function));
     return this;
   }
@@ -211,8 +235,9 @@ public class BasicCompletes<T> implements Completes<T> {
   @SuppressWarnings("unchecked")
   public <O> Completes<O> with(final O outcome) {
     if (!state.handleFailure((T) outcome)) {
+      debug("SUCCEESS WITH: " + state.id() + " :" + outcome);
       state.completedWith((T) outcome);
-    }
+    } else debug("FAILED WITH: " + outcome);
 
     return (Completes<O>) this;
   }
@@ -233,8 +258,25 @@ public class BasicCompletes<T> implements Completes<T> {
     andThenConsume(consumer);
   }
 
-  private BasicCompletes(final BasicActiveState<T> parent) {
-    this.state = new BasicActiveState<T>(parent.scheduler(), parent);
+  private BasicCompletes(final BasicActiveState<T> parent, final boolean root) {
+    if (root) {
+      this.state = parent;
+    } else {
+      this.state = new BasicActiveState<T>(parent.scheduler(), parent);
+    }
+  }
+
+  private static void debug(final String message) {
+    if (DEBUG) System.out.println(message);
+  }
+
+  private static String printLimitedTrace(final Exception exception, final int levels) {
+    final StringBuilder builder = new StringBuilder();
+    final StackTraceElement[] trace = exception.getStackTrace();
+    for (int idx = 0; idx < levels && idx < trace.length; ++idx) {
+      builder.append("\n").append("TRACE: ").append(idx+1).append(": ").append(trace[idx]);
+    }
+    return builder.toString();
   }
 
   protected static class Action<T> {
@@ -320,20 +362,25 @@ public class BasicCompletes<T> implements Completes<T> {
     boolean await(final long timeout);
     void backUp(final Action<T> action);
     void cancelTimer();
+    ActiveState<T> child();
+    void child(final ActiveState<T> child);
     void completedWith(final T outcome);
     boolean executeFailureAction();
+    boolean isExecutable();
     boolean hasFailed();
     void failed();
     <F> void failedValue(final F failedOutcomeValue);
     T failedValue();
     void failureAction(final Action<T> action);
-    Action<T> failureActionFunction();
+    List<Action<T>> failureActions();
+    void failureActions(final List<Action<T>> actions);
     boolean handleFailure(final T outcome);
     void exceptionAction(final Function<Exception,T> function);
     void handleException();
     void handleException(final Exception e);
     boolean hasException();
     boolean hasOutcome();
+    String id();
     void outcome(final T outcome);
     <O> O outcome();
     boolean isOutcomeKnown();
@@ -342,6 +389,7 @@ public class BasicCompletes<T> implements Completes<T> {
     void registerWithExecution(final Action<T> action, final long timeout, final ActiveState<T> state);
     boolean isRepeatable();
     void repeat();
+    <F> boolean replaceFailedOutcomeValue(F nextFailedOutcomeValue);
     void restore();
     void restore(final Action<T> action);
     Scheduler scheduler();
@@ -352,11 +400,13 @@ public class BasicCompletes<T> implements Completes<T> {
     private AtomicBoolean accessible;
     private Queue<Action<T>> actions;
     private AtomicBoolean readyToExecute;
+    private AtomicBoolean wasExecutable;
 
     Executables() {
       this.accessible = new AtomicBoolean(false);
       this.actions = new ConcurrentLinkedQueue<>();
       this.readyToExecute = new AtomicBoolean(false);
+      this.wasExecutable = new AtomicBoolean(false);
     }
 
     int count() {
@@ -367,6 +417,7 @@ public class BasicCompletes<T> implements Completes<T> {
       while (true) {
         if (accessible.compareAndSet(false, true)) {
           readyToExecute.set(true);
+          wasExecutable.set(true);
           executeActions(state);
           accessible.set(false);
           break;
@@ -441,16 +492,21 @@ public class BasicCompletes<T> implements Completes<T> {
         }
       }
     }
+
+    boolean wasExecutable() {
+      return wasExecutable.get();
+    }
   }
 
   protected static class BasicActiveState<T> implements ActiveState<T>, Scheduled<Object> {
     private static final Object UnfailedValue = new Object();
 
     private Cancellable cancellable;
+    private ActiveState<T> child;
     private final Executables<T> executables;
     private final AtomicBoolean failed;
     private AtomicReference<T> failedOutcomeValue;
-    private Action<T> failureAction;
+    private final List<Action<T>> failureActions;
     private AtomicReference<Exception> exception;
     private Function<Exception,?> exceptionAction;
     private final AtomicReference<Object> outcome;
@@ -459,18 +515,65 @@ public class BasicCompletes<T> implements Completes<T> {
     private Scheduler scheduler;
     private final AtomicBoolean timedOut;
 
-    @SuppressWarnings("unchecked")
     protected BasicActiveState(final Scheduler scheduler, final ActiveState<T> parent) {
       this.scheduler = scheduler;
       this.parent = parent;
       this.executables = new Executables<>();
-      this.failed = new AtomicBoolean(false);
-      this.failedOutcomeValue = new AtomicReference<>((T) UnfailedValue);
+      this.failed = isFailed(parent);
+      this.failedOutcomeValue = failedValueOf(parent);
+      this.failureActions = failureActions(parent);
       this.exception = new AtomicReference<>(null);
       this.exceptionAction = (e) -> null;
       this.outcome = new AtomicReference<>(null);
       this.outcomeKnown = new CountDownLatch(1);
       this.timedOut = new AtomicBoolean(false);
+
+      this.id = id(parent);
+
+      if (parent != null) {
+        parent.child(this);
+      }
+
+      debug("BAS NEW: " + id() + ": " + printLimitedTrace(new Exception(), 10));
+    }
+
+    private List<Action<T>> failureActions(final ActiveState<T> parent) {
+      if (parent != null) {
+        return new CopyOnWriteArrayList<>(parent.failureActions());
+      }
+      return new CopyOnWriteArrayList<>();
+    }
+
+    @SuppressWarnings("unchecked")
+    private AtomicReference<T> failedValueOf(final ActiveState<T> parent) {
+      if (parent != null && parent.hasFailed()) {
+        new AtomicReference<>(parent.failedValue());
+      }
+      return new AtomicReference<>((T) UnfailedValue);
+    }
+
+    private AtomicBoolean isFailed(final ActiveState<T> parent) {
+      if (parent != null && parent.hasFailed()) {
+        return new AtomicBoolean(true);
+      }
+      return new AtomicBoolean(false);
+    }
+
+    static final AtomicInteger nextId = new AtomicInteger(0);
+    final String id;
+    int nextChildId = 1;
+
+    @Override
+    public String id() {
+      return id;
+    }
+    private String id(final ActiveState<T> parent) {
+      if (parent != null) {
+        BasicActiveState<T> bs = (BasicActiveState<T>) parent;
+        final int childId = bs.nextChildId++;
+        return bs.id + "." + childId;
+      }
+      return "" + nextId.incrementAndGet();
     }
 
     protected BasicActiveState(final Scheduler scheduler) {
@@ -513,6 +616,16 @@ public class BasicCompletes<T> implements Completes<T> {
     }
 
     @Override
+    public ActiveState<T> child() {
+      return child;
+    }
+
+    @Override
+    public void child(final ActiveState<T> child) {
+      this.child = child;
+    }
+
+    @Override
     public void completedWith(final T outcome) {
       cancelTimer();
 
@@ -528,21 +641,55 @@ public class BasicCompletes<T> implements Completes<T> {
     @Override
     @SuppressWarnings("unchecked")
     public boolean executeFailureAction() {
-      if (failureAction != null) {
-        final Action<T> executeFailureAction = failureAction;
-        failureAction = null;
-        failed.set(true);
-        if (executeFailureAction.isConsumer()) {
-          executeFailureAction.asConsumer().accept((T) outcome.get());
-        } else {
-          outcome.set(executeFailureAction.asFunction().apply((T) outcome.get()));
+      boolean executed = false;
+      debug("EXEC-FA-1: " + id() + ": " + printLimitedTrace(new Exception(), 10));
+      for (int idx = 0; idx < failureActions.size(); ) {
+        final Action<T> failureAction = failureActions.get(idx++);
+        if (failureAction != null) {
+          debug("EXEC-FA-1.1: " + id);
+          final Action<T> executeFailureAction = failureAction;
+          failed.set(true);
+          try {
+            if (executeFailureAction.isConsumer()) {
+              debug("EXEC-FA-C1.1.1-BEGIN: " + id);
+              executeFailureAction.asConsumer().accept((T) outcome.get());
+              debug("EXEC-FA-C1.1.1-END: " + id);
+            } else {
+              debug("EXEC-FA-F1.1.2-BEGIN: " + id);
+              outcome.set(executeFailureAction.asFunction().apply((T) outcome.get()));
+              debug("EXEC-FA-F1.1.2-END: " + id);
+            }
+            executed = true;
+          } catch (Throwable t) {
+            // ignore and iterate
+            debug("EXEC-FA-F1.1.3-EXECEPTION: " + id + ": CONTINUING");
+          }
         }
-        return true;
-      } else if (parent != null) {
-        // bubble up
-        return parent.handleFailure(failedValue());
+//        if (parent != null) {
+//          debug("EXEC-FA-1.2: DELEGATE TO PARENT: " + id);
+//          // bubble up
+//          return parent.handleFailure(failedValue());
+//        }
       }
-      return false;
+
+      if (!executed && child != null) {
+        debug("EXEC-FA-1.2.1: DELEGATE TO CHILD: " + id);
+        final Object failedOutcome = outcome.get();
+        child.failedValue(failedOutcome);
+        if (child.handleFailure((T) failedOutcome)) {
+          debug("EXEC-FA-1.2.2: CHILD HANDLED FOR: " + id);
+          return true;
+        }
+      }
+
+      debug("EFA-1.3: " + id + ": ACTION: " + executed);
+      return executed;
+    }
+
+    @Override
+    public boolean isExecutable() {
+      debug("EXECUTABLE: " + id + ": " + executables.wasExecutable());
+      return executables.hasAction() || executables.wasExecutable();
     }
 
     @Override
@@ -560,6 +707,7 @@ public class BasicCompletes<T> implements Completes<T> {
     public <F> void failedValue(final F failedOutcomeValue) {
       final T failureValue = this.failedOutcomeValue.get();
       if (failedOutcomeValue == null && failureValue != null && failureValue != UnfailedValue) {
+        debug("FAILED VALUE: NOT SETTING: " + id + ": " + failedOutcomeValue);
         return;
       }
       this.failedOutcomeValue.set((T) failedOutcomeValue);
@@ -572,27 +720,43 @@ public class BasicCompletes<T> implements Completes<T> {
 
     @Override
     public void failureAction(final Action<T> action) {
-      this.failureAction = action;
+      debug("FAILURE ACTION: " + id() + (action == null ? ": NULL" : ": FN()") + ": "
+              + printLimitedTrace(new Exception(), 10));
+      this.failureActions.add(action);
+      debug("FAILURE-ACTION REGISTERED: " + id + ": TO: " + action + ": TOTAL: " + this.failureActions.size());
       if (isOutcomeKnown() && hasFailed()) {
+        debug("FAILURE-ACTION EXECUTING: " + id);
         executeFailureAction();
+      } else {
+        debug("FAILURE-ACTION: " + id + ": NOT EXECUTING: OUTCOME? " + isOutcomeKnown() + " FAILED? " + hasFailed());
       }
     }
 
     @Override
-    public Action<T> failureActionFunction() {
-      return failureAction;
+    public List<Action<T>> failureActions() {
+      return failureActions;
+    }
+
+    @Override
+    public void failureActions(final List<Action<T>> actions) {
+      this.failureActions.addAll(actions);
     }
 
     @Override
     public boolean handleFailure(final T outcome) {
       if (isOutcomeKnown() && hasFailed()) {
+        debug("FV-ALREADY: " + id() + ": " + printLimitedTrace(new Exception(), 10));
         return true; // already reached below
       }
       final T tempFailureOutcomeValue = failedOutcomeValue.get();
+      debug("FV: " + id + " FV: (" + tempFailureOutcomeValue + ") O: (" + outcome + ") FVSTD: " + BasicActiveState.UnfailedValue
+              + printLimitedTrace(new Exception(), 10));
       boolean handle = false;
       if (outcome == tempFailureOutcomeValue) {
+        debug("FV==: " + id);
         handle = true;
       } else if (outcome != null && tempFailureOutcomeValue != null && tempFailureOutcomeValue.equals(outcome)) {
+        debug("FVEQ: " + id);
         handle = true;
       }
       if (handle) {
@@ -630,7 +794,7 @@ public class BasicCompletes<T> implements Completes<T> {
         // bubble up
         parent.handleException(e);
       } else {
-        System.out.println("[WARN] Exception doesn't have (yet?) appropriate exceptionAction specified!" +
+        debug("[WARN] Exception doesn't have (yet?) appropriate exceptionAction specified!" +
                 " Exception type: " + e.getClass().getName() + "." +
                 " Exception message: " + e.getMessage() + "." +
                 " Exception thrown from: " + e.getStackTrace()[0].toString());
@@ -693,6 +857,15 @@ public class BasicCompletes<T> implements Completes<T> {
     }
 
     @Override
+    public <F> boolean replaceFailedOutcomeValue(final F failedOutcomeValue) {
+      if (failedValue() == UnfailedValue) {
+        failedValue(failedOutcomeValue);
+        return true;
+      }
+      return false;
+    }
+
+    @Override
     public void restore() {
       // unused; see RepeatableCompletes
     }
@@ -729,7 +902,7 @@ public class BasicCompletes<T> implements Completes<T> {
 
     @Override
     public String toString() {
-      return "BasicActiveState[actions=" + executables.count() + "]";
+      return "BasicActiveState[id= " + id + "actions=" + executables.count() + "]";
     }
   }
 }
