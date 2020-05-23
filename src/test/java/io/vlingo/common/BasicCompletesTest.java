@@ -162,7 +162,7 @@ public class BasicCompletesTest {
       .useFailedOutcomeOf(new Integer(-100))
       .timeoutWithin(1)
       .andThen(value -> 2 * value)
-      .otherwise(failedValue -> failedValue.intValue() - 100);
+      .otherwise((Integer failedValue) -> failedValue.intValue() - 100);
 
     Thread.sleep(100);
 
