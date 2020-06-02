@@ -2,9 +2,11 @@
 
 [![Javadocs](http://javadoc.io/badge/io.vlingo/vlingo-common.svg?color=brightgreen)](http://javadoc.io/doc/io.vlingo/vlingo-common) [![Build Status](https://travis-ci.org/vlingo/vlingo-common.svg?branch=master)](https://travis-ci.org/vlingo/vlingo-common) [ ![Download](https://api.bintray.com/packages/vlingo/vlingo-platform-java/vlingo-common/images/download.svg) ](https://bintray.com/vlingo/vlingo-platform-java/vlingo-common/_latestVersion) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/vlingo-platform-java/community)
 
-The vlingo/PLATFORM common tools shared across various projects.
+The VLINGO/PLATFORM common tools shared across various projects.
 
-The vlingo-common project consists of a minimal toolset used across various other vlingo projects
+Docs: https://docs.vlingo.io/vlingo-common
+
+The `vlingo-common` project consists of a minimal toolset used across various other vlingo projects
 
   - `Completes<T>` and `BasicCompletes`
   - `IdentityGenerator` with various identity generation algorithms
@@ -27,14 +29,14 @@ The vlingo-common project consists of a minimal toolset used across various othe
   <dependency>
     <groupId>io.vlingo</groupId>
     <artifactId>vlingo-common</artifactId>
-    <version>1.2.9</version>
+    <version>1.3.0</version>
     <type>pom</type>
   </dependency>
 ```
 
 ```gradle
 dependencies {
-    compile 'io.vlingo:vlingo-common:1.2.9'
+    compile 'io.vlingo:vlingo-common:1.3.0'
 }
 
 repositories {
