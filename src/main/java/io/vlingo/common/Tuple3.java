@@ -49,4 +49,9 @@ public class Tuple3<A, B, C> {
     this._2 = b;
     this._3 = c;
   }
+
+  @Override
+  public String toString() {
+    return "Tuple3 [_1=" + _1 + ", _2=" + _2 + ", _3=" + _3 + "]";
+  }
 }
