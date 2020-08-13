@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
+@Deprecated
 public class BasicCompletesTest {
   private Integer andThenValue;
   private Integer failureValue;
@@ -250,7 +251,7 @@ public class BasicCompletesTest {
     final Outcome<RuntimeException, Completes<String>> failed = Failure.of(new RuntimeException("boom"));
     Completes<Outcome<RuntimeException, String>> inverted = Completes.invert(failed);
     CountDownLatch latch = new CountDownLatch(1);
-    inverted.andThenConsume(outcome -> {
+    inverted.otherwiseConsume(outcome -> {
       assertTrue("was not Failure", outcome instanceof Failure);
       assertNull("was not null", outcome.getOrNull());
       assertEquals("was not the expected error message", "boom", outcome.otherwise(Throwable::getMessage).get());
