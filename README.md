@@ -8,14 +8,14 @@ Docs: https://docs.vlingo.io/vlingo-common
 
 The `vlingo-common` project consists of a minimal toolset used across various other vlingo projects
 
-  - `Completes<T>` and `BasicCompletes`
+  - `Completes<T>` and `AsyncCompletes`
   - `IdentityGenerator` with various identity generation algorithms
   - `Outcome` with `Success` and `Failure` (like `Either` and `Try`)
   - `Scheduler`
   - Serialization
   - `SemanticVersion`
   - `DynaCompiler` (makes `JavaCompiler` simpiler to use)
-  - `Tuple2`, `Tuple3`, `Tuple4`
+  - `Tuple2`, `Tuple3`, `Tuple4`, `Tuple5`
 
 ### Bintray
 
@@ -29,14 +29,14 @@ The `vlingo-common` project consists of a minimal toolset used across various ot
   <dependency>
     <groupId>io.vlingo</groupId>
     <artifactId>vlingo-common</artifactId>
-    <version>1.3.0</version>
+    <version>1.3.1</version>
     <type>pom</type>
   </dependency>
 ```
 
 ```gradle
 dependencies {
-    compile 'io.vlingo:vlingo-common:1.3.0'
+    compile 'io.vlingo:vlingo-common:1.3.1'
 }
 
 repositories {

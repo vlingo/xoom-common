@@ -11,6 +11,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Deprecated
 public class RepeatableCompletes<T> extends BasicCompletes<T> {
 
   public RepeatableCompletes(final Scheduler scheduler) {
