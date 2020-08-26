@@ -410,6 +410,54 @@ public class CFCompletesTest {
   }
 
   @Test
+  public void testNestedCompletesFirst() {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+    final Completes<Integer> nested = Completes.using(new Scheduler());
+
+    Completes<Integer> client =
+            service
+                    .andThen(value -> value * 2)
+                    .andThenTo(value -> nested.andThen(v -> v * value))
+                    .andThenTo(value -> Completes.withSuccess(value * 2))
+                    .andThen(value -> value * 2);
+
+    Assert.assertNotEquals(service.id(), client.id());
+
+    nested.with(2);
+    service.with(5);
+
+    final Integer outcome = client.await();
+
+    Assert.assertFalse(client.hasFailed());
+    Assert.assertNull(andThenValue);
+    Assert.assertEquals(new Integer(80), outcome);
+  }
+
+  @Test
+  public void testNestedCompletesLast() {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+    final Completes<Integer> nested = Completes.using(new Scheduler());
+
+    Completes<Integer> client =
+            service
+                    .andThen(value -> value * 2)
+                    .andThenTo(value -> nested.andThen(v -> v * value))
+                    .andThenTo(value -> Completes.withSuccess(value * 2))
+                    .andThen(value -> value * 2);
+
+    Assert.assertNotEquals(service.id(), client.id());
+
+    service.with(5);
+    nested.with(2);
+
+    final Integer outcome = client.await();
+
+    Assert.assertFalse(client.hasFailed());
+    Assert.assertNull(andThenValue);
+    Assert.assertEquals(new Integer(80), outcome);
+  }
+
+  @Test
   public void testAndThenAndThenToAndThenToAndThenCrashCompletes() {
     final Completes<Integer> service = Completes.using(new Scheduler());
 
