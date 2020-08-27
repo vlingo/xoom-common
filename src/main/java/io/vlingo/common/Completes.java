@@ -646,7 +646,7 @@ public interface Completes<T> {
   /**
    * Defines an identity for {@code Completes} instances.
    */
-  static class CompletesId {
+  public static class CompletesId {
     private static final AtomicLong nextId = new AtomicLong();
 
     private final String id;
