@@ -434,7 +434,7 @@ public class CFCompletesTest {
   }
 
   @Test
-  public void testNestedCompletesLast() {
+  public void testNestedCompletesLast() throws InterruptedException {
     final Completes<Integer> service = Completes.using(new Scheduler());
     final Completes<Integer> nested = Completes.using(new Scheduler());
 
@@ -448,6 +448,7 @@ public class CFCompletesTest {
     Assert.assertNotEquals(service.id(), client.id());
 
     service.with(5);
+    Thread.sleep(100);
     nested.with(2);
 
     final Integer outcome = client.await();

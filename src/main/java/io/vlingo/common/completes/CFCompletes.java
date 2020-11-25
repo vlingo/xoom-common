@@ -7,6 +7,12 @@
 
 package io.vlingo.common.completes;
 
+import io.vlingo.common.Cancellable;
+import io.vlingo.common.Completes;
+import io.vlingo.common.Scheduled;
+import io.vlingo.common.Scheduler;
+import io.vlingo.common.Tuple2;
+
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -15,12 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import io.vlingo.common.Cancellable;
-import io.vlingo.common.Completes;
-import io.vlingo.common.Scheduled;
-import io.vlingo.common.Scheduler;
-import io.vlingo.common.Tuple2;
 
 public class CFCompletes<T> implements Completes<T> {
   private static final long NoTimeout = -1L;
@@ -578,8 +578,8 @@ public class CFCompletes<T> implements Completes<T> {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     <O> CFCompletes<T> nextForFunction(final long timeout, final O failedOutcomeValue, final Function<T, O> function, final boolean handlesFailure) {
-      final Function<T,O> functionWrapper = functionWrapper(function, handlesFailure, false);
-      final State<T> state = new State(Completes.completesId(), scheduler, future.thenApply(functionWrapper), failedOutcomeValue, handlesFailure, OutcomeType.Some);
+      final Function<T, O> functionWrapper = functionWrapper(function, handlesFailure, false);
+      final State<T> state = new State(Completes.completesId(), scheduler, future.thenCompose(composableFunction(functionWrapper)), failedOutcomeValue, handlesFailure, OutcomeType.Some);
       state.startTimer(timeout);
       return new CFCompletes<T>(state);
     }
@@ -590,8 +590,8 @@ public class CFCompletes<T> implements Completes<T> {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     <O> CFCompletes<T> nextForFunctionAsync(final long timeout, final O failedOutcomeValue, final Function<T, O> function, final boolean handlesFailure) {
-      final Function<T,O> functionWrapper = functionWrapper(function, handlesFailure, true);
-      final State<T> state =  new State(Completes.completesId(), scheduler, future.thenApply(functionWrapper), failedOutcomeValue, handlesFailure, OutcomeType.Some);
+      final Function<T, O> functionWrapper = functionWrapper(function, handlesFailure, true);
+      final State<T> state = new State(Completes.completesId(), scheduler, future.thenComposeAsync(composableFunction(functionWrapper)), failedOutcomeValue, handlesFailure, OutcomeType.Some);
       state.startTimer(timeout);
       return new CFCompletes<T>(state);
     }
@@ -748,6 +748,16 @@ public class CFCompletes<T> implements Completes<T> {
           }
           return null;
         }
+      };
+    }
+
+    private <O> Function<T, CompletableFuture<O>> composableFunction(final Function<T, O> userFunction) {
+      return (T t) -> {
+        O outcome = userFunction.apply(t);
+        if (outcome instanceof CFCompletes) {
+          return (CompletableFuture<O>) ((CFCompletes<?>) outcome).state().future;
+        }
+        return CompletableFuture.completedFuture(outcome);
       };
     }
 
