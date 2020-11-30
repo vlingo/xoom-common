@@ -764,23 +764,11 @@ public class CFCompletes<T> implements Completes<T> {
     @SuppressWarnings("unchecked")
     private <O> Function<T, O> functionWrapper(final Function<T, O> userFunction, final boolean whenFailure, final boolean isAsync) {
       final Function<T, O> applyResult = (result) -> {
-        final Completes<T> next = completes.hasNext() ? completes.next() : null;
-
         final T wrapped = (T) userFunction.apply(result);
 
         final Tuple2<Boolean, T> outcome = unwrap(wrapped);
 
-        if (outcome._1 && !completes.hasOutcome()) {
-          completes.state().outcome(new CompletedOutcome<>(outcome._2));
-        }
-
-        if (next != null && outcome._1) {
-          next.with(outcome._2);
-        }
-
-        final O typedOutcome = (O) outcome._2;
-
-        return typedOutcome;
+        return (O) outcome._2;
       };
 
       return (value) -> {
@@ -791,14 +779,6 @@ public class CFCompletes<T> implements Completes<T> {
 
           if (!whenFailure && hasFailed()) {
             return (O) value;
-          }
-
-          if (value instanceof Completes) {
-            final Completes<T> outcomeCompletes = ((Completes<T>) value).andFinally(result -> {
-              final O typedOutcome = applyResult.apply(result);
-              return (T) typedOutcome;
-            });
-            return (O) outcomeCompletes;
           }
 
           return applyResult.apply(value);
