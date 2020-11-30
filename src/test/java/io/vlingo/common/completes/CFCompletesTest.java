@@ -252,6 +252,24 @@ public class CFCompletesTest {
   }
 
   @Test
+  public void testThatExceptionOutcomeFailsIfNotRecovered() {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+
+    final Completes<Object> client =
+            service
+                    .andThen(null, (value) -> value * 2)
+                    .andThen((Integer value) -> { throw new IllegalStateException("" + (value * 2)); })
+                    .recoverFrom((e) -> { throw new IllegalStateException("Not recovered."); });
+
+    service.with(2);
+
+    final Integer outcome = client.await();
+
+    Assert.assertNull(outcome);
+    Assert.assertTrue(client.hasFailed());
+  }
+
+  @Test
   public void testThatExceptionHandlerDelayRecovers() {
     final Completes<Integer> service = Completes.using(new Scheduler());
 
