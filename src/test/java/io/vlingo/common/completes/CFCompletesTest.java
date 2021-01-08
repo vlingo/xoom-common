@@ -7,17 +7,12 @@
 
 package io.vlingo.common.completes;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
+import io.vlingo.common.*;
 import org.junit.Assert;
 import org.junit.Test;
 
-import io.vlingo.common.Completes;
-import io.vlingo.common.Failure;
-import io.vlingo.common.Outcome;
-import io.vlingo.common.Scheduler;
-import io.vlingo.common.Success;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class CFCompletesTest {
   private Integer andThenValue;
@@ -474,6 +469,49 @@ public class CFCompletesTest {
     Assert.assertFalse(client.hasFailed());
     Assert.assertNull(andThenValue);
     Assert.assertEquals(new Integer(80), outcome);
+  }
+
+  @Test
+  public void testOutcomeIsConsumedOncePipelineIsCompleted() throws InterruptedException {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+    final Completes<Integer> nested = Completes.using(new Scheduler());
+    final Holder holder = new Holder();
+
+    Completes<Integer> client =
+            service
+                    .andThen(value -> value * 2)
+                    .andThenTo(value -> nested.andThen(v -> v * value))
+                    .andThenTo(value -> Completes.withSuccess(value * 2))
+                    .andThenConsume(outcome -> holder.hold(outcome));
+
+    service.with(5);
+    Thread.sleep(100);
+    nested.with(2);
+
+    final Integer outcome = client.await();
+
+    Assert.assertFalse(client.hasFailed());
+    Assert.assertEquals(new Integer(40), andThenValue);
+    Assert.assertEquals(new Integer(40), outcome);
+  }
+
+  @Test
+  public void testThatItRecoversFromConsumerException() {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+
+    Completes<Integer> client =
+            service
+                    .andThen(value -> value * 2)
+                    .andThenTo(value -> Completes.withSuccess(value * 2))
+                    .andThenConsume(outcome -> { throw new RuntimeException(""+(outcome * 2)); })
+                    .recoverFrom(e -> Integer.parseInt(e.getMessage()));
+
+    service.with(5);
+
+    final Integer outcome = client.await();
+
+    Assert.assertTrue(client.hasFailed());
+    Assert.assertEquals(new Integer(40), outcome);
   }
 
   @Test
