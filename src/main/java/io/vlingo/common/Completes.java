@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import io.vlingo.common.completes.CFCompletes;
+import io.vlingo.common.completes.FutureCompletes;
 
 /**
  * {@code Completes<T>} models the eventual completion of an asynchronous operation
@@ -81,7 +81,7 @@ public interface Completes<T> {
    * @return {@code Completes<Byte>}
    */
   static Completes<Byte> asByte() {
-    return new CFCompletes<Byte>();
+    return new FutureCompletes<Byte>();
   }
 
   /**
@@ -90,7 +90,7 @@ public interface Completes<T> {
    * @return {@code Completes<Character>}
    */
   static Completes<Character> asCharacter() {
-    return new CFCompletes<Character>();
+    return new FutureCompletes<Character>();
   }
 
   /**
@@ -99,7 +99,7 @@ public interface Completes<T> {
    * @return {@code Completes<Double>}
    */
   static Completes<Double> asDouble() {
-    return new CFCompletes<Double>();
+    return new FutureCompletes<Double>();
   }
 
   /**
@@ -108,7 +108,7 @@ public interface Completes<T> {
    * @return {@code Completes<Float>}
    */
   static Completes<Float> asFloat() {
-    return new CFCompletes<Float>();
+    return new FutureCompletes<Float>();
   }
 
   /**
@@ -117,7 +117,7 @@ public interface Completes<T> {
    * @return {@code Completes<Integer>}
    */
   static Completes<Integer> asInteger() {
-    return new CFCompletes<Integer>();
+    return new FutureCompletes<Integer>();
   }
 
   /**
@@ -126,7 +126,7 @@ public interface Completes<T> {
    * @return {@code Completes<Long>}
    */
   static Completes<Long> asLong() {
-    return new CFCompletes<Long>();
+    return new FutureCompletes<Long>();
   }
 
   /**
@@ -135,7 +135,7 @@ public interface Completes<T> {
    * @return {@code Completes<Short>}
    */
   static Completes<Short> asShort() {
-    return new CFCompletes<Short>();
+    return new FutureCompletes<Short>();
   }
 
   /**
@@ -144,7 +144,7 @@ public interface Completes<T> {
    * @return {@code Completes<String>}
    */
   static Completes<String> asString() {
-    return new CFCompletes<String>();
+    return new FutureCompletes<String>();
   }
 
   /**
@@ -154,7 +154,7 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> asTyped() {
-    return new CFCompletes<T>();
+    return new FutureCompletes<T>();
   }
 
   /**
@@ -166,7 +166,7 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> using(final CompletesId id, final Scheduler scheduler) {
-    return new CFCompletes<T>(id, scheduler);
+    return new FutureCompletes<T>(id, scheduler);
   }
 
   /**
@@ -177,11 +177,11 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> using(final Scheduler scheduler) {
-    return new CFCompletes<T>(scheduler);
+    return new FutureCompletes<T>(scheduler);
   }
 
   static <T> Completes<T> noTimeout() {
-    return new CFCompletes<T>((Scheduler) null);
+    return new FutureCompletes<T>((Scheduler) null);
   }
 
   /**
@@ -194,7 +194,7 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> withSuccess(final T outcome) {
-    return new CFCompletes<T>(outcome, true);
+    return new FutureCompletes<T>(outcome, true);
   }
 
   /**
@@ -207,7 +207,7 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> withFailure(final T outcome) {
-    return new CFCompletes<T>(outcome, false);
+    return new FutureCompletes<T>(outcome, false);
   }
 
   /**
@@ -234,7 +234,7 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> repeatableUsing(final Scheduler scheduler) {
-    return new CFCompletes<T>(scheduler);
+    return new FutureCompletes<T>(scheduler);
   }
 
   /**
@@ -249,7 +249,7 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> repeatableWithSuccess(final T outcome) {
-    return new CFCompletes<T>(outcome, true);
+    return new FutureCompletes<T>(outcome, true);
   }
 
   /**
@@ -264,7 +264,7 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> repeatableWithFailure(final T outcome) {
-    return new CFCompletes<>(outcome, false);
+    return new FutureCompletes<>(outcome, false);
   }
 
   /**

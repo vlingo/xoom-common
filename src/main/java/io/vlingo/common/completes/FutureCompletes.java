@@ -22,23 +22,23 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class CFCompletes<T> implements Completes<T> {
+public class FutureCompletes<T> implements Completes<T> {
   private static final long NoTimeout = -1L;
 
-  private CFCompletes<?> next;
-  private CFCompletes<?> previous;
+  private FutureCompletes<?> next;
+  private FutureCompletes<?> previous;
   private final State<T> state;
 
-  public CFCompletes(final CompletesId id, final Scheduler scheduler) {
+  public FutureCompletes(final CompletesId id, final Scheduler scheduler) {
     this.state = new State<>(Completes.completesId(), scheduler, OutcomeType.Some);
     this.state.completes(this);
   }
 
-  public CFCompletes(final Scheduler scheduler) {
+  public FutureCompletes(final Scheduler scheduler) {
     this(Completes.completesId(), scheduler);
   }
 
-  public CFCompletes(final CompletesId id, final T outcome, final boolean successful) {
+  public FutureCompletes(final CompletesId id, final T outcome, final boolean successful) {
     this(id, (Scheduler) null);
 
     if (!successful) {
@@ -48,23 +48,23 @@ public class CFCompletes<T> implements Completes<T> {
     with(outcome);
   }
 
-  public CFCompletes(final T outcome, final boolean successful) {
+  public FutureCompletes(final T outcome, final boolean successful) {
     this(Completes.completesId(), outcome, successful);
   }
 
-  public CFCompletes(final CompletesId id, final T outcome) {
+  public FutureCompletes(final CompletesId id, final T outcome) {
     this(id, outcome, true);
   }
 
-  public CFCompletes(final T outcome) {
+  public FutureCompletes(final T outcome) {
     this(Completes.completesId(), outcome);
   }
 
-  public CFCompletes(final CompletesId id) {
+  public FutureCompletes(final CompletesId id) {
     this(id, (Scheduler) null);
   }
 
-  public CFCompletes() {
+  public FutureCompletes() {
     this(Completes.completesId());
   }
 
@@ -255,10 +255,10 @@ public class CFCompletes<T> implements Completes<T> {
 
   @Override
   public String toString() {
-    return "CFCompletes [id=" + id() + ", next=" + (next != null ? next.id() : "(none)") + " state=" + state + "]";
+    return "FutureCompletes [id=" + id() + ", next=" + (next != null ? next.id() : "(none)") + " state=" + state + "]";
   }
 
-  private CFCompletes(final State<T> state) {
+  private FutureCompletes(final State<T> state) {
     this.state = state;
     this.state.completes(this);
     this.next = null;
@@ -274,13 +274,13 @@ public class CFCompletes<T> implements Completes<T> {
   }
 
   @SuppressWarnings("unchecked")
-  private CFCompletes<T> next() {
-    return (CFCompletes<T>) this.next;
+  private FutureCompletes<T> next() {
+    return (FutureCompletes<T>) this.next;
   }
 
   @SuppressWarnings("unchecked")
   private State<T> nextState() {
-    return ((CFCompletes<T>) this.next).state;
+    return ((FutureCompletes<T>) this.next).state;
   }
 
   private boolean hasPrevious() {
@@ -288,13 +288,13 @@ public class CFCompletes<T> implements Completes<T> {
   }
 
   @SuppressWarnings({ "unchecked", "unused" })
-  private CFCompletes<T> previous() {
-    return (CFCompletes<T>) this.previous;
+  private FutureCompletes<T> previous() {
+    return (FutureCompletes<T>) this.previous;
   }
 
   @SuppressWarnings("unchecked")
   private State<T> previousState() {
-    return ((CFCompletes<T>) this.previous).state;
+    return ((FutureCompletes<T>) this.previous).state;
   }
 
   private State<T> state() {
@@ -308,7 +308,7 @@ public class CFCompletes<T> implements Completes<T> {
   @SuppressWarnings("unused")
   private static void debug(final String message) {
     if (DEBUG) {
-      synchronized (CFCompletes.class) {
+      synchronized (FutureCompletes.class) {
         System.out.println(message);
       }
     }
@@ -334,7 +334,7 @@ public class CFCompletes<T> implements Completes<T> {
       final StringBuilder builder = new StringBuilder();
       final StackTraceElement[] trace = t.getStackTrace();
       int idx = startingWith;
-      idx = (idx >= 0) ? idx : trace[1].toString().contains("CFCompletes.access$") ? 2 : 1;
+      idx = (idx >= 0) ? idx : trace[1].toString().contains("FutureCompletes.access$") ? 2 : 1;
       final int max = Math.min(levels + idx, trace.length);
       int count = 1;
       for ( ; idx < max; ++idx) {
@@ -357,7 +357,7 @@ public class CFCompletes<T> implements Completes<T> {
 
   private static class State<T> implements Scheduled<Object> {
     private Cancellable cancellable;
-    private CFCompletes<T> completes;
+    private FutureCompletes<T> completes;
     private final AtomicBoolean failed;
     private final AtomicReference<T> failureValue;
     private final CompletableFuture<T> future;
@@ -487,7 +487,7 @@ public class CFCompletes<T> implements Completes<T> {
       }
     }
 
-    void completes(CFCompletes<T> completes) {
+    void completes(FutureCompletes<T> completes) {
       this.completes = completes;
     }
 
@@ -555,48 +555,48 @@ public class CFCompletes<T> implements Completes<T> {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    CFCompletes<T> nextForConsumer(final long timeout, final T failedOutcomeValue, final Consumer<T> consumer, final boolean handlesFailure) {
+    FutureCompletes<T> nextForConsumer(final long timeout, final T failedOutcomeValue, final Consumer<T> consumer, final boolean handlesFailure) {
       final Consumer<T> consumerWrapper = consumerWrapper(consumer, handlesFailure);
       final State<T> state = new State(Completes.completesId(), scheduler, future.thenAccept(consumerWrapper), failedOutcomeValue, handlesFailure, OutcomeType.None);
       if (future.isDone()) {
         state.outcome(outcome.get());
       }
       state.startTimer(timeout);
-      return new CFCompletes<T>(state);
+      return new FutureCompletes<T>(state);
     }
 
-    CFCompletes<T> nextForConsumer(final long timeout, final T failedOutcomeValue, final Consumer<T> consumer) {
+    FutureCompletes<T> nextForConsumer(final long timeout, final T failedOutcomeValue, final Consumer<T> consumer) {
       return nextForConsumer(timeout, failedOutcomeValue, consumer, false);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    CFCompletes<T> nextForExceptional(final Function<Throwable, T> function) {
+    FutureCompletes<T> nextForExceptional(final Function<Throwable, T> function) {
       final Function<Throwable,T> functionWrapper = functionExceptionWrapper(function);
       final State<T> state = new State(Completes.completesId(), scheduler, future.exceptionally(functionWrapper), null, false, OutcomeType.Some);
-      return new CFCompletes<T>(state);
+      return new FutureCompletes<T>(state);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    <O> CFCompletes<T> nextForFunction(final long timeout, final O failedOutcomeValue, final Function<T, O> function, final boolean handlesFailure) {
+    <O> FutureCompletes<T> nextForFunction(final long timeout, final O failedOutcomeValue, final Function<T, O> function, final boolean handlesFailure) {
       final Function<T, O> functionWrapper = functionWrapper(function, handlesFailure, false);
       final State<T> state = new State(Completes.completesId(), scheduler, future.thenCompose(composableFunction(functionWrapper)), failedOutcomeValue, handlesFailure, OutcomeType.Some);
       state.startTimer(timeout);
-      return new CFCompletes<T>(state);
+      return new FutureCompletes<T>(state);
     }
 
-    <O> CFCompletes<T> nextForFunction(final long timeout, final O failedOutcomeValue, final Function<T, O> function) {
+    <O> FutureCompletes<T> nextForFunction(final long timeout, final O failedOutcomeValue, final Function<T, O> function) {
       return nextForFunction(timeout, failedOutcomeValue, function, false);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    <O> CFCompletes<T> nextForFunctionAsync(final long timeout, final O failedOutcomeValue, final Function<T, O> function, final boolean handlesFailure) {
+    <O> FutureCompletes<T> nextForFunctionAsync(final long timeout, final O failedOutcomeValue, final Function<T, O> function, final boolean handlesFailure) {
       final Function<T, O> functionWrapper = functionWrapper(function, handlesFailure, true);
       final State<T> state = new State(Completes.completesId(), scheduler, future.thenComposeAsync(composableFunction(functionWrapper)), failedOutcomeValue, handlesFailure, OutcomeType.Some);
       state.startTimer(timeout);
-      return new CFCompletes<T>(state);
+      return new FutureCompletes<T>(state);
     }
 
-    <O> CFCompletes<T> nextForFunctionAsync(final long timeout, final O failedOutcomeValue, final Function<T, O> function) {
+    <O> FutureCompletes<T> nextForFunctionAsync(final long timeout, final O failedOutcomeValue, final Function<T, O> function) {
       return nextForFunctionAsync(timeout, failedOutcomeValue, function, false);
     }
 
@@ -626,8 +626,6 @@ public class CFCompletes<T> implements Completes<T> {
       if (!outcome.isCompleted()) {
         return;
       }
-
-      // debug("OUTCOME SETTING: " + id + " OUTCOME: " + outcome + CFCompletes.printLimitedTrace(10));
 
       this.outcome.set(outcome);
     }
@@ -754,8 +752,8 @@ public class CFCompletes<T> implements Completes<T> {
     private <O> Function<T, CompletableFuture<O>> composableFunction(final Function<T, O> userFunction) {
       return (T t) -> {
         O outcome = userFunction.apply(t);
-        if (outcome instanceof CFCompletes) {
-          return (CompletableFuture<O>) ((CFCompletes<?>) outcome).state().future;
+        if (outcome instanceof FutureCompletes) {
+          return (CompletableFuture<O>) ((FutureCompletes<?>) outcome).state().future;
         }
         return CompletableFuture.completedFuture(outcome);
       };
@@ -875,7 +873,7 @@ public class CFCompletes<T> implements Completes<T> {
     @SuppressWarnings("unchecked")
     private Tuple2<Boolean, T> unwrap(final T outcome) {
       if (outcome instanceof Completes) {
-        final CFCompletes<T> completes = (CFCompletes<T>) outcome;
+        final FutureCompletes<T> completes = (FutureCompletes<T>) outcome;
         if (completes.isCompleted() && !completes.hasFailed()) {
           return Tuple2.from(true, completes.outcome());
         }

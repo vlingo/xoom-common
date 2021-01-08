@@ -14,7 +14,7 @@ import org.junit.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class CFCompletesTest {
+public class FutureCompletesTest {
   private Integer andThenValue;
   private Integer failureValue;
 
