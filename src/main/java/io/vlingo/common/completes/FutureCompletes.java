@@ -7,11 +7,7 @@
 
 package io.vlingo.common.completes;
 
-import io.vlingo.common.Cancellable;
-import io.vlingo.common.Completes;
-import io.vlingo.common.Scheduled;
-import io.vlingo.common.Scheduler;
-import io.vlingo.common.Tuple2;
+import io.vlingo.common.*;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -30,7 +26,7 @@ public class FutureCompletes<T> implements Completes<T> {
   private final State<T> state;
 
   public FutureCompletes(final CompletesId id, final Scheduler scheduler) {
-    this.state = new State<>(Completes.completesId(), scheduler, OutcomeType.Some);
+    this.state = new State<>(id, scheduler, OutcomeType.Some);
     this.state.completes(this);
   }
 
@@ -229,8 +225,11 @@ public class FutureCompletes<T> implements Completes<T> {
 
   @Override
   public Completes<T> repeat() {
-    // TODO Auto-generated method stub
-    return null;
+    state.repeat();
+    if (hasPrevious()) {
+      previous.repeat();
+    }
+    return this;
   }
 
   @Override
@@ -249,6 +248,7 @@ public class FutureCompletes<T> implements Completes<T> {
   @Override
   @SuppressWarnings("unchecked")
   public <O> Completes<O> with(final O outcome) {
+    state.reset();
     state.complete(outcome);
     return (Completes<O>) this;
   }
@@ -269,6 +269,18 @@ public class FutureCompletes<T> implements Completes<T> {
     state().exceptional(t);
   }
 
+  private FutureCompletes<?> first() {
+    FutureCompletes<?> first = this;
+    while (first.previous != null) {
+      first = first.previous;
+    }
+    return first;
+  }
+
+  private State<?> firstState() {
+    return first().state;
+  }
+
   private boolean hasNext() {
     return this.next != null;
   }
@@ -278,7 +290,7 @@ public class FutureCompletes<T> implements Completes<T> {
     return (FutureCompletes<T>) this.next;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "RedundantCast"})
   private State<T> nextState() {
     return ((FutureCompletes<T>) this.next).state;
   }
@@ -287,12 +299,12 @@ public class FutureCompletes<T> implements Completes<T> {
     return this.previous != null;
   }
 
-  @SuppressWarnings({ "unchecked", "unused" })
+  @SuppressWarnings({"unchecked", "unused"})
   private FutureCompletes<T> previous() {
     return (FutureCompletes<T>) this.previous;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "RedundantCast"})
   private State<T> previousState() {
     return ((FutureCompletes<T>) this.previous).state;
   }
@@ -301,56 +313,6 @@ public class FutureCompletes<T> implements Completes<T> {
     return this.state;
   }
 
-
-
-  private static boolean DEBUG = false;
-
-  @SuppressWarnings("unused")
-  private static void debug(final String message) {
-    if (DEBUG) {
-      synchronized (FutureCompletes.class) {
-        System.out.println(message);
-      }
-    }
-  }
-
-  @SuppressWarnings("unused")
-  private static String printLimitedTrace(final int startingWith, final int levels) {
-    return printLimitedTrace(new Exception(), startingWith, levels);
-  }
-
-  @SuppressWarnings("unused")
-  private static String printLimitedTrace(final int levels) {
-    return printLimitedTrace(new Exception(), -1, levels);
-  }
-
-  @SuppressWarnings("unused")
-  private static String printLimitedTrace(final Throwable t, final int levels) {
-    return printLimitedTrace(t, -1, levels);
-  }
-
-  private static String printLimitedTrace(final Throwable t, final int startingWith, final int levels) {
-    if (DEBUG) {
-      final StringBuilder builder = new StringBuilder();
-      final StackTraceElement[] trace = t.getStackTrace();
-      int idx = startingWith;
-      idx = (idx >= 0) ? idx : trace[1].toString().contains("FutureCompletes.access$") ? 2 : 1;
-      final int max = Math.min(levels + idx, trace.length);
-      int count = 1;
-      for ( ; idx < max; ++idx) {
-        builder.append("\n").append("TRACE: ").append(count++).append(": ").append(trace[idx]);
-      }
-      return builder.toString();
-    }
-    return "";
-  }
-
-
-
-
-
-
-
   //////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////
@@ -358,31 +320,33 @@ public class FutureCompletes<T> implements Completes<T> {
   private static class State<T> implements Scheduled<Object> {
     private Cancellable cancellable;
     private FutureCompletes<T> completes;
+    private CompletableFuture<T> future;
     private final AtomicBoolean failed;
     private final AtomicReference<T> failureValue;
-    private final CompletableFuture<T> future;
+    private final Function<CompletableFuture<?>, CompletableFuture<T>> futureFactory;
     private final boolean handlesFailure;
     private final CompletesId id;
     private final AtomicReference<Outcome<T>> outcome;
     private final OutcomeType outcomeType;
     private final Scheduler scheduler;
     private final AtomicBoolean timedOut = new AtomicBoolean(false);
+    private final AtomicBoolean repeats = new AtomicBoolean(false);
 
-    State(final CompletesId id, final Scheduler scheduler, final CompletableFuture<T> future, final T failedOutcomeValue, final boolean handlesFailure, final OutcomeType outcomeType) {
+    State(final CompletesId id, final Scheduler scheduler, final Function<CompletableFuture<?>, CompletableFuture<T>> futureFactory, final CompletableFuture<T> parentFuture, final T failedOutcomeValue, final boolean handlesFailure, final OutcomeType outcomeType) {
       this.id = id;
       this.scheduler = scheduler;
       this.failed = new AtomicBoolean(false);
       this.failureValue = new AtomicReference<>(failedOutcomeValue);
       this.handlesFailure = handlesFailure;
-      this.future = future;
-      this.outcome = new AtomicReference<>(new UncompletedOutcome<>());
+      this.futureFactory = futureFactory;
+      this.future = futureFactory.apply(parentFuture);
+      this.outcome = new AtomicReference<>(UncompletedOutcome.instance());
       this.outcomeType = outcomeType;
-
-      //debug("CTOR: " + this.id);
     }
 
+    @SuppressWarnings("unchecked")
     State(final CompletesId id, final Scheduler scheduler, final OutcomeType outcomeType) {
-      this(id, scheduler, new CompletableFuture<>(), null, false, outcomeType);
+      this(id, scheduler, (f) -> (CompletableFuture<T>) f, new CompletableFuture<>(), null, false, outcomeType);
     }
 
     @SuppressWarnings("unchecked")
@@ -401,8 +365,6 @@ public class FutureCompletes<T> implements Completes<T> {
 
         return (O) outcome();
       } catch (Exception e) {
-        // debug("=============== AWAIT: EXECEPTION: " + e.getMessage() + "\n");
-        e.printStackTrace();
         if (this.hasFailed()) {
           return (O) outcome();
         }
@@ -452,7 +414,6 @@ public class FutureCompletes<T> implements Completes<T> {
       T realOutcome = (T) outcome;
 
       if (isFailureValue(realOutcome)) {
-        // debug("FAILURE: " + realOutcome);
         realOutcome = failureValue();
         failAll(realOutcome, isTimedOut());
         if (handlingFailure) {
@@ -462,25 +423,17 @@ public class FutureCompletes<T> implements Completes<T> {
         }
       }
 
-      // debug("COMPLETE: " + id + " OUTCOME: " + realOutcome + printLimitedTrace(7));
-
       outcomeMaybeOverride(realOutcome);
 
-      // debug("COMPLETE FUTURE: " + id + " DONE: " + future.isDone() + " OUTCOME: " + realOutcome);
-
       if (!future.isDone()) {
-        // debug("COMPLETE FUTURE: " + id + " OUTCOME: " + realOutcome);
         future.complete(realOutcome);
       }
     }
 
     private void outcomeMaybeOverride(final T outcome) {
-      // debug("OUTCOME MAYBE OVERRIDE: " + id + " CURRENT: " + this.outcome.get() + " OUTCOME: " + outcome);
       if (!hasOutcome()) {
-        // debug("OUTCOME MAYBE OVERRIDE (HAS OUTCOME) SETTING: " + id + " OUTCOME: " + outcome);
         outcome(new CompletedOutcome<>(outcome));
       } else if (hasFailed() && isFailureValue(this.outcome.get().value())) {
-        // debug("OUTCOME MAYBE OVERRIDE (HAS FAILED) SETTING: " + id + " OUTCOME: " + outcome);
         outcome(new CompletedOutcome<>(outcome));
       } else if (this.outcome.get().value() instanceof Completes) {
         outcome(new CompletedOutcome<>(outcome));
@@ -491,6 +444,29 @@ public class FutureCompletes<T> implements Completes<T> {
       this.completes = completes;
     }
 
+    private void repeat() {
+      this.repeats.set(true);
+    }
+
+    private boolean hasRepeats() {
+      return this.repeats.get();
+    }
+
+    private void reset() {
+      if (hasOutcome() && hasRepeats()) {
+        completes.firstState().reset(new CompletableFuture<>());
+      }
+    }
+
+    private void reset(CompletableFuture<T> previousFuture) {
+      this.outcome.set(UncompletedOutcome.instance());
+      this.failed.set(false);
+      this.future = futureFactory.apply(previousFuture);
+      if (completes.hasNext()) {
+        completes.nextState().reset(this.future);
+      }
+    }
+
     void exceptional(final Throwable t) {
       failAll(outcome(), isTimedOut());
       future.completeExceptionally(t);
@@ -498,24 +474,19 @@ public class FutureCompletes<T> implements Completes<T> {
 
     boolean hasFailed() {
       if (failed.get()) {
-        // debug("HAS FAILED: " + id + printLimitedTrace(5));
         return true;
       }
 
       if (future.isDone()) {
         final T outcome = outcome();
-        // debug("HAS FAILED: " + id + " IS DONE: " + (outcome == null ? "(null)":outcome));
 
         if (isFailureValue(outcome)) {
-          // debug("HAS FAILED: " + id + " FAILED OUTCOME VALUE: " + (outcome == null ? "(null)":outcome) + printLimitedTrace(20));
           failed.set(true);
           return true;
         }
       }
 
       final boolean hasFailed = future.isCancelled() || future.isCompletedExceptionally();
-
-      // if (hasFailed) debug("HAS FAILED: " + id + printLimitedTrace(5));
 
       failed.set(hasFailed);
 
@@ -530,9 +501,7 @@ public class FutureCompletes<T> implements Completes<T> {
     }
 
     boolean isFailureValue(final T candidateFailureValue) {
-      // debug("CANDIDATE FAILURE VALUE: " + candidateFailureValue);
       if (isTimedOut()) {
-        // debug("TIMED OUT FAILURE");
         return true;
       }
 
@@ -549,7 +518,6 @@ public class FutureCompletes<T> implements Completes<T> {
           return true;
         }
       }
-      // debug("FAILURE VALUE: NOT FAILED: " + candidateFailureValue);
 
       return false;
     }
@@ -557,12 +525,13 @@ public class FutureCompletes<T> implements Completes<T> {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     FutureCompletes<T> nextForConsumer(final long timeout, final T failedOutcomeValue, final Consumer<T> consumer, final boolean handlesFailure) {
       final Consumer<T> consumerWrapper = consumerWrapper(consumer, handlesFailure);
-      final State<T> state = new State(Completes.completesId(), scheduler, future.thenAccept(consumerWrapper), failedOutcomeValue, handlesFailure, OutcomeType.None);
+      final Function<CompletableFuture<T>, CompletableFuture<Void>> futureFactory = f -> f.thenAccept(consumerWrapper);
+      final State<T> state = new State(Completes.completesId(), scheduler, futureFactory, future, failedOutcomeValue, handlesFailure, OutcomeType.None);
       if (future.isDone()) {
         state.outcome(outcome.get());
       }
       state.startTimer(timeout);
-      return new FutureCompletes<T>(state);
+      return new FutureCompletes<>(state);
     }
 
     FutureCompletes<T> nextForConsumer(final long timeout, final T failedOutcomeValue, final Consumer<T> consumer) {
@@ -572,16 +541,18 @@ public class FutureCompletes<T> implements Completes<T> {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     FutureCompletes<T> nextForExceptional(final Function<Throwable, T> function) {
       final Function<Throwable,T> functionWrapper = functionExceptionWrapper(function);
-      final State<T> state = new State(Completes.completesId(), scheduler, future.exceptionally(functionWrapper), null, false, OutcomeType.Some);
-      return new FutureCompletes<T>(state);
+      final Function<CompletableFuture<T>, CompletableFuture<T>> futureFactory = f -> f.exceptionally(functionWrapper);
+      final State<T> state = new State(Completes.completesId(), scheduler, futureFactory, future, null, false, OutcomeType.Some);
+      return new FutureCompletes<>(state);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     <O> FutureCompletes<T> nextForFunction(final long timeout, final O failedOutcomeValue, final Function<T, O> function, final boolean handlesFailure) {
-      final Function<T, O> functionWrapper = functionWrapper(function, handlesFailure, false);
-      final State<T> state = new State(Completes.completesId(), scheduler, future.thenCompose(composableFunction(functionWrapper)), failedOutcomeValue, handlesFailure, OutcomeType.Some);
+      Function<T, CompletableFuture<O>> functionWrapper = composableFunction(functionWrapper(function, handlesFailure));
+      final Function<CompletableFuture<T>, CompletableFuture<O>> futureFactory = f ->  f.thenCompose(functionWrapper);
+      final State<T> state = new State(Completes.completesId(), scheduler, futureFactory, future, failedOutcomeValue, handlesFailure, OutcomeType.Some);
       state.startTimer(timeout);
-      return new FutureCompletes<T>(state);
+      return new FutureCompletes<>(state);
     }
 
     <O> FutureCompletes<T> nextForFunction(final long timeout, final O failedOutcomeValue, final Function<T, O> function) {
@@ -589,15 +560,12 @@ public class FutureCompletes<T> implements Completes<T> {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    <O> FutureCompletes<T> nextForFunctionAsync(final long timeout, final O failedOutcomeValue, final Function<T, O> function, final boolean handlesFailure) {
-      final Function<T, O> functionWrapper = functionWrapper(function, handlesFailure, true);
-      final State<T> state = new State(Completes.completesId(), scheduler, future.thenComposeAsync(composableFunction(functionWrapper)), failedOutcomeValue, handlesFailure, OutcomeType.Some);
-      state.startTimer(timeout);
-      return new FutureCompletes<T>(state);
-    }
-
     <O> FutureCompletes<T> nextForFunctionAsync(final long timeout, final O failedOutcomeValue, final Function<T, O> function) {
-      return nextForFunctionAsync(timeout, failedOutcomeValue, function, false);
+      Function<T, CompletableFuture<O>> functionWrapper = composableFunction(functionWrapper(function, handlesFailure));
+      final Function<CompletableFuture<T>, CompletableFuture<O>> futureFactory = f -> f.thenComposeAsync(functionWrapper);
+      final State<T> state = new State(Completes.completesId(), scheduler, futureFactory, future, failedOutcomeValue, handlesFailure, OutcomeType.Some);
+      state.startTimer(timeout);
+      return new FutureCompletes<>(state);
     }
 
     T outcome() {
@@ -666,9 +634,7 @@ public class FutureCompletes<T> implements Completes<T> {
     @Override
     public void intervalSignal(final Scheduled<Object> scheduled, final Object data) {
       cancelTimer();
-      // debug("TIMER TIMED OUT!!!");
       if (future.isDone()) return;
-      // debug("TIMER TIMED OUT NOT DONE!!!");
       timedOut();
     }
 
@@ -704,16 +670,13 @@ public class FutureCompletes<T> implements Completes<T> {
           }
 
           if (value instanceof Completes) {
-            ((Completes<T>) value).andFinallyConsume(result -> {
-              acceptResults.accept(value);
-            });
+            ((Completes<T>) value).andFinallyConsume(result -> acceptResults.accept(value));
             return;
           }
 
           acceptResults.accept(value);
 
         } catch (Throwable t) {
-          // debug("CONSUMER EXECEPTION: " + t);
           if (completes.hasNext()) {
             completes.next().exceptional(t);
           }
@@ -740,7 +703,6 @@ public class FutureCompletes<T> implements Completes<T> {
 
           return outcome._2;
         } catch (Exception ex) {
-          // debug("FUNCTION EX: " + id + " EXCEPTION: " + ex.getMessage() + printLimitedTrace(ex, 5));
           if (completes.hasNext()) {
             completes.next().exceptional(e);
           }
@@ -749,6 +711,7 @@ public class FutureCompletes<T> implements Completes<T> {
       };
     }
 
+    @SuppressWarnings("unchecked")
     private <O> Function<T, CompletableFuture<O>> composableFunction(final Function<T, O> userFunction) {
       return (T t) -> {
         O outcome = userFunction.apply(t);
@@ -760,7 +723,7 @@ public class FutureCompletes<T> implements Completes<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private <O> Function<T, O> functionWrapper(final Function<T, O> userFunction, final boolean whenFailure, final boolean isAsync) {
+    private <O> Function<T, O> functionWrapper(final Function<T, O> userFunction, final boolean whenFailure) {
       final Function<T, O> applyResult = (result) -> {
         final T wrapped = (T) userFunction.apply(result);
 
@@ -782,7 +745,6 @@ public class FutureCompletes<T> implements Completes<T> {
           return applyResult.apply(value);
 
         } catch (Exception e) {
-          // debug("FUNCTION: " + id + " VALUE: " + value + " EXCEPTION: " + e.getMessage() + printLimitedTrace(e, 20));
           if (completes.hasNext()) {
             completes.next().exceptional(e);
           }
@@ -841,8 +803,6 @@ public class FutureCompletes<T> implements Completes<T> {
 
       final Outcome<T> maybeOutcome = this.outcome.get();
 
-      // debug("========== " + maybeOutcome);
-
       if (maybeOutcome.isCompleted()) {
         final Tuple2<Boolean, T> unwrapped = unwrap(maybeOutcome.value());
         return unwrapped._1 ? unwrapped._2 : null;
@@ -863,7 +823,6 @@ public class FutureCompletes<T> implements Completes<T> {
           }
         }
       } catch (Exception e) {
-        // debug("******** EXCEPTION: " + e);
         // fall through
       }
 
@@ -889,12 +848,12 @@ public class FutureCompletes<T> implements Completes<T> {
     }
   }
 
-  static enum OutcomeType {
+  enum OutcomeType {
     Some,
     None
   }
 
-  static interface Outcome<T> {
+  interface Outcome<T> {
     default boolean isCompleted() {
       return false;
     }
