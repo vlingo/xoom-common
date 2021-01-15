@@ -539,6 +539,27 @@ public class FutureCompletesTest {
     Assert.assertEquals(1000, outcome.intValue());
   }
 
+  @Test
+  public void testThatItRecoversConsistentlyWithNoRaceConditions() {
+    for (int i = 0; i < 1000; i++) {
+      final Completes<Integer> service = Completes.using(new Scheduler());
+
+      Completes<Integer> client =
+              service
+                      .andThen(value -> value * 2)
+                      .andThenTo(value -> Completes.withSuccess(value * 2))
+                      .andThenConsume(outcome -> { throw new RuntimeException(""+(outcome * 2)); })
+                      .recoverFrom(e -> Integer.parseInt(e.getMessage()));
+
+      service.with(5);
+
+      final Integer outcome = client.await();
+
+      Assert.assertTrue(client.hasFailed());
+      Assert.assertEquals(new Integer(40), outcome);
+    }
+  }
+
   private int multipleBy(final int amount, final int by) {
     throw new IllegalStateException("1000");
   }

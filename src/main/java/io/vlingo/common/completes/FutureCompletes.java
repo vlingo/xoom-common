@@ -761,7 +761,6 @@ public class FutureCompletes<T> implements Completes<T> {
       this.failureValue.set(failureValue);
       this.failed.set(true);
       this.timedOut.set(hasTimedOut);
-      outcome(new CompletedOutcome<>(failureValue));
 
       if (completes.hasNext()) {
         final State<T> nextState = completes.nextState();
