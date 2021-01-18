@@ -81,7 +81,7 @@ public interface Completes<T> {
    * @return {@code Completes<Byte>}
    */
   static Completes<Byte> asByte() {
-    return new FutureCompletes<Byte>();
+    return new FutureCompletes<>();
   }
 
   /**
@@ -90,7 +90,7 @@ public interface Completes<T> {
    * @return {@code Completes<Character>}
    */
   static Completes<Character> asCharacter() {
-    return new FutureCompletes<Character>();
+    return new FutureCompletes<>();
   }
 
   /**
@@ -99,7 +99,7 @@ public interface Completes<T> {
    * @return {@code Completes<Double>}
    */
   static Completes<Double> asDouble() {
-    return new FutureCompletes<Double>();
+    return new FutureCompletes<>();
   }
 
   /**
@@ -108,7 +108,7 @@ public interface Completes<T> {
    * @return {@code Completes<Float>}
    */
   static Completes<Float> asFloat() {
-    return new FutureCompletes<Float>();
+    return new FutureCompletes<>();
   }
 
   /**
@@ -117,7 +117,7 @@ public interface Completes<T> {
    * @return {@code Completes<Integer>}
    */
   static Completes<Integer> asInteger() {
-    return new FutureCompletes<Integer>();
+    return new FutureCompletes<>();
   }
 
   /**
@@ -126,7 +126,7 @@ public interface Completes<T> {
    * @return {@code Completes<Long>}
    */
   static Completes<Long> asLong() {
-    return new FutureCompletes<Long>();
+    return new FutureCompletes<>();
   }
 
   /**
@@ -135,7 +135,7 @@ public interface Completes<T> {
    * @return {@code Completes<Short>}
    */
   static Completes<Short> asShort() {
-    return new FutureCompletes<Short>();
+    return new FutureCompletes<>();
   }
 
   /**
@@ -144,7 +144,7 @@ public interface Completes<T> {
    * @return {@code Completes<String>}
    */
   static Completes<String> asString() {
-    return new FutureCompletes<String>();
+    return new FutureCompletes<>();
   }
 
   /**
@@ -154,7 +154,7 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> asTyped() {
-    return new FutureCompletes<T>();
+    return new FutureCompletes<>();
   }
 
   /**
@@ -166,7 +166,7 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> using(final CompletesId id, final Scheduler scheduler) {
-    return new FutureCompletes<T>(id, scheduler);
+    return new FutureCompletes<>(id, scheduler);
   }
 
   /**
@@ -177,11 +177,11 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> using(final Scheduler scheduler) {
-    return new FutureCompletes<T>(scheduler);
+    return new FutureCompletes<>(scheduler);
   }
 
   static <T> Completes<T> noTimeout() {
-    return new FutureCompletes<T>((Scheduler) null);
+    return new FutureCompletes<>((Scheduler) null);
   }
 
   /**
@@ -194,7 +194,7 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> withSuccess(final T outcome) {
-    return new FutureCompletes<T>(outcome, true);
+    return new FutureCompletes<>(outcome);
   }
 
   /**
@@ -207,7 +207,7 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> withFailure(final T outcome) {
-    return new FutureCompletes<T>(outcome, false);
+    return new FutureCompletes<>(outcome, false);
   }
 
   /**
@@ -234,7 +234,7 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> repeatableUsing(final Scheduler scheduler) {
-    return new FutureCompletes<T>(scheduler);
+    return new FutureCompletes<>(scheduler);
   }
 
   /**
@@ -249,7 +249,7 @@ public interface Completes<T> {
    * @return {@code Completes<T>}
    */
   static <T> Completes<T> repeatableWithSuccess(final T outcome) {
-    return new FutureCompletes<T>(outcome, true);
+    return new FutureCompletes<>(outcome, true);
   }
 
   /**
@@ -293,14 +293,12 @@ public interface Completes<T> {
    */
   static <E extends Throwable, A> Completes<Outcome<E, A>> invert(final Outcome<E, Completes<A>> outcome) {
     return outcome.resolve(
-        e -> { return Completes.withFailure(Failure.of(e)); },
+        e -> Completes.withFailure(Failure.of(e)),
         s -> {
           if (s.hasFailed()) {
             return Completes.withFailure(Success.of(s.outcome()));
           }
-          return s.andThenTo(result -> {
-            return Completes.withSuccess(Success.of(result));
-          });
+          return s.andThenTo(result -> Completes.withSuccess(Success.of(result)));
         });
   }
 

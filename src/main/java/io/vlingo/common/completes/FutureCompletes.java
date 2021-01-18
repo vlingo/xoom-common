@@ -356,13 +356,7 @@ public class FutureCompletes<T> implements Completes<T> {
       }
 
       try {
-        T awaitedOutcome = future.get();
-
-        if (awaitedOutcome instanceof Completes) {
-          awaitedOutcome = ((Completes<T>) awaitedOutcome).await();
-          outcomeMaybeOverride(awaitedOutcome);
-        }
-
+        future.get();
         return (O) outcome();
       } catch (Exception e) {
         if (this.hasFailed()) {
@@ -572,21 +566,6 @@ public class FutureCompletes<T> implements Completes<T> {
       if (hasOutcome()) {
         return ultimateOutcome();
       }
-
-      try {
-        if (future.isDone()) {
-          final T outcome = future.get(1, TimeUnit.MILLISECONDS);
-
-          outcome(new CompletedOutcome<>(outcome));
-
-          return ultimateOutcome();
-        }
-      } catch (Throwable t) {
-        if (completes.hasNext()) {
-          completes.next().exceptional(t);
-        }
-      }
-
       return null;
     }
 
@@ -648,33 +627,28 @@ public class FutureCompletes<T> implements Completes<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private Consumer<T> consumerWrapper(final Consumer<T> userConsumer, final boolean whenFailure) {
-      final Consumer<T> acceptResults = (result) -> {
-        if (!completes.hasOutcome()) {
-          completes.state().outcome(new CompletedOutcome<>(result));
+    private <O> Function<T, CompletableFuture<O>> composableFunction(final Function<T, O> userFunction) {
+      return (T t) -> {
+        O outcome = userFunction.apply(t);
+        if (outcome instanceof FutureCompletes) {
+          return (CompletableFuture<O>) ((FutureCompletes<?>) outcome).state().future;
         }
-
-        userConsumer.accept(result);
-
-        if (completes.hasNext()) {
-          completes.next().with(outcome());
-        }
+        return CompletableFuture.completedFuture(outcome);
       };
+    }
 
+    private Consumer<T> consumerWrapper(final Consumer<T> userConsumer, final boolean whenFailure) {
       return (value) -> {
         try {
           if (whenFailure && !hasFailed()) {
             return;
-          } else if (!whenFailure && hasFailed()) {
+          }
+
+          if (!whenFailure && hasFailed()) {
             return;
           }
 
-          if (value instanceof Completes) {
-            ((Completes<T>) value).andFinallyConsume(result -> acceptResults.accept(value));
-            return;
-          }
-
-          acceptResults.accept(value);
+          userConsumer.accept(value);
 
         } catch (Throwable t) {
           if (completes.hasNext()) {
@@ -689,19 +663,11 @@ public class FutureCompletes<T> implements Completes<T> {
         try {
           final Throwable inner = unwrap(e);
 
-          final Completes<T> next = completes.hasNext() ? completes.next() : null;
+          final T outcome = userFunction.apply(inner);
 
-          final T wrapped = userFunction.apply(inner);
+          completes.state().outcomeMaybeOverride(outcome);
 
-          final Tuple2<Boolean, T> outcome = unwrap(wrapped);
-
-          completes.state().outcomeMaybeOverride(outcome._2);
-
-          if (next != null) {
-            next.with(outcome._2);
-          }
-
-          return outcome._2;
+          return outcome;
         } catch (Exception ex) {
           if (completes.hasNext()) {
             completes.next().exceptional(e);
@@ -712,26 +678,7 @@ public class FutureCompletes<T> implements Completes<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private <O> Function<T, CompletableFuture<O>> composableFunction(final Function<T, O> userFunction) {
-      return (T t) -> {
-        O outcome = userFunction.apply(t);
-        if (outcome instanceof FutureCompletes) {
-          return (CompletableFuture<O>) ((FutureCompletes<?>) outcome).state().future;
-        }
-        return CompletableFuture.completedFuture(outcome);
-      };
-    }
-
-    @SuppressWarnings("unchecked")
     private <O> Function<T, O> functionWrapper(final Function<T, O> userFunction, final boolean whenFailure) {
-      final Function<T, O> applyResult = (result) -> {
-        final T wrapped = (T) userFunction.apply(result);
-
-        final Tuple2<Boolean, T> outcome = unwrap(wrapped);
-
-        return (O) outcome._2;
-      };
-
       return (value) -> {
         try {
           if (whenFailure && !hasFailed()) {
@@ -742,8 +689,7 @@ public class FutureCompletes<T> implements Completes<T> {
             return (O) value;
           }
 
-          return applyResult.apply(value);
-
+          return userFunction.apply(value);
         } catch (Exception e) {
           if (completes.hasNext()) {
             completes.next().exceptional(e);
@@ -780,14 +726,12 @@ public class FutureCompletes<T> implements Completes<T> {
       return false;
     }
 
-    private T previousOutcome() {
+    private Outcome<T> previousOutcome() {
       if (completes.hasPrevious()) {
         if (completes.previousState().outcomeType == OutcomeType.Some) {
-          outcome(completes.previousState().outcome.get());
+          return completes.previousState().outcome.get();
         }
-        final T previousOutcome = completes.previousState().previousOutcome();
-
-        outcome(new CompletedOutcome<>(previousOutcome));
+        return completes.previousState().previousOutcome();
       }
       return null;
     }
@@ -803,41 +747,30 @@ public class FutureCompletes<T> implements Completes<T> {
       final Outcome<T> maybeOutcome = this.outcome.get();
 
       if (maybeOutcome.isCompleted()) {
-        final Tuple2<Boolean, T> unwrapped = unwrap(maybeOutcome.value());
-        return unwrapped._1 ? unwrapped._2 : null;
+        return maybeOutcome.value();
       }
 
       if (outcomeType == OutcomeType.None) {
-        outcome(new CompletedOutcome<>(previousOutcome()));
+        Outcome<T> outcome = previousOutcome();
+        if (null != outcome && outcome.isCompleted()) {
+          outcome(outcome);
+          return outcome.value();
+        }
       }
 
       try {
         // may be a race where outcome is demanded
         // but not yet set by future pipeline
         if (future.isDone()) {
-          final Tuple2<Boolean, T> possibleOutcome = unwrap(future.get());
-          if (possibleOutcome._1) {
-            outcome(new CompletedOutcome<>(possibleOutcome._2));
-            return possibleOutcome._2;
-          }
+          final T outcome = future.get();
+          outcome(new CompletedOutcome<>(outcome));
+          return outcome;
         }
       } catch (Exception e) {
         // fall through
       }
 
       return null;
-    }
-
-    @SuppressWarnings("unchecked")
-    private Tuple2<Boolean, T> unwrap(final T outcome) {
-      if (outcome instanceof Completes) {
-        final FutureCompletes<T> completes = (FutureCompletes<T>) outcome;
-        if (completes.isCompleted() && !completes.hasFailed()) {
-          return Tuple2.from(true, completes.outcome());
-        }
-        return Tuple2.from(false, outcome);
-      }
-      return Tuple2.from(true, outcome);
     }
 
     private Throwable unwrap(final Throwable t) {

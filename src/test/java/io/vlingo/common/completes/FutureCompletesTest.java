@@ -27,6 +27,7 @@ public class FutureCompletesTest {
     completes.await();
 
     Assert.assertTrue(completes.isCompleted());
+    Assert.assertTrue(completes.hasOutcome());
     Assert.assertFalse(completes.hasFailed());
     Assert.assertEquals(5, completes.outcome().intValue());
   }
@@ -36,8 +37,19 @@ public class FutureCompletesTest {
     final Completes<Integer> completes = Completes.withFailure(5);
 
     Assert.assertTrue(completes.isCompleted());
+    Assert.assertTrue(completes.hasOutcome());
     Assert.assertTrue(completes.hasFailed());
     Assert.assertEquals(new Integer(5), completes.outcome());
+  }
+
+  @Test
+  public void testNotCompleted() {
+    final Completes<Integer> completes = Completes.asInteger();
+
+    Assert.assertFalse(completes.isCompleted());
+    Assert.assertFalse(completes.hasOutcome());
+    Assert.assertFalse(completes.hasFailed());
+    Assert.assertEquals(null, completes.outcome());
   }
 
   @Test
@@ -142,6 +154,7 @@ public class FutureCompletesTest {
     client.await();
 
     Assert.assertTrue(client.hasFailed());
+    Assert.assertTrue(client.hasOutcome());
     Assert.assertNotEquals(new Integer(10), andThenValue);
     Assert.assertNull(andThenValue);
   }
@@ -161,6 +174,7 @@ public class FutureCompletesTest {
     client.await();
 
     Assert.assertTrue(client.hasFailed());
+    Assert.assertTrue(client.hasOutcome());
     Assert.assertNull(andThenValue);
     Assert.assertEquals(new Integer(1000), failureValue);
   }
@@ -558,6 +572,133 @@ public class FutureCompletesTest {
       Assert.assertTrue(client.hasFailed());
       Assert.assertEquals(new Integer(40), outcome);
     }
+  }
+
+  @Test
+  public void testThatFinallyTerminatesThePipeline() {
+    final Completes<Integer> service = Completes.asInteger();
+
+    Completes<Integer> client =
+            service
+                    .andThen(value -> value * 2)
+                    .andThenTo(value -> Completes.withSuccess(value * 2))
+                    .andFinally();
+
+    service.with(5);
+
+    final Integer outcome = client.await();
+
+    Assert.assertFalse(client.hasFailed());
+    Assert.assertEquals(new Integer(20), outcome);
+  }
+
+  @Test
+  public void testThatFinallyRunsOnSuccessfulOutcome() {
+    final Completes<Integer> service = Completes.asInteger();
+
+    Completes<Integer> client =
+            service
+                    .andThen(value -> value * 2)
+                    .andThenTo(value -> Completes.withSuccess(value * 2))
+                    .andFinally(outcome -> outcome * 3);
+
+    service.with(5);
+
+    final Integer outcome = client.await();
+
+    Assert.assertFalse(client.hasFailed());
+    Assert.assertEquals(new Integer(60), outcome);
+  }
+
+  @Test
+  public void testThatItFinallyConsumesTheOutcome() throws InterruptedException {
+    final CountDownLatch latch = new CountDownLatch(1);
+    final Completes<Integer> service = Completes.asInteger();
+
+    service
+        .andThen(value -> value * 2)
+        .andThenTo(value -> Completes.withSuccess(value * 2))
+        .andFinallyConsume(outcome -> {
+          Assert.assertEquals(new Integer(20), outcome);
+          latch.countDown();
+        });
+
+    service.with(5);
+
+    Assert.assertTrue("timed out", latch.await(1000, TimeUnit.SECONDS));
+  }
+
+  @Test
+  public void testItExplicitlyTriggersFailure() {
+    final Completes<Integer> service = Completes.asInteger();
+
+    Completes<Integer> client = service
+            .useFailedOutcomeOf(-1)
+            .andThen(value -> value * 2);
+
+    service.failed();
+
+    final Integer outcome = client.await();
+
+    Assert.assertTrue(client.hasFailed());
+    Assert.assertEquals(new Integer(-1), outcome);
+  }
+
+  @Test
+  public void testItExplicitlyTriggersFailureWithException() {
+    final Completes<Integer> service = Completes.asInteger();
+
+    Completes<Integer> client = service
+            .useFailedOutcomeOf(-1)
+            .andThen(value -> value * 2);
+
+    service.failed(new RuntimeException());
+
+    final Integer outcome = client.await();
+
+    Assert.assertTrue(client.hasFailed());
+    Assert.assertEquals(null, outcome);
+  }
+
+  @Test
+  public void testItRecoversFromCompletingWithException() {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+    final Completes<Integer> client =
+            service
+                    .andThen((value) -> 2 * value)
+                    .recoverFrom((e) -> Integer.valueOf(e.getMessage()));
+    service.with(new RuntimeException("10"));
+
+    final Integer outcome = client.await();
+
+    Assert.assertTrue(client.hasFailed());
+    Assert.assertEquals(new Integer(10), outcome);
+  }
+
+  @Test
+  public void testIntermediateStagesReturnTheFinalOutcome() throws InterruptedException {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+    final Completes<Integer> nested = Completes.using(new Scheduler());
+
+    Completes<Integer> stage1 = service.andThen(value -> value * 2);
+    Completes<Integer> stage2 = stage1.andThenTo(value -> nested.andThen(v -> v * value));
+    Completes<Integer> stage3 = stage2.andThenTo(value -> Completes.withSuccess(value * 2));
+    Completes<Integer> client = stage3.andThen(value -> value * 2);
+
+    service.with(5);
+    Thread.sleep(100);
+    nested.with(2);
+
+    final Integer outcome = client.await();
+
+    Assert.assertFalse(client.hasFailed());
+    Assert.assertEquals(new Integer(80), outcome);
+    Assert.assertEquals(new Integer(80), client.outcome());
+    Assert.assertEquals(new Integer(80), service.outcome());
+    Assert.assertEquals(new Integer(80), stage1.outcome());
+    Assert.assertEquals(new Integer(80), stage2.outcome());
+    Assert.assertEquals(new Integer(80), stage3.outcome());
+    Assert.assertEquals(new Integer(20), nested.outcome());
   }
 
   private int multipleBy(final int amount, final int by) {
