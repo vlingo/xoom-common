@@ -5,12 +5,13 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-package io.vlingo.common;
+package io.vlingo.common.completes;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
+import io.vlingo.common.Completes;
+import io.vlingo.common.Scheduler;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class RepeatableCompletesTest {
   private Integer andThenValue;
@@ -81,6 +82,7 @@ public class RepeatableCompletesTest {
 
     completes.with(10);
     final int outcome20 = completes.await();
+    assertFalse(completes.hasFailed());
     assertEquals(20, outcome20);
     assertEquals(new Integer(20), andThenValue);
   }
