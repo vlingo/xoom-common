@@ -8,8 +8,7 @@
 package io.vlingo.common.completes;
 
 import io.vlingo.common.*;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -20,9 +19,7 @@ public class FutureCompletesTest {
 
   @Test
   public void testCompletesAsTyped() {
-    final Completes<Integer> completes = Completes.asTyped();
-
-    completes.with(5);
+    final Completes<Integer> completes = Completes.asTyped().with(5);
 
     completes.await();
 
@@ -49,7 +46,7 @@ public class FutureCompletesTest {
     Assert.assertFalse(completes.isCompleted());
     Assert.assertFalse(completes.hasOutcome());
     Assert.assertFalse(completes.hasFailed());
-    Assert.assertEquals(null, completes.outcome());
+    Assert.assertNull(completes.outcome());
   }
 
   @Test
@@ -76,6 +73,32 @@ public class FutureCompletesTest {
     client.await();
 
     Assert.assertEquals(new Integer(5), client.outcome());
+  }
+
+  @Test
+  public void testCompletesAfterLateDefinedConsumer() {
+    final Completes<Integer> completes = Completes.asInteger().with(5);
+
+    completes
+            .andThen((value) -> value * 2)
+            .andFinallyConsume((value) -> andThenValue = value);
+
+    Assert.assertEquals(new Integer(10), andThenValue);
+    Assert.assertEquals(new Integer(10), completes.outcome());
+  }
+
+  @Test
+  public void testItContinuesAfterConsumingTheOutcome() {
+    final Completes<Integer> completes = Completes.asInteger().with(5);
+
+    completes
+            .andThenConsume((value) -> andThenValue = value)
+            .andThenConsume((value) -> andThenValue = andThenValue + value)
+            .andThen((value) -> value * 2)
+            .otherwise((value) -> 1000);
+
+    Assert.assertEquals(new Integer(10), andThenValue);
+    Assert.assertEquals(new Integer(10), completes.outcome());
   }
 
   @Test
@@ -121,14 +144,15 @@ public class FutureCompletesTest {
 
     final Completes<Integer> client =
       service
-        .andThen(1000, (value) -> value * 2)
+        .andThen(500, (value) -> value * 2)
         .andThen((value) -> andThenValue = value);
 
     service.with(5);
 
-    client.await(10);
+    Integer outcome = client.await(10);
 
     Assert.assertEquals(new Integer(10), andThenValue);
+    Assert.assertEquals(new Integer(10), outcome);
   }
 
   @Test
@@ -137,17 +161,13 @@ public class FutureCompletesTest {
 
     final Completes<Integer> client =
       service
-        .andThen(1, 0, (value) -> {
-          System.out.println("HIT 1");
-          return value * 2;
-        })
+        .andThen(1, 0, (value) -> value * 2)
         .andThen((value) -> {
           andThenValue = value;
-          System.out.println("HIT 2");
           return value;
         });
 
-    try { Thread.sleep(100); } catch (Exception e) { }
+    Thread.sleep(100);
 
     service.with(5);
 
@@ -155,6 +175,7 @@ public class FutureCompletesTest {
 
     Assert.assertTrue(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
+    Assert.assertEquals(new Integer(0), client.outcome());
     Assert.assertNotEquals(new Integer(10), andThenValue);
     Assert.assertNull(andThenValue);
   }
@@ -176,7 +197,90 @@ public class FutureCompletesTest {
     Assert.assertTrue(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
     Assert.assertNull(andThenValue);
+    Assert.assertEquals(new Integer(1000), client.outcome());
     Assert.assertEquals(new Integer(1000), failureValue);
+  }
+
+  @Test
+  public void testOutcomeBeforeConsumerTimeout() {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+
+    final Completes<Integer> client =
+      service
+        .andThen((value) -> value * 2)
+        .andThenConsume(200, (value) -> andThenValue = value);
+
+    service.with(5);
+
+    client.await(10);
+
+    Assert.assertTrue(client.isCompleted());
+    Assert.assertFalse(client.hasFailed());
+    Assert.assertTrue(client.hasOutcome());
+    Assert.assertEquals(new Integer(10), andThenValue);
+  }
+
+  @Test
+  public void testTimeoutBeforeConsumer() throws Exception {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+
+    final Completes<Integer> client =
+      service
+        .andThen((value) -> value * 2)
+        .andThenConsume(1, (value) -> andThenValue = value);
+
+    Thread.sleep(10);
+
+    service.with(5);
+
+    client.await();
+
+    Assert.assertTrue(client.isCompleted());
+    Assert.assertTrue(client.hasFailed());
+    Assert.assertFalse(client.hasOutcome());
+    Assert.assertNotEquals(new Integer(10), andThenValue);
+    Assert.assertNull(andThenValue);
+    Assert.assertNull(client.outcome());
+  }
+
+  @Test
+  public void testAsyncOutcomeBeforeTimeout() {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+
+    final Completes<Integer> client =
+      service
+        .andThen((value) -> value * 2)
+        .andThenTo(1000, (value) -> Completes.withSuccess(value * 2));
+
+    service.with(5);
+
+    client.await(10);
+
+    Assert.assertTrue(client.isCompleted());
+    Assert.assertFalse(client.hasFailed());
+    Assert.assertTrue(client.hasOutcome());
+    Assert.assertEquals(new Integer(20), client.outcome());
+  }
+
+  @Test
+  public void testTimeoutBeforeAsyncOutcome() throws Exception {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+
+    final Completes<Integer> client =
+      service
+        .andThen((value) -> value * 2)
+        .andThenTo(1, (value) -> Completes.withSuccess(value * 2));
+
+    Thread.sleep(100);
+
+    service.with(5);
+
+    client.await();
+
+    Assert.assertTrue(client.isCompleted());
+    Assert.assertTrue(client.hasFailed());
+    Assert.assertFalse(client.hasOutcome());
+    Assert.assertNull(client.outcome());
   }
 
   @Test
@@ -193,7 +297,10 @@ public class FutureCompletesTest {
 
     client.await();
 
+    Assert.assertTrue(client.isCompleted());
     Assert.assertFalse(client.hasFailed());
+    Assert.assertTrue(client.hasOutcome());
+    Assert.assertEquals(new Integer(20), client.outcome());
     Assert.assertEquals(new Integer(20), andThenValue);
     Assert.assertNull(failureValue);
   }
@@ -212,14 +319,99 @@ public class FutureCompletesTest {
 
     final Integer completed = client.await();
 
+    Assert.assertTrue(client.isCompleted());
     Assert.assertTrue(client.hasFailed());
+    Assert.assertTrue(client.hasOutcome());
     Assert.assertEquals(new Integer(1000), completed);
-    Assert.assertEquals(null, andThenValue);
+    Assert.assertNull(andThenValue);
     Assert.assertEquals(new Integer(1000), failureValue);
   }
 
   @Test
-  public void testThatFluentTimeoutWithNonNullFailureTimesout() throws Exception {
+  public void testThatNonNullFailureOutcomeIsOtherwiseConsumed() {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+
+    final Completes<Integer> client =
+      service
+        .andThen(new Integer(-100), (value) -> 2 * value)
+        .andThen((x) -> andThenValue = x)
+        .otherwiseConsume((x) -> failureValue = 1000);
+
+    service.with(-100);
+
+    final Integer completed = client.await();
+
+    Assert.assertTrue(client.isCompleted());
+    Assert.assertTrue(client.hasFailed());
+    Assert.assertTrue(client.hasOutcome());
+    Assert.assertEquals(new Integer(-100), completed);
+    Assert.assertNull(andThenValue);
+    Assert.assertEquals(new Integer(1000), failureValue);
+  }
+
+  @Test
+  public void testThatNonFailedOutcomeIsNotOtherwiseConsumed() {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+
+    final Completes<Integer> client =
+            service
+                    .andThen(new Integer(-100), (value) -> 2 * value)
+                    .andThen((x) -> andThenValue = x)
+                    .otherwiseConsume((x) -> failureValue = 1000);
+
+    service.with(5);
+
+    final Integer completed = client.await();
+
+    Assert.assertTrue(client.isCompleted());
+    Assert.assertFalse(client.hasFailed());
+    Assert.assertTrue(client.hasOutcome());
+    Assert.assertEquals(new Integer(10), completed);
+    Assert.assertNull(failureValue);
+    Assert.assertEquals(new Integer(10), andThenValue);
+  }
+
+  @Test
+  public void testThatNonNullConsumerFailureOutcomeFails() {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+
+    final Completes<Integer> client =
+      service
+        .andThen((value) -> 2 * value)
+        .andThenConsume(new Integer(-200), (x) -> andThenValue = 1000);
+
+    service.with(-100);
+
+    final Integer completed = client.await();
+
+    Assert.assertTrue(client.isCompleted());
+    Assert.assertTrue(client.hasFailed());
+    Assert.assertTrue(client.hasOutcome());
+    Assert.assertEquals(new Integer(-200), completed);
+    Assert.assertNull(andThenValue);
+  }
+
+  @Test
+  public void testThatNonNullAsyncFailureOutcomeFails() {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+
+    final Completes<Integer> client =
+      service
+        .andThen((value) -> 2 * value)
+        .andThenTo(new Integer(-200), (x) -> Completes.withSuccess(1000));
+
+    service.with(-100);
+
+    final Integer completed = client.await();
+
+    Assert.assertTrue(client.isCompleted());
+    Assert.assertTrue(client.hasFailed());
+    Assert.assertTrue(client.hasOutcome());
+    Assert.assertEquals(new Integer(-200), completed);
+  }
+
+  @Test
+  public void testThatFluentTimeoutWithNonNullFailureTimesOut() throws Exception {
     final Completes<Integer> service = Completes.using(new Scheduler());
 
     final Completes<Integer> client =
@@ -236,6 +428,25 @@ public class FutureCompletesTest {
     final Integer failureOutcome = client.await();
 
     Assert.assertTrue(service.hasFailed());
+    Assert.assertEquals(new Integer(-200), failureOutcome);
+  }
+
+  @Test
+  public void testThatStageTimeoutWithNonNullFailureTimesOut() throws Exception {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+
+    final Completes<Integer> client =
+            service
+                    .andThen(1, new Integer(-100), value -> 2 * value)
+                    .otherwise((Integer failedValue) -> failedValue.intValue() - 100);
+
+    Thread.sleep(100);
+
+    service.with(5);
+
+    final Integer failureOutcome = client.await();
+
+    Assert.assertTrue(client.hasFailed());
     Assert.assertEquals(new Integer(-200), failureOutcome);
   }
 
@@ -274,8 +485,10 @@ public class FutureCompletesTest {
 
     final Integer outcome = client.await();
 
-    Assert.assertNull(outcome);
+    Assert.assertTrue(client.isCompleted());
     Assert.assertTrue(client.hasFailed());
+    Assert.assertFalse(client.hasOutcome());
+    Assert.assertNull(outcome);
   }
 
   @Test
@@ -285,13 +498,11 @@ public class FutureCompletesTest {
     final Completes<Object> client =
       service
         .andThen(null, (value) -> value * 2)
-        .andThen((Integer value) -> { throw new IllegalStateException("" + (value * 2)); })
-        .recoverFrom((e) -> {
-          failureValue = Integer.parseInt(e.getMessage());
-          return failureValue;
-        });
+        .andThen((Integer value) -> { throw new IllegalStateException("" + (value * 2)); });
 
     service.with(10);
+
+    client.recoverFrom((e) -> failureValue = Integer.parseInt(e.getMessage()));
 
     client.await();
 
@@ -301,7 +512,7 @@ public class FutureCompletesTest {
   }
 
   @Test
-  public void testThatAwaitTimesout() throws Exception {
+  public void testThatAwaitTimesOut() {
     final Completes<Integer> service = Completes.using(new Scheduler());
 
     final Integer completed = service.await(10);
@@ -313,20 +524,17 @@ public class FutureCompletesTest {
   }
 
   @Test
-  public void testThatAwaitCompletes() throws Exception {
+  public void testThatAwaitCompletes() {
     final Completes<Integer> completes = Completes.using(new Scheduler());
 
-    new Thread() {
-      @Override
-      public void run() {
-        try {
-          Thread.sleep(100);
-          completes.with(5);
-        } catch (Exception e) {
-          // ignore
-        }
+    new Thread(() -> {
+      try {
+        Thread.sleep(100);
+        completes.with(5);
+      } catch (Exception e) {
+        // ignore
       }
-    }.start();
+    }).start();
 
     final Integer completed = completes.await();
 
@@ -358,7 +566,7 @@ public class FutureCompletesTest {
       Assert.assertEquals("was not the expected value", "YAY", outcome.get());
       latch.countDown();
     });
-    Assert.assertTrue("timed out", latch.await(1000, TimeUnit.SECONDS));
+    Assert.assertTrue("timed out", latch.await(1, TimeUnit.SECONDS));
   }
 
   @Test
@@ -380,8 +588,6 @@ public class FutureCompletesTest {
       service
         .andThenTo(value -> Completes.withSuccess(value * 2));
 
-    Assert.assertNotEquals(service.id(), client.id());
-
     final int value = 5;
     service.with(value);
 
@@ -400,8 +606,6 @@ public class FutureCompletesTest {
       service
         .andThen(value -> value * 2)
         .andThenTo(value -> Completes.withSuccess(value * 2));
-
-    Assert.assertNotEquals(service.id(), client.id());
 
     final int value = 5;
     service.with(value);
@@ -424,8 +628,6 @@ public class FutureCompletesTest {
         .andThenTo(value -> Completes.withSuccess(value * 2))
         .andThen(value -> value * 2);
 
-    Assert.assertNotEquals(service.id(), client.id());
-
     final int value = 5;
     service.with(value);
 
@@ -442,13 +644,11 @@ public class FutureCompletesTest {
     final Completes<Integer> nested = Completes.using(new Scheduler());
 
     Completes<Integer> client =
-            service
-                    .andThen(value -> value * 2)
-                    .andThenTo(value -> nested.andThen(v -> v * value))
-                    .andThenTo(value -> Completes.withSuccess(value * 2))
-                    .andThen(value -> value * 2);
-
-    Assert.assertNotEquals(service.id(), client.id());
+      service
+        .andThen(value -> value * 2)
+        .andThenTo(value -> nested.andThen(v -> v * value))
+        .andThenTo(value -> Completes.withSuccess(value * 2))
+        .andThen(value -> value * 2);
 
     nested.with(2);
     service.with(5);
@@ -466,13 +666,11 @@ public class FutureCompletesTest {
     final Completes<Integer> nested = Completes.using(new Scheduler());
 
     Completes<Integer> client =
-            service
-                    .andThen(value -> value * 2)
-                    .andThenTo(value -> nested.andThen(v -> v * value))
-                    .andThenTo(value -> Completes.withSuccess(value * 2))
-                    .andThen(value -> value * 2);
-
-    Assert.assertNotEquals(service.id(), client.id());
+      service
+        .andThen(value -> value * 2)
+        .andThenTo(value -> nested.andThen(v -> v * value))
+        .andThenTo(value -> Completes.withSuccess(value * 2))
+        .andThen(value -> value * 2);
 
     service.with(5);
     Thread.sleep(100);
@@ -492,11 +690,11 @@ public class FutureCompletesTest {
     final Holder holder = new Holder();
 
     Completes<Integer> client =
-            service
-                    .andThen(value -> value * 2)
-                    .andThenTo(value -> nested.andThen(v -> v * value))
-                    .andThenTo(value -> Completes.withSuccess(value * 2))
-                    .andThenConsume(outcome -> holder.hold(outcome));
+      service
+        .andThen(value -> value * 2)
+        .andThenTo(value -> nested.andThen(v -> v * value))
+        .andThenTo(value -> Completes.withSuccess(value * 2))
+        .andThenConsume(holder::hold);
 
     service.with(5);
     Thread.sleep(100);
@@ -514,11 +712,11 @@ public class FutureCompletesTest {
     final Completes<Integer> service = Completes.using(new Scheduler());
 
     Completes<Integer> client =
-            service
-                    .andThen(value -> value * 2)
-                    .andThenTo(value -> Completes.withSuccess(value * 2))
-                    .andThenConsume(outcome -> { throw new RuntimeException(""+(outcome * 2)); })
-                    .recoverFrom(e -> Integer.parseInt(e.getMessage()));
+      service
+        .andThen(value -> value * 2)
+        .andThenTo(value -> Completes.withSuccess(value * 2))
+        .andThenConsume(outcome -> { throw new RuntimeException(""+(outcome * 2)); })
+        .recoverFrom(e -> Integer.parseInt(e.getMessage()));
 
     service.with(5);
 
@@ -526,6 +724,19 @@ public class FutureCompletesTest {
 
     Assert.assertTrue(client.hasFailed());
     Assert.assertEquals(new Integer(40), outcome);
+  }
+
+  @Test
+  public void testItRecoversLateDefinedPipeline() {
+    final Completes<Integer> completes = Completes.asInteger().with(5);
+
+    completes
+            .andThen(null, (value) -> value * 2)
+            .andThen((Integer value) -> { throw new IllegalStateException("" + (value * 2)); })
+            .recoverFrom((e) -> failureValue = Integer.parseInt(e.getMessage()));
+
+    Assert.assertEquals(new Integer(20), failureValue);
+    Assert.assertEquals(new Integer(20), completes.outcome());
   }
 
   @Test
@@ -540,8 +751,6 @@ public class FutureCompletesTest {
         .andThen(value -> multipleBy(value, 2))
         .andThen((Integer value) -> value * 2)
         .recoverFrom(e -> Integer.parseInt(e.getMessage()));
-
-    Assert.assertNotEquals(service.id(), client.id());
 
     final int value = 5;
     service.with(value);
@@ -559,17 +768,19 @@ public class FutureCompletesTest {
       final Completes<Integer> service = Completes.using(new Scheduler());
 
       Completes<Integer> client =
-              service
-                      .andThen(value -> value * 2)
-                      .andThenTo(value -> Completes.withSuccess(value * 2))
-                      .andThenConsume(outcome -> { throw new RuntimeException(""+(outcome * 2)); })
-                      .recoverFrom(e -> Integer.parseInt(e.getMessage()));
+        service
+          .andThen(value -> value * 2)
+          .andThenTo(value -> Completes.withSuccess(value * 2))
+          .andThenConsume(outcome -> { throw new RuntimeException(""+(outcome * 2)); })
+          .recoverFrom(e -> Integer.parseInt(e.getMessage()));
 
       service.with(5);
 
       final Integer outcome = client.await();
 
+      Assert.assertTrue(client.isCompleted());
       Assert.assertTrue(client.hasFailed());
+      Assert.assertTrue(client.hasOutcome());
       Assert.assertEquals(new Integer(40), outcome);
     }
   }
@@ -579,16 +790,18 @@ public class FutureCompletesTest {
     final Completes<Integer> service = Completes.asInteger();
 
     Completes<Integer> client =
-            service
-                    .andThen(value -> value * 2)
-                    .andThenTo(value -> Completes.withSuccess(value * 2))
-                    .andFinally();
+      service
+        .andThen(value -> value * 2)
+        .andThenTo(value -> Completes.withSuccess(value * 2))
+        .andFinally();
 
     service.with(5);
 
     final Integer outcome = client.await();
 
+    Assert.assertTrue(client.isCompleted());
     Assert.assertFalse(client.hasFailed());
+    Assert.assertTrue(client.hasOutcome());
     Assert.assertEquals(new Integer(20), outcome);
   }
 
@@ -597,16 +810,18 @@ public class FutureCompletesTest {
     final Completes<Integer> service = Completes.asInteger();
 
     Completes<Integer> client =
-            service
-                    .andThen(value -> value * 2)
-                    .andThenTo(value -> Completes.withSuccess(value * 2))
-                    .andFinally(outcome -> outcome * 3);
+      service
+        .andThen(value -> value * 2)
+        .andThenTo(value -> Completes.withSuccess(value * 2))
+        .andFinally(outcome -> outcome * 3);
 
     service.with(5);
 
     final Integer outcome = client.await();
 
+    Assert.assertTrue(client.isCompleted());
     Assert.assertFalse(client.hasFailed());
+    Assert.assertTrue(client.hasOutcome());
     Assert.assertEquals(new Integer(60), outcome);
   }
 
@@ -616,16 +831,16 @@ public class FutureCompletesTest {
     final Completes<Integer> service = Completes.asInteger();
 
     service
-        .andThen(value -> value * 2)
-        .andThenTo(value -> Completes.withSuccess(value * 2))
-        .andFinallyConsume(outcome -> {
-          Assert.assertEquals(new Integer(20), outcome);
-          latch.countDown();
-        });
+      .andThen(value -> value * 2)
+      .andThenTo(value -> Completes.withSuccess(value * 2))
+      .andFinallyConsume(outcome -> {
+        Assert.assertEquals(new Integer(20), outcome);
+        latch.countDown();
+      });
 
     service.with(5);
 
-    Assert.assertTrue("timed out", latch.await(1000, TimeUnit.SECONDS));
+    Assert.assertTrue("timed out", latch.await(1, TimeUnit.SECONDS));
   }
 
   @Test
@@ -633,14 +848,16 @@ public class FutureCompletesTest {
     final Completes<Integer> service = Completes.asInteger();
 
     Completes<Integer> client = service
-            .useFailedOutcomeOf(-1)
-            .andThen(value -> value * 2);
+      .useFailedOutcomeOf(-1)
+      .andThen(value -> value * 2);
 
     service.failed();
 
     final Integer outcome = client.await();
 
+    Assert.assertTrue(client.isCompleted());
     Assert.assertTrue(client.hasFailed());
+    Assert.assertTrue(client.hasOutcome());
     Assert.assertEquals(new Integer(-1), outcome);
   }
 
@@ -649,34 +866,46 @@ public class FutureCompletesTest {
     final Completes<Integer> service = Completes.asInteger();
 
     Completes<Integer> client = service
-            .useFailedOutcomeOf(-1)
-            .andThen(value -> value * 2);
+      .useFailedOutcomeOf(-1)
+      .andThen(value -> value * 2);
 
     service.failed(new RuntimeException());
 
     final Integer outcome = client.await();
 
+    Assert.assertTrue(client.isCompleted());
     Assert.assertTrue(client.hasFailed());
-    Assert.assertEquals(null, outcome);
+    Assert.assertFalse(client.hasOutcome());
+    Assert.assertNull(outcome);
   }
 
   @Test
   public void testItRecoversFromCompletingWithException() {
     final Completes<Integer> service = Completes.using(new Scheduler());
     final Completes<Integer> client =
-            service
-                    .andThen((value) -> 2 * value)
-                    .recoverFrom((e) -> Integer.valueOf(e.getMessage()));
+      service
+        .andThen((value) -> 2 * value)
+        .recoverFrom((e) -> Integer.valueOf(e.getMessage()));
     service.with(new RuntimeException("10"));
 
     final Integer outcome = client.await();
 
+    Assert.assertTrue(client.isCompleted());
     Assert.assertTrue(client.hasFailed());
+    Assert.assertTrue(client.hasOutcome());
     Assert.assertEquals(new Integer(10), outcome);
   }
 
   @Test
-  public void testIntermediateStagesReturnTheFinalOutcome() throws InterruptedException {
+  public void testThatStagesHaveTheirOwnIdentity() {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+    final Completes<Integer> client = service.andThenTo(value -> Completes.withSuccess(value * 2));
+
+    Assert.assertNotEquals(service.id(), client.id());
+  }
+
+  @Test
+  public void testIntermediateStagesReturnTheFinalOutcome() {
     final Completes<Integer> service = Completes.using(new Scheduler());
     final Completes<Integer> nested = Completes.using(new Scheduler());
 
@@ -686,7 +915,6 @@ public class FutureCompletesTest {
     Completes<Integer> client = stage3.andThen(value -> value * 2);
 
     service.with(5);
-    Thread.sleep(100);
     nested.with(2);
 
     final Integer outcome = client.await();

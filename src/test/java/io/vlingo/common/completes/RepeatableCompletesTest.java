@@ -42,47 +42,21 @@ public class RepeatableCompletesTest {
   }
 
   @Test
-  public void testThatCompletesRepeatsAfterFailure() {
-    final Completes<Integer> completes = Completes.asTyped();
+  public void testThatCompletesRepeatsForClient() {
+    final Completes<Integer> service = Completes.using(new Scheduler());
 
-    completes
-            .andThen((value) -> {
-              if (value < 10) throw new RuntimeException();
-              return value;
-            })
+    Completes<Integer> client = service
             .andThen((value) -> value * 2)
             .andThen((Integer value) -> andThenValue = value)
             .repeat();
 
-    completes.with(5);
-    completes.await();
-    assertTrue(completes.hasFailed());
+    service.with(5);
+    final int outcome10 = client.await();
+    assertEquals(10, outcome10);
+    assertEquals(new Integer(10), andThenValue);
 
-    completes.with(10);
-    final int outcome20 = completes.await();
-    assertEquals(20, outcome20);
-    assertEquals(new Integer(20), andThenValue);
-  }
-
-
-  @Test
-  public void testThatCompletesRepeatsAfterTimeout() {
-    final Completes<Integer> completes = Completes.using(new Scheduler());
-
-    completes
-            .andThen(1, (value) -> value * 2)
-            .andThen((Integer value) -> andThenValue = value)
-            .repeat();
-
-    try { Thread.sleep(100); } catch (Exception e) { }
-
-    completes.with(5);
-    completes.await(10);
-    assertTrue(completes.hasFailed());
-
-    completes.with(10);
-    final int outcome20 = completes.await();
-    assertFalse(completes.hasFailed());
+    service.with(10);
+    final int outcome20 = client.await();
     assertEquals(20, outcome20);
     assertEquals(new Integer(20), andThenValue);
   }

@@ -557,6 +557,7 @@ public interface Completes<T> {
 
   /**
    * Answer whether or not this {@code Completes<T>} has completed.
+   * It has completed if a non-null or null outcome value was set.
    * @return boolean
    */
   boolean isCompleted();
@@ -585,7 +586,7 @@ public interface Completes<T> {
   CompletesId id();
 
   /**
-   * Answer whether or not this {@code Completes<T>} has an available outcome,
+   * Answer whether or not this {@code Completes<T>} has an available non-null outcome,
    * which will be true for either success or failure.
    * @return boolean
    */
