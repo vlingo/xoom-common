@@ -393,9 +393,6 @@ public class FutureCompletes<T> implements Completes<T> {
     }
 
     T failureValue() {
-      if (handlesFailure) {
-        return outcome();
-      }
       return failureValue.get();
     }
 

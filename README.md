@@ -8,7 +8,7 @@ Docs: https://docs.vlingo.io/vlingo-common
 
 The `vlingo-common` project consists of a minimal toolset used across various other vlingo projects
 
-  - `Completes<T>` and `AsyncCompletes`
+  - `Completes<T>` and `FutureCompletes`
   - `IdentityGenerator` with various identity generation algorithms
   - `Outcome` with `Success` and `Failure` (like `Either` and `Try`)
   - `Scheduler`
@@ -29,14 +29,14 @@ The `vlingo-common` project consists of a minimal toolset used across various ot
   <dependency>
     <groupId>io.vlingo</groupId>
     <artifactId>vlingo-common</artifactId>
-    <version>1.3.1</version>
+    <version>1.3.0</version>
     <type>pom</type>
   </dependency>
 ```
 
 ```gradle
 dependencies {
-    compile 'io.vlingo:vlingo-common:1.3.1'
+    compile 'io.vlingo:vlingo-common:1.3.0'
 }
 
 repositories {
