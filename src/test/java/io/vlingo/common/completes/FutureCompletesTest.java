@@ -76,6 +76,17 @@ public class FutureCompletesTest {
   }
 
   @Test
+  public void testThatNestedCompletesIsNotFlattened() {
+    final Completes<Integer> service = Completes.asInteger().with(5);
+
+    final Completes<Integer> client = service.andThen((value) -> Completes.withSuccess(value)).await();
+
+    client.await();
+
+    Assert.assertEquals(new Integer(5), client.outcome());
+  }
+
+  @Test
   public void testCompletesAfterLateDefinedConsumer() {
     final Completes<Integer> completes = Completes.asInteger().with(5);
 

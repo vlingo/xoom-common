@@ -476,7 +476,7 @@ public class FutureCompletes<T> implements Completes<T> {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     <O> State<O> nextForFunction(final O failedOutcomeValue, final Function<T, O> function, final boolean handlesFailure) {
-      Function<State<T>, CompletableFuture<O>> factory = (State<T> state) -> state.previousFuture().thenCompose(state.composableFunction(state.functionWrapper(function)));
+      Function<State<T>, CompletableFuture<O>> factory = (State<T> state) -> state.previousFuture().thenApply(state.functionWrapper(function));
       return new State(Completes.completesId(), this, scheduler, factory, failedOutcomeValue, handlesFailure, OutcomeType.Some);
     }
 
