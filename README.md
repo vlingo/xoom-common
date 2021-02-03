@@ -8,14 +8,14 @@ Docs: https://docs.vlingo.io/vlingo-common
 
 The `vlingo-common` project consists of a minimal toolset used across various other vlingo projects
 
-  - `Completes<T>` and `BasicCompletes`
+  - `Completes<T>` and `FutureCompletes`
   - `IdentityGenerator` with various identity generation algorithms
   - `Outcome` with `Success` and `Failure` (like `Either` and `Try`)
   - `Scheduler`
   - Serialization
   - `SemanticVersion`
   - `DynaCompiler` (makes `JavaCompiler` simpiler to use)
-  - `Tuple2`, `Tuple3`, `Tuple4`
+  - `Tuple2`, `Tuple3`, `Tuple4`, `Tuple5`
 
 ### Bintray
 
