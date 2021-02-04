@@ -26,9 +26,6 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Configure Maven
-        run: cp .github/settings.xml ~/.m2/settings.xml
-
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots install
 
@@ -38,9 +35,18 @@ jobs:
           name: JARs
           path: target/*.jar
 
+      - name: Deploy to GitHub
+        if: (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master') && github.repository_owner == 'vlingo'
+        run: mvn --batch-mode -DskipTests -DuseGitHubPackages=true deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Maven for Bintray
+        run: cp .github/settings.xml ~/.m2/settings.xml
+
       - name: Deploy
         if: (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master') && github.repository_owner == 'vlingo'
-        run: mvn --batch-mode -DskipTests deploy
+        run: mvn --batch-mode -DskipTests -DuseJFrogBintray=true deploy
         env:
           BINTRAY_USERNAME: ${{ secrets.BINTRAY_USERNAME }}
           BINTRAY_PASSWORD: ${{ secrets.BINTRAY_PASSWORD }}
