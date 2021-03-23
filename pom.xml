@@ -71,6 +71,26 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <version>1.6</version>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+            <configuration>
+              <gpgArguments>
+                <arg>--pinentry-mode</arg>
+                <arg>loopback</arg>
+              </gpgArguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
   <dependencies>
@@ -115,14 +135,6 @@
 
   <repositories>
     <repository>
-      <id>jcenter</id>
-      <url>https://jcenter.bintray.com/</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
       <id>github</id>
       <url>https://maven.pkg.github.com/vlingo/vlingo-platform</url>
       <releases><enabled>true</enabled></releases>
@@ -132,18 +144,18 @@
 
   <profiles>
     <profile>
-      <id>jfrog</id>
+      <id>ossrh</id>
       <activation>
         <property>
-          <name>useJFrogBintray</name>
+          <name>useSonatype</name>
           <value>true</value>
         </property>
       </activation>
       <distributionManagement>
         <repository>
-          <id>bintray-deploy</id>
-          <name>vlingo-vlingo-platform-java</name>
-          <url>https://api.bintray.com/maven/vlingo/vlingo-platform-java/vlingo-common/;publish=1</url>
+          <id>ossrh</id>
+          <name>Central Repository OSSRH</name>
+          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
       </distributionManagement>
     </profile>
