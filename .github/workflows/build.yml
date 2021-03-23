@@ -32,7 +32,7 @@ jobs:
         run: mvn --batch-mode --update-snapshots install
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MAVEN_GPG_PASSPHRASE: ""
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
       - name: Publish artifacts
         uses: actions/upload-artifact@v2
@@ -45,7 +45,7 @@ jobs:
         run: mvn --batch-mode -DskipTests -DuseGitHubPackages=true deploy
         env:
           GITHUB_TOKEN: ${{ secrets.DEPLOY_GITHUB_TOKEN }}
-          MAVEN_GPG_PASSPHRASE: ""
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
       - name: Set up Java for publishing to Maven Central Repository
         if: startsWith(github.ref, 'refs/tags/') && github.repository_owner == 'vlingo'
@@ -64,7 +64,7 @@ jobs:
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
-          MAVEN_GPG_PASSPHRASE: ""
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
       - name: Trigger downstream builds
         if: false && startsWith(github.ref, 'refs/tags/') && github.repository_owner == 'vlingo'
