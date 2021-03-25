@@ -32,14 +32,14 @@ If using snapshot builds [follow these instructions](https://github.com/vlingo/v
   <dependency>
     <groupId>io.vlingo</groupId>
     <artifactId>vlingo-common</artifactId>
-    <version>1.5.1</version>
+    <version>1.5.2</version>
     <type>pom</type>
   </dependency>
 ```
 
 ```gradle
 dependencies {
-    compile 'io.vlingo:vlingo-common:1.5.1'
+    compile 'io.vlingo:vlingo-common:1.5.2'
 }
 
 repositories {
