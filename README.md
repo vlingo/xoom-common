@@ -17,18 +17,9 @@ The `vlingo-common` project consists of a minimal toolset used across various ot
   - `DynaCompiler` (makes `JavaCompiler` simpiler to use)
   - `Tuple2`, `Tuple3`, `Tuple4`, `Tuple5`
 
-### Important
-If using snapshot builds [follow these instructions](https://github.com/vlingo/vlingo-platform#snapshots-repository) or you will experience failures.
-
-### Bintray
+### Installation
 
 ```xml
-  <repositories>
-    <repository>
-      <id>jcenter</id>
-      <url>https://jcenter.bintray.com/</url>
-    </repository>
-  </repositories>
   <dependency>
     <groupId>io.vlingo</groupId>
     <artifactId>vlingo-common</artifactId>
@@ -40,10 +31,6 @@ If using snapshot builds [follow these instructions](https://github.com/vlingo/v
 ```gradle
 dependencies {
     compile 'io.vlingo:vlingo-common:1.5.2'
-}
-
-repositories {
-    jcenter()
 }
 ```
 
