@@ -1,6 +1,6 @@
 # vlingo-common
 
-[![Javadocs](http://javadoc.io/badge/io.vlingo/vlingo-common.svg?color=brightgreen)](http://javadoc.io/doc/io.vlingo/vlingo-common) [![Build](https://github.com/vlingo/vlingo-common/workflows/Build/badge.svg)](https://github.com/vlingo/vlingo-common/actions?query=workflow%3ABuild) [ ![Download](https://api.bintray.com/packages/vlingo/vlingo-platform-java/vlingo-common/images/download.svg) ](https://bintray.com/vlingo/vlingo-platform-java/vlingo-common/_latestVersion) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/vlingo-platform-java/community)
+[![Javadocs](http://javadoc.io/badge/io.vlingo/vlingo-common.svg?color=brightgreen)](http://javadoc.io/doc/io.vlingo/vlingo-common) [![Build](https://github.com/vlingo/vlingo-common/workflows/Build/badge.svg)](https://github.com/vlingo/vlingo-common/actions?query=workflow%3ABuild) [![Download](https://img.shields.io/maven-central/v/io.vlingo/vlingo-common?label=maven)](https://search.maven.org/artifact/io.vlingo/vlingo-common) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/vlingo-platform-java/community)
 
 The VLINGO XOOM platform SDK common tools shared across various projects.
 
