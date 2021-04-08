@@ -1,12 +1,12 @@
-# vlingo-common
+# xoom-common
 
-[![Javadocs](http://javadoc.io/badge/io.vlingo/vlingo-common.svg?color=brightgreen)](http://javadoc.io/doc/io.vlingo/vlingo-common) [![Build](https://github.com/vlingo/vlingo-common/workflows/Build/badge.svg)](https://github.com/vlingo/vlingo-common/actions?query=workflow%3ABuild) [![Download](https://img.shields.io/maven-central/v/io.vlingo/vlingo-common?label=maven)](https://search.maven.org/artifact/io.vlingo/vlingo-common) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/vlingo-platform-java/community)
+[![Javadocs](http://javadoc.io/badge/io.vlingo.xoom/xoom-common.svg?color=brightgreen)](http://javadoc.io/doc/io.vlingo.xoom/xoom-common) [![Build](https://github.com/vlingo/xoom-common/workflows/Build/badge.svg)](https://github.com/vlingo/xoom-common/actions?query=workflow%3ABuild) [![Download](https://img.shields.io/maven-central/v/io.vlingo.xoom/xoom-common?label=maven)](https://search.maven.org/artifact/io.vlingo.xoom/xoom-common) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/vlingo-platform-java/community)
 
 The VLINGO XOOM platform SDK common tools shared across various projects.
 
-Docs: https://docs.vlingo.io/vlingo-common
+Docs: https://docs.vlingo.io/xoom-common
 
-The `vlingo-common` project consists of a minimal toolset used across various other VLINGO XOOM SDK components.
+The `xoom-common` project consists of a minimal toolset used across various other VLINGO XOOM SDK components.
 
   - `Completes<T>` and `FutureCompletes`
   - `IdentityGenerator` with various identity generation algorithms
@@ -21,8 +21,8 @@ The `vlingo-common` project consists of a minimal toolset used across various ot
 
 ```xml
   <dependency>
-    <groupId>io.vlingo</groupId>
-    <artifactId>vlingo-common</artifactId>
+    <groupId>io.vlingo.xoom</groupId>
+    <artifactId>xoom-common</artifactId>
     <version>1.6.0</version>
     <type>pom</type>
   </dependency>
@@ -30,7 +30,7 @@ The `vlingo-common` project consists of a minimal toolset used across various ot
 
 ```gradle
 dependencies {
-    compile 'io.vlingo:vlingo-common:1.6.0'
+    compile 'io.vlingo.xoom:xoom-common:1.6.0'
 }
 ```
 

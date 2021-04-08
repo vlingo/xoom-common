@@ -1,0 +1,94 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.vlingo</groupId>
+  <artifactId>vlingo-common</artifactId>
+  <version>1.6.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+  <name>vlingo-common</name>
+  <description>These are just a few common tools shared across various vlingo projects.</description>
+  <url>https://github.com/vlingo/vlingo-common</url>
+  <licenses>
+    <license>
+      <name>Mozilla Public License 2.0</name>
+      <url>https://mozilla.org/MPL/2.0/</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>vlingo</id>
+      <name>vlingo/PLATFORM Team</name>
+      <email>info@vlingo.io</email>
+      <organization>vlingo</organization>
+      <organizationUrl>https://vlingo.io/contributors/</organizationUrl>
+    </developer>
+  </developers>
+
+  <profiles>
+    <profile>
+      <id>sonatype</id>
+      <activation>
+        <property>
+          <name>useSonatype</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <distributionManagement>
+        <relocation>
+          <groupId>io.vlingo.xoom</groupId>
+          <artifactId>xoom-common</artifactId>
+        </relocation>
+        <snapshotRepository>
+          <id>central-repository-ossrh</id>
+          <name>Snapshots Repository OSSRH</name>
+          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+      </distributionManagement>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <version>1.6.8</version>
+            <extensions>true</extensions>
+            <configuration>
+              <serverId>central-repository-ossrh</serverId>
+              <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+              <autoReleaseAfterClose>true</autoReleaseAfterClose>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>github</id>
+      <activation>
+        <property>
+          <name>useGitHubPackages</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <distributionManagement>
+        <relocation>
+          <groupId>io.vlingo.xoom</groupId>
+          <artifactId>xoom-common</artifactId>
+        </relocation>
+        <repository>
+          <id>github</id>
+          <name>GitHub Packages</name>
+          <url>https://maven.pkg.github.com/vlingo/vlingo-platform</url>
+        </repository>
+      </distributionManagement>
+    </profile>
+    <profile>
+      <!-- We only need GitHub packages during releases as syncing to central is too slow. -->
+      <id>github-releases</id>
+      <repositories>
+        <repository>
+          <id>github</id>
+          <name>GitHub Packages</name>
+          <url>https://maven.pkg.github.com/vlingo/vlingo-platform</url>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
+</project>
