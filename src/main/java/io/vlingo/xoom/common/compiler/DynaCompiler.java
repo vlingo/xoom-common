@@ -93,7 +93,7 @@ public class DynaCompiler {
     public void report(final Diagnostic<? extends T> diagnostic) {
       if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
         // TODO: log
-        System.out.println("vlingo/common: DynaCompiler ERROR: " + diagnostic);
+        System.out.println("XOOM: DynaCompiler ERROR: " + diagnostic);
       }
     }
   }
