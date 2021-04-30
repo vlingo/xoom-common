@@ -140,7 +140,7 @@ jobs:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
       - name: Deploy
-        run: mv src src-bkp && mvn -f pom-relocation.xml --batch-mode -DskipTests -DuseSonatype -DsignArtifacts -Pgithub-releases deploy && mv src-bkp src
+        run: mvn -f pom-relocation.xml --batch-mode -DskipTests -DuseSonatype -DsignArtifacts -Pgithub-releases deploy
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
