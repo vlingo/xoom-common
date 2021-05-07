@@ -8,8 +8,7 @@
 package io.vlingo.xoom.common.serialization;
 
 import java.lang.reflect.Type;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -34,6 +33,10 @@ public class JsonSerialization {
         .registerTypeAdapter(Class.class, new ClassDeserializer())
         .registerTypeAdapter(Date.class, new DateSerializer())
         .registerTypeAdapter(Date.class, new DateDeserializer())
+        .registerTypeAdapter(LocalDate.class, new LocalDateSerializer())
+        .registerTypeAdapter(LocalDate.class, new LocalDateDeserializer())
+        .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeSerializer())
+        .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeDeserializer())
         .registerTypeAdapter(OffsetDateTime.class, new OffsetDateTimeSerializer())
         .registerTypeAdapter(OffsetDateTime.class, new OffsetDateTimeDeserializer())
         .create();
@@ -104,6 +107,32 @@ public class JsonSerialization {
     public Date deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
         long time = Long.parseLong(json.getAsJsonPrimitive().getAsString());
         return new Date(time);
+    }
+  }
+
+  private static class LocalDateSerializer implements JsonSerializer<LocalDate> {
+    public JsonElement serialize(LocalDate source, Type typeOfSource, JsonSerializationContext context) {
+      return new JsonPrimitive(Long.toString(source.toEpochDay()));
+    }
+  }
+
+  private static class LocalDateDeserializer implements JsonDeserializer<LocalDate> {
+    public LocalDate deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
+      final long time = Long.parseLong(json.getAsJsonPrimitive().getAsString());
+      return Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+  }
+
+  private static class LocalDateTimeSerializer implements JsonSerializer<LocalDateTime> {
+    public JsonElement serialize(final LocalDateTime source, Type typeOfSource, JsonSerializationContext context) {
+      return new JsonPrimitive(Long.toString(source.atZone(ZoneId.systemDefault()).toEpochSecond()));
+    }
+  }
+
+  private static class LocalDateTimeDeserializer implements JsonDeserializer<LocalDateTime> {
+    public LocalDateTime deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
+      final long time = Long.parseLong(json.getAsJsonPrimitive().getAsString());
+      return Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDateTime();
     }
   }
 
