@@ -7,22 +7,14 @@
 
 package io.vlingo.xoom.common.serialization;
 
+import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
+
 import java.lang.reflect.Type;
 import java.time.*;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
-import com.google.gson.reflect.TypeToken;
 
 public class JsonSerialization {
   private final static Gson gson;
@@ -119,20 +111,20 @@ public class JsonSerialization {
   private static class LocalDateDeserializer implements JsonDeserializer<LocalDate> {
     public LocalDate deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
       final long time = Long.parseLong(json.getAsJsonPrimitive().getAsString());
-      return Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDate();
+      return Instant.ofEpochMilli(time).atZone(ZoneOffset.UTC).toLocalDate();
     }
   }
 
   private static class LocalDateTimeSerializer implements JsonSerializer<LocalDateTime> {
     public JsonElement serialize(final LocalDateTime source, Type typeOfSource, JsonSerializationContext context) {
-      return new JsonPrimitive(Long.toString(source.atZone(ZoneId.systemDefault()).toEpochSecond()));
+      return new JsonPrimitive(Long.toString(source.atZone(ZoneOffset.UTC).toEpochSecond()));
     }
   }
 
   private static class LocalDateTimeDeserializer implements JsonDeserializer<LocalDateTime> {
     public LocalDateTime deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
       final long time = Long.parseLong(json.getAsJsonPrimitive().getAsString());
-      return Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDateTime();
+      return Instant.ofEpochMilli(time).atZone(ZoneOffset.UTC).toLocalDateTime();
     }
   }
 
