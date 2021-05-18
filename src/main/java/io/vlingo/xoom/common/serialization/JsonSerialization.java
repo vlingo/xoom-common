@@ -110,21 +110,21 @@ public class JsonSerialization {
 
   private static class LocalDateDeserializer implements JsonDeserializer<LocalDate> {
     public LocalDate deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
-      final long time = Long.parseLong(json.getAsJsonPrimitive().getAsString());
-      return Instant.ofEpochMilli(time).atZone(ZoneOffset.UTC).toLocalDate();
+      final long epochDay = Long.parseLong(json.getAsJsonPrimitive().getAsString());
+      return LocalDate.ofEpochDay(epochDay);
     }
   }
 
   private static class LocalDateTimeSerializer implements JsonSerializer<LocalDateTime> {
     public JsonElement serialize(final LocalDateTime source, Type typeOfSource, JsonSerializationContext context) {
-      return new JsonPrimitive(Long.toString(source.atZone(ZoneOffset.UTC).toEpochSecond()));
+      return new JsonPrimitive(Long.toString(source.atZone(ZoneOffset.UTC).toInstant().toEpochMilli()));
     }
   }
 
   private static class LocalDateTimeDeserializer implements JsonDeserializer<LocalDateTime> {
     public LocalDateTime deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
-      final long time = Long.parseLong(json.getAsJsonPrimitive().getAsString());
-      return Instant.ofEpochMilli(time).atZone(ZoneOffset.UTC).toLocalDateTime();
+      final long milli = Long.parseLong(json.getAsJsonPrimitive().getAsString());
+      return LocalDateTime.ofInstant(Instant.ofEpochMilli(milli), ZoneOffset.UTC);
     }
   }
 
