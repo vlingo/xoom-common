@@ -1,4 +1,4 @@
-package io.vlingo.xoom.common.nativebuild;
+package nativebuild;
 
 import io.vlingo.xoom.common.identity.IdentityGenerator;
 import io.vlingo.xoom.common.message.Message;
