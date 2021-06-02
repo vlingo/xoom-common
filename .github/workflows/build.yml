@@ -44,26 +44,6 @@ jobs:
           name: JARs
           path: target/*.jar
 
-      - name: Set up GraalVM
-        uses: DeLaGuardo/setup-graalvm@4.0
-        with:
-          java: 'java8'
-
-      - name: Install the native-image component
-        run: gu install native-image
-
-      - name: Build with GraalVM
-        run: mvn --batch-mode -Pgithub-releases -Pnative-image clean install
-
-      - name: Publish GraalVM artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: GraalVM
-          path: |
-            target/*.h
-            target/*.so
-            target/*.build_artifacts.txt
-
       - name: Notify slack
         if: always() && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.repository_owner == 'vlingo'
         uses: rtCamp/action-slack-notify@v2
