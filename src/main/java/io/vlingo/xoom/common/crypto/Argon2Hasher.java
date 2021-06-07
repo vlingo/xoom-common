@@ -25,12 +25,12 @@ public class Argon2Hasher implements Hasher {
 
   @Override
   public String hash(final String plainSecret) {
-    final String hash = argon2.hash(maxDuration, memoryCost, parallelism, plainSecret);
+    final String hash = argon2.hash(maxDuration, memoryCost, parallelism, plainSecret.toCharArray());
     return hash;
   }
 
   @Override
   public boolean verify(final String plainSecret, final String hashedSecret) {
-    return argon2.verify(hashedSecret, plainSecret);
+    return argon2.verify(hashedSecret, plainSecret.toCharArray());
   }
 }
