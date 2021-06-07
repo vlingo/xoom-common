@@ -18,32 +18,27 @@ public final class NativeBuildEntryPoint {
 
       @Override
       public String id() {
-        // TODO Auto-generated method stub
         return new IdentityGenerator.NameBasedIdentityGenerator().generate().toString();
       }
 
       @Override
       public Date occurredOn() {
-        // TODO Auto-generated method stub
         return null;
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public String payload() {
-        // TODO Auto-generated method stub
         return messageString;
       }
 
       @Override
       public String type() {
-        // TODO Auto-generated method stub
         return null;
       }
 
       @Override
       public String version() {
-        // TODO Auto-generated method stub
         return null;
       }
 
