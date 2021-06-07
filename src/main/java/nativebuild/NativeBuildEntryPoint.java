@@ -1,13 +1,14 @@
 package nativebuild;
 
-import io.vlingo.xoom.common.identity.IdentityGenerator;
-import io.vlingo.xoom.common.message.Message;
-import io.vlingo.xoom.common.message.MessageExchangeReader;
+import java.util.Date;
+
 import org.graalvm.nativeimage.c.function.CEntryPoint;
 import org.graalvm.nativeimage.c.type.CCharPointer;
 import org.graalvm.nativeimage.c.type.CTypeConversion;
 
-import java.util.Date;
+import io.vlingo.xoom.common.identity.IdentityGenerator;
+import io.vlingo.xoom.common.message.Message;
+import io.vlingo.xoom.common.message.MessageExchangeReader;
 
 public final class NativeBuildEntryPoint {
   @CEntryPoint(name = "Java_io_vlingo_xoom_commonnative_Native_from")
@@ -28,6 +29,7 @@ public final class NativeBuildEntryPoint {
       }
 
       @Override
+      @SuppressWarnings("unchecked")
       public String payload() {
         // TODO Auto-generated method stub
         return messageString;
