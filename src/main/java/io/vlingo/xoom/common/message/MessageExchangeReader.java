@@ -29,6 +29,11 @@ public class MessageExchangeReader extends MessageReader {
     return Long.parseLong(id());
   }
 
+  @SuppressWarnings("unchecked")
+  public <T extends Message> T message() {
+    return (T) message;
+  }
+
   public String type() {
     return message.type();
   }
