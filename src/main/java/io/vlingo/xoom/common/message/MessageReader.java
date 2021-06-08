@@ -156,8 +156,7 @@ public abstract class MessageReader {
 
   protected JsonObject parse(final String jsonRepresentation) {
     try {
-      JsonParser parser = new JsonParser();
-      final JsonObject jsonObject = parser.parse(jsonRepresentation).getAsJsonObject();
+      JsonObject jsonObject = (JsonObject) JsonParser.parseString(jsonRepresentation);
       return jsonObject;
     } catch (Exception e) {
       e.printStackTrace();
