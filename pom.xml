@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.vlingo.xoom</groupId>
   <artifactId>xoom-common</artifactId>
-  <version>1.7.8-SNAPSHOT</version>
+  <version>1.8.0</version>
   <packaging>jar</packaging>
   <name>xoom-common</name>
   <description>These are just a few common tools shared across various vlingo projects.</description>
