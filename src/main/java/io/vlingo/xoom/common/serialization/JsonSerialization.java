@@ -15,9 +15,11 @@ import java.time.*;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class JsonSerialization {
   private final static Gson gson;
+  private final static Pattern pattern = Pattern.compile("-?\\d+(\\.\\d+)?");
 
   static {
     gson = new GsonBuilder()
@@ -55,13 +57,13 @@ public class JsonSerialization {
   }
 
   public static <T> String serialized(final Collection<T> instance) {
-    final Type collectionOfT = new TypeToken<Collection<T>>(){}.getType();
+    final Type collectionOfT = new TypeToken<Collection<T>>() {}.getType();
     final String serialization = gson.toJson(instance, collectionOfT);
     return serialization;
   }
 
   public static <T> String serialized(final List<T> instance) {
-    final Type listOfT = new TypeToken<List<T>>(){}.getType();
+    final Type listOfT = new TypeToken<List<T>>() {}.getType();
     final String serialization = gson.toJson(instance, listOfT);
     return serialization;
   }
@@ -78,27 +80,27 @@ public class JsonSerialization {
   private static class ClassDeserializer implements JsonDeserializer<Class> {
     @Override
     public Class deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
-        final String classname = json.getAsJsonPrimitive().getAsString();
-        try {
-          return Class.forName(classname);
-        } catch (ClassNotFoundException e) {
-          throw new JsonParseException(e);
-        }
+      final String classname = json.getAsJsonPrimitive().getAsString();
+      try {
+        return Class.forName(classname);
+      } catch (ClassNotFoundException e) {
+        throw new JsonParseException(e);
+      }
     }
   }
 
   private static class DateSerializer implements JsonSerializer<Date> {
     @Override
     public JsonElement serialize(Date source, Type typeOfSource, JsonSerializationContext context) {
-        return new JsonPrimitive(Long.toString(source.getTime()));
+      return new JsonPrimitive(Long.toString(source.getTime()));
     }
   }
 
   private static class DateDeserializer implements JsonDeserializer<Date> {
     @Override
     public Date deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
-        long time = Long.parseLong(json.getAsJsonPrimitive().getAsString());
-        return new Date(time);
+      long time = Long.parseLong(json.getAsJsonPrimitive().getAsString());
+      return new Date(time);
     }
   }
 
@@ -110,8 +112,12 @@ public class JsonSerialization {
 
   private static class LocalDateDeserializer implements JsonDeserializer<LocalDate> {
     public LocalDate deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
-      final long epochDay = Long.parseLong(json.getAsJsonPrimitive().getAsString());
-      return LocalDate.ofEpochDay(epochDay);
+      if (isNumericString(json.getAsJsonPrimitive().getAsString())) {
+        final long epochDay = Long.parseLong(json.getAsJsonPrimitive().getAsString());
+        return LocalDate.ofEpochDay(epochDay);
+      }
+
+      return LocalDate.parse(json.getAsJsonPrimitive().getAsString());
     }
   }
 
@@ -123,23 +129,32 @@ public class JsonSerialization {
 
   private static class LocalDateTimeDeserializer implements JsonDeserializer<LocalDateTime> {
     public LocalDateTime deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
-      final long milli = Long.parseLong(json.getAsJsonPrimitive().getAsString());
-      return LocalDateTime.ofInstant(Instant.ofEpochMilli(milli), ZoneOffset.UTC);
+      if (isNumericString(json.getAsJsonPrimitive().getAsString())) {
+        final long milli = Long.parseLong(json.getAsJsonPrimitive().getAsString());
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(milli), ZoneOffset.UTC);
+      }
+
+      return LocalDateTime.parse(json.getAsJsonPrimitive().getAsString());
     }
   }
 
   private static class OffsetDateTimeSerializer implements JsonSerializer<OffsetDateTime> {
     @Override
     public JsonElement serialize(OffsetDateTime source, Type typeOfSource, JsonSerializationContext context) {
-        return new JsonPrimitive(Long.toString(source.toInstant().toEpochMilli()) + ";" + source.getOffset().toString());
+      return new JsonPrimitive(source.toInstant().toEpochMilli() + ";" + source.getOffset().toString());
     }
   }
 
   private static class OffsetDateTimeDeserializer implements JsonDeserializer<OffsetDateTime> {
     @Override
     public OffsetDateTime deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
-        final String[] encoding = json.getAsJsonPrimitive().getAsString().split(";");
-        final Date date = new Date(Long.parseLong(encoding[0]));
-        return date.toInstant().atOffset(ZoneOffset.of(encoding[1]));
+      final String[] encoding = json.getAsJsonPrimitive().getAsString().split(";");
+      final Date date = new Date(Long.parseLong(encoding[0]));
+      return date.toInstant().atOffset(ZoneOffset.of(encoding[1]));
     }
-  }}
+  }
+
+  private static boolean isNumericString(String element) {
+    return pattern.matcher(element).matches();
+  }
+}
