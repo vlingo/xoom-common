@@ -114,7 +114,7 @@ public class JsonSerialization {
 
   private static class LocalDateDeserializer implements JsonDeserializer<LocalDate> {
     public LocalDate deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
-      if (pattern.matcher(json.getAsJsonPrimitive().getAsString()).matches()) {
+      if (isNumericString(json.getAsJsonPrimitive().getAsString())) {
         final long epochDay = Long.parseLong(json.getAsJsonPrimitive().getAsString());
         return LocalDate.ofEpochDay(epochDay);
       }
@@ -131,7 +131,7 @@ public class JsonSerialization {
 
   private static class LocalDateTimeDeserializer implements JsonDeserializer<LocalDateTime> {
     public LocalDateTime deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
-      if (pattern.matcher(json.getAsJsonPrimitive().getAsString()).matches()) {
+      if (isNumericString(json.getAsJsonPrimitive().getAsString())) {
         final long milli = Long.parseLong(json.getAsJsonPrimitive().getAsString());
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(milli), ZoneOffset.UTC);
       }
@@ -154,5 +154,9 @@ public class JsonSerialization {
       final Date date = new Date(Long.parseLong(encoding[0]));
       return date.toInstant().atOffset(ZoneOffset.of(encoding[1]));
     }
+  }
+
+  private static boolean isNumericString(String element) {
+    return pattern.matcher(element).matches();
   }
 }
