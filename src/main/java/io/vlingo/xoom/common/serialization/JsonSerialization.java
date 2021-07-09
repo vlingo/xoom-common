@@ -57,15 +57,13 @@ public class JsonSerialization {
   }
 
   public static <T> String serialized(final Collection<T> instance) {
-    final Type collectionOfT = new TypeToken<Collection<T>>() {
-    }.getType();
+    final Type collectionOfT = new TypeToken<Collection<T>>() {}.getType();
     final String serialization = gson.toJson(instance, collectionOfT);
     return serialization;
   }
 
   public static <T> String serialized(final List<T> instance) {
-    final Type listOfT = new TypeToken<List<T>>() {
-    }.getType();
+    final Type listOfT = new TypeToken<List<T>>() {}.getType();
     final String serialization = gson.toJson(instance, listOfT);
     return serialization;
   }
