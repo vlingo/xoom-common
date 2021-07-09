@@ -11,17 +11,15 @@ import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
+import java.time.*;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class JsonSerialization {
   private final static Gson gson;
+  private final static Pattern pattern = Pattern.compile("-?\\d+(\\.\\d+)?");
 
   static {
     gson = new GsonBuilder()
@@ -110,24 +108,34 @@ public class JsonSerialization {
 
   private static class LocalDateSerializer implements JsonSerializer<LocalDate> {
     public JsonElement serialize(LocalDate source, Type typeOfSource, JsonSerializationContext context) {
-      return new JsonPrimitive(source.format(DateTimeFormatter.ISO_LOCAL_DATE));
+      return new JsonPrimitive(Long.toString(source.toEpochDay()));
     }
   }
 
   private static class LocalDateDeserializer implements JsonDeserializer<LocalDate> {
     public LocalDate deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
+      if (pattern.matcher(json.getAsJsonPrimitive().getAsString()).matches()) {
+        final long epochDay = Long.parseLong(json.getAsJsonPrimitive().getAsString());
+        return LocalDate.ofEpochDay(epochDay);
+      }
+
       return LocalDate.parse(json.getAsJsonPrimitive().getAsString());
     }
   }
 
   private static class LocalDateTimeSerializer implements JsonSerializer<LocalDateTime> {
     public JsonElement serialize(final LocalDateTime source, Type typeOfSource, JsonSerializationContext context) {
-      return new JsonPrimitive(source.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+      return new JsonPrimitive(Long.toString(source.atZone(ZoneOffset.UTC).toInstant().toEpochMilli()));
     }
   }
 
   private static class LocalDateTimeDeserializer implements JsonDeserializer<LocalDateTime> {
     public LocalDateTime deserialize(JsonElement json, Type typeOfTarget, JsonDeserializationContext context) throws JsonParseException {
+      if (pattern.matcher(json.getAsJsonPrimitive().getAsString()).matches()) {
+        final long milli = Long.parseLong(json.getAsJsonPrimitive().getAsString());
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(milli), ZoneOffset.UTC);
+      }
+
       return LocalDateTime.parse(json.getAsJsonPrimitive().getAsString());
     }
   }
