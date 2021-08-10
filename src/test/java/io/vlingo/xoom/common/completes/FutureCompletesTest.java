@@ -79,7 +79,7 @@ public class FutureCompletesTest {
   public void testThatNestedCompletesIsNotFlattened() {
     final Completes<Integer> service = Completes.asInteger().with(5);
 
-    final Completes<Integer> client = service.andThen((value) -> Completes.withSuccess(value)).await();
+    final Completes<Integer> client = service.andThen(Completes::withSuccess).await();
 
     client.await();
 
@@ -427,10 +427,10 @@ public class FutureCompletesTest {
 
     final Completes<Integer> client =
       service
-        .useFailedOutcomeOf(new Integer(-100))
+        .useFailedOutcomeOf(-100)
         .timeoutWithin(1)
         .andThen(value -> 2 * value)
-        .otherwise((Integer failedValue) -> failedValue.intValue() - 100);
+        .otherwise((Integer failedValue) -> failedValue - 100);
 
     Thread.sleep(100);
 
@@ -448,8 +448,8 @@ public class FutureCompletesTest {
 
     final Completes<Integer> client =
             service
-                    .andThen(1, new Integer(-100), value -> 2 * value)
-                    .otherwise((Integer failedValue) -> failedValue.intValue() - 100);
+                    .andThen(1, -100, value -> 2 * value)
+                    .otherwise((Integer failedValue) -> failedValue - 100);
 
     Thread.sleep(100);
 
