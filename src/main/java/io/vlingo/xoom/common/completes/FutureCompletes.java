@@ -515,7 +515,7 @@ public class FutureCompletes<T> implements Completes<T> {
             return;
           }
 
-          if (previous.hasFailed()) {
+          if (previous.hasFailed() && !previous.handlesFailure) {
             fail(previous.failureValue(), previous.isTimedOut());
             if (!handlesFailure) {
               return;
@@ -561,7 +561,7 @@ public class FutureCompletes<T> implements Completes<T> {
             return (O) value;
           }
 
-          if (previous.hasFailed()) {
+          if (previous.hasFailed() && !previous.handlesFailure) {
             fail(previous.failureValue(), previous.isTimedOut());
             if (!handlesFailure) {
               return (O) previous.failureValue();

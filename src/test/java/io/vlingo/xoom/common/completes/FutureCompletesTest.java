@@ -448,7 +448,7 @@ public class FutureCompletesTest {
 
     final Completes<Integer> client =
             service
-                    .andThen(1, -100, value -> 2 * value)
+                    .andThen(1, -100, value -> 3 * value)
                     .otherwise((Integer failedValue) -> failedValue - 100);
 
     Thread.sleep(100);
@@ -938,6 +938,56 @@ public class FutureCompletesTest {
     Assert.assertEquals(new Integer(80), stage2.outcome());
     Assert.assertEquals(new Integer(80), stage3.outcome());
     Assert.assertEquals(new Integer(20), nested.outcome());
+  }
+
+  @Test
+  public void testThatOtherwiseLetsTheClientPipelineContinueDespiteEarlierTimeout() throws InterruptedException {
+    final Completes<Integer> service = Completes.using(new Scheduler());
+
+    service
+            .useFailedOutcomeOf(-1)
+            .timeoutWithin(1)
+            .andThen(value -> value * 2)
+            .otherwise(e -> 100)
+            .andThen(v -> v * 2);
+
+    Thread.sleep(100);
+
+    service.with(5);
+
+    Assert.assertTrue(service.hasFailed());
+    Assert.assertEquals(new Integer(200), service.outcome());
+  }
+
+  @Test
+  public void testThatOtherwiseLetsTheClientPipelineContinueDespiteEarlierFailedOutcome() {
+    final Completes<Integer> service = Completes.asInteger();
+    final Completes<Integer> client = service
+            .useFailedOutcomeOf(-1)
+            .andThen(value -> value * 2)
+            .otherwise(e -> 100);
+
+    final Completes<Integer> otherClient = client
+            .andThen(value -> value * 2);
+
+    service.with(-1);
+
+    Assert.assertEquals(new Integer(200), otherClient.outcome());
+  }
+
+  @Test
+  public void testThatOtherwiseLetsTheClientConsumerContinueDespiteEarlierFailedOutcome() {
+    final Completes<Integer> service = Completes.asInteger();
+    final Completes<Integer> client = service
+            .useFailedOutcomeOf(-1)
+            .andThen(value -> value * 2)
+            .otherwise(e -> 100);
+
+    client.andThenConsume(value -> andThenValue = value * 2);
+
+    service.with(-1);
+
+    Assert.assertEquals(new Integer(200), andThenValue);
   }
 
   private int multipleBy(final int amount, final int by) {
