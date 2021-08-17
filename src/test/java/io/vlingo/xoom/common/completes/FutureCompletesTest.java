@@ -941,7 +941,7 @@ public class FutureCompletesTest {
   }
 
   @Test
-  public void testThatOtherwiseLetsTheClientPipelineContinueDespiteEarlierTimeout() throws InterruptedException {
+  public void testThatOtherwiseLetsTheClientPipelineContinueWithTheFailureBranchOnTimeout() throws InterruptedException {
     final Completes<Integer> service = Completes.using(new Scheduler());
 
     service
@@ -949,18 +949,19 @@ public class FutureCompletesTest {
             .timeoutWithin(1)
             .andThen(value -> value * 2)
             .otherwise(e -> 100)
-            .andThen(v -> v * 2);
+            .andThen(v -> v * 2)
+            .otherwise((Integer v) -> v * 3);
 
     Thread.sleep(100);
 
     service.with(5);
 
     Assert.assertTrue(service.hasFailed());
-    Assert.assertEquals(new Integer(200), service.outcome());
+    Assert.assertEquals(new Integer(300), service.outcome());
   }
 
   @Test
-  public void testThatOtherwiseLetsTheClientPipelineContinueDespiteEarlierFailedOutcome() {
+  public void testThatOtherwiseLetsTheClientPipelineContinueWithTheFailureBranchOnFailedOutcome() {
     final Completes<Integer> service = Completes.asInteger();
     final Completes<Integer> client = service
             .useFailedOutcomeOf(-1)
@@ -968,26 +969,41 @@ public class FutureCompletesTest {
             .otherwise(e -> 100);
 
     final Completes<Integer> otherClient = client
-            .andThen(value -> value * 2);
+            .andThen(value -> value * 2)
+            .otherwise((Integer value) -> value * 3);
 
     service.with(-1);
 
-    Assert.assertEquals(new Integer(200), otherClient.outcome());
+    Integer outcome = otherClient.await(100);
+
+    Assert.assertTrue(service.hasFailed());
+    Assert.assertTrue(client.hasFailed());
+    Assert.assertTrue(otherClient.hasFailed());
+    Assert.assertEquals(new Integer(300), otherClient.outcome());
+    Assert.assertEquals(new Integer(300), outcome);
   }
 
   @Test
-  public void testThatOtherwiseLetsTheClientConsumerContinueDespiteEarlierFailedOutcome() {
+  public void testThatOtherwiseLetsTheClientConsumerContinueWithTheFailureBranchOnFailedOutcome() {
     final Completes<Integer> service = Completes.asInteger();
     final Completes<Integer> client = service
             .useFailedOutcomeOf(-1)
             .andThen(value -> value * 2)
-            .otherwise(e -> 100);
+            .otherwise(e -> 100)
+            .otherwiseConsume(value -> andThenValue = value);
 
-    client.andThenConsume(value -> andThenValue = value * 2);
+    client
+            .andThenConsume(value -> andThenValue = value * 2)
+            .otherwiseConsume(value -> andThenValue = value * 3);
 
     service.with(-1);
 
-    Assert.assertEquals(new Integer(200), andThenValue);
+    Integer outcome = client.await(100);
+
+    Assert.assertTrue(service.hasFailed());
+    Assert.assertTrue(client.hasFailed());
+    Assert.assertEquals(new Integer(300), andThenValue);
+    Assert.assertEquals(new Integer(100), outcome);
   }
 
   private int multipleBy(final int amount, final int by) {

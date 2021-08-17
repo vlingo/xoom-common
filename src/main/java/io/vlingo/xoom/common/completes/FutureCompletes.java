@@ -515,7 +515,7 @@ public class FutureCompletes<T> implements Completes<T> {
             return;
           }
 
-          if (previous.hasFailed() && !previous.handlesFailure) {
+          if (previous.hasFailed()) {
             fail(previous.failureValue(), previous.isTimedOut());
             if (!handlesFailure) {
               return;
@@ -561,19 +561,19 @@ public class FutureCompletes<T> implements Completes<T> {
             return (O) value;
           }
 
-          if (previous.hasFailed() && !previous.handlesFailure) {
+          if (previous.hasFailed() && !handlesFailure) {
             fail(previous.failureValue(), previous.isTimedOut());
-            if (!handlesFailure) {
-              return (O) previous.failureValue();
-            }
-          } else if (isFailureValue(value)) {
+            return (O) previous.failureValue();
+          } else if (isFailureValue(value) && !handlesFailure) {
             fail(failureValue(), isTimedOut());
-            if (!handlesFailure) {
-              return (O) failureValue();
-            }
+            return (O) failureValue();
           }
 
-          return userFunction.apply(value);
+          O outcome = userFunction.apply(value);
+          if (handlesFailure) {
+            fail((T) outcome, previous.isTimedOut());
+          }
+          return outcome;
         } catch (Exception cause) {
           fail(failureValue(), isTimedOut());
           throw cause;
