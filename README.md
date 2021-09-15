@@ -23,14 +23,14 @@ The `xoom-common` project consists of a minimal toolset used across various othe
   <dependency>
     <groupId>io.vlingo.xoom</groupId>
     <artifactId>xoom-common</artifactId>
-    <version>1.8.6</version>
+    <version>1.8.7</version>
     <type>pom</type>
   </dependency>
 ```
 
 ```gradle
 dependencies {
-    compile 'io.vlingo.xoom:xoom-common:1.8.6'
+    compile 'io.vlingo.xoom:xoom-common:1.8.7'
 }
 ```
 
