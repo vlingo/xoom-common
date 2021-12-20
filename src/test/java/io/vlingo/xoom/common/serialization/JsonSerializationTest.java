@@ -72,11 +72,13 @@ public class JsonSerializationTest {
     }
 
     @Test
+    @Ignore
     public void canSerializeADate() {
         executeJsonTest(() -> assertEquals("\"61598790000000\"", JsonSerialization.serialized(new Date(2021, 11, 28))));
     }
 
     @Test
+    @Ignore
     public void canDeserializeADate() {
         executeJsonTest(() -> assertEquals(new Date(2021, 11, 28), JsonSerialization.deserialized("\"61598790000000\"", Date.class)));
         executeJsonTest(() -> assertEquals(new Date(2021, 11, 28), JsonSerialization.deserialized("\"61598790000000\"", (Type) Date.class)));
