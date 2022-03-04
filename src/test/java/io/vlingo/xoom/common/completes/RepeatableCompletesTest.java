@@ -28,17 +28,17 @@ public class RepeatableCompletesTest {
     completes.with(5);
     final int outcome10 = completes.await();
     assertEquals(10, outcome10);
-    assertEquals(new Integer(10), andThenValue);
+    assertEquals(Integer.valueOf(10), andThenValue);
 
     completes.with(10);
     final int outcome20 = completes.await();
     assertEquals(20, outcome20);
-    assertEquals(new Integer(20), andThenValue);
+    assertEquals(Integer.valueOf(20), andThenValue);
 
     completes.with(20);
     final int outcome40 = completes.await();
     assertEquals(40, outcome40);
-    assertEquals(new Integer(40), andThenValue);
+    assertEquals(Integer.valueOf(40), andThenValue);
   }
 
   @Test
@@ -53,11 +53,11 @@ public class RepeatableCompletesTest {
     service.with(5);
     final int outcome10 = client.await();
     assertEquals(10, outcome10);
-    assertEquals(new Integer(10), andThenValue);
+    assertEquals(Integer.valueOf(10), andThenValue);
 
     service.with(10);
     final int outcome20 = client.await();
     assertEquals(20, outcome20);
-    assertEquals(new Integer(20), andThenValue);
+    assertEquals(Integer.valueOf(20), andThenValue);
   }
 }

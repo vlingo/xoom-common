@@ -36,7 +36,7 @@ public class FutureCompletesTest {
     Assert.assertTrue(completes.isCompleted());
     Assert.assertTrue(completes.hasOutcome());
     Assert.assertTrue(completes.hasFailed());
-    Assert.assertEquals(new Integer(5), completes.outcome());
+    Assert.assertEquals(Integer.valueOf(5), completes.outcome());
   }
 
   @Test
@@ -59,7 +59,7 @@ public class FutureCompletesTest {
 
     client.await();
 
-    Assert.assertEquals(new Integer(10), client.outcome());
+    Assert.assertEquals(Integer.valueOf(10), client.outcome());
   }
 
   @Test
@@ -72,7 +72,7 @@ public class FutureCompletesTest {
 
     client.await();
 
-    Assert.assertEquals(new Integer(5), client.outcome());
+    Assert.assertEquals(Integer.valueOf(5), client.outcome());
   }
 
   @Test
@@ -83,7 +83,7 @@ public class FutureCompletesTest {
 
     client.await();
 
-    Assert.assertEquals(new Integer(5), client.outcome());
+    Assert.assertEquals(Integer.valueOf(5), client.outcome());
   }
 
   @Test
@@ -94,8 +94,8 @@ public class FutureCompletesTest {
             .andThen((value) -> value * 2)
             .andFinallyConsume((value) -> andThenValue = value);
 
-    Assert.assertEquals(new Integer(10), andThenValue);
-    Assert.assertEquals(new Integer(10), completes.outcome());
+    Assert.assertEquals(Integer.valueOf(10), andThenValue);
+    Assert.assertEquals(Integer.valueOf(10), completes.outcome());
   }
 
   @Test
@@ -108,8 +108,8 @@ public class FutureCompletesTest {
             .andThen((value) -> value * 2)
             .otherwise((value) -> 1000);
 
-    Assert.assertEquals(new Integer(10), andThenValue);
-    Assert.assertEquals(new Integer(10), completes.outcome());
+    Assert.assertEquals(Integer.valueOf(10), andThenValue);
+    Assert.assertEquals(Integer.valueOf(10), completes.outcome());
   }
 
   @Test
@@ -127,8 +127,8 @@ public class FutureCompletesTest {
 
     client.await();
 
-    Assert.assertEquals(new Integer(10), andThenValue);
-    Assert.assertEquals(new Integer(10), client.outcome());
+    Assert.assertEquals(Integer.valueOf(10), andThenValue);
+    Assert.assertEquals(Integer.valueOf(10), client.outcome());
   }
 
   @Test
@@ -146,7 +146,7 @@ public class FutureCompletesTest {
 
     client.await();
 
-    Assert.assertEquals(new Integer(10), andThenValue);
+    Assert.assertEquals(Integer.valueOf(10), andThenValue);
   }
 
   @Test
@@ -162,8 +162,8 @@ public class FutureCompletesTest {
 
     Integer outcome = client.await(10);
 
-    Assert.assertEquals(new Integer(10), andThenValue);
-    Assert.assertEquals(new Integer(10), outcome);
+    Assert.assertEquals(Integer.valueOf(10), andThenValue);
+    Assert.assertEquals(Integer.valueOf(10), outcome);
   }
 
   @Test
@@ -186,8 +186,8 @@ public class FutureCompletesTest {
 
     Assert.assertTrue(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
-    Assert.assertEquals(new Integer(0), client.outcome());
-    Assert.assertNotEquals(new Integer(10), andThenValue);
+    Assert.assertEquals(Integer.valueOf(0), client.outcome());
+    Assert.assertNotEquals(Integer.valueOf(10), andThenValue);
     Assert.assertNull(andThenValue);
   }
 
@@ -208,8 +208,8 @@ public class FutureCompletesTest {
     Assert.assertTrue(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
     Assert.assertNull(andThenValue);
-    Assert.assertEquals(new Integer(1000), client.outcome());
-    Assert.assertEquals(new Integer(1000), failureValue);
+    Assert.assertEquals(Integer.valueOf(1000), client.outcome());
+    Assert.assertEquals(Integer.valueOf(1000), failureValue);
   }
 
   @Test
@@ -228,7 +228,7 @@ public class FutureCompletesTest {
     Assert.assertTrue(client.isCompleted());
     Assert.assertFalse(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
-    Assert.assertEquals(new Integer(10), andThenValue);
+    Assert.assertEquals(Integer.valueOf(10), andThenValue);
   }
 
   @Test
@@ -249,7 +249,7 @@ public class FutureCompletesTest {
     Assert.assertTrue(client.isCompleted());
     Assert.assertTrue(client.hasFailed());
     Assert.assertFalse(client.hasOutcome());
-    Assert.assertNotEquals(new Integer(10), andThenValue);
+    Assert.assertNotEquals(Integer.valueOf(10), andThenValue);
     Assert.assertNull(andThenValue);
     Assert.assertNull(client.outcome());
   }
@@ -270,7 +270,7 @@ public class FutureCompletesTest {
     Assert.assertTrue(client.isCompleted());
     Assert.assertFalse(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
-    Assert.assertEquals(new Integer(20), client.outcome());
+    Assert.assertEquals(Integer.valueOf(20), client.outcome());
   }
 
   @Test
@@ -311,8 +311,8 @@ public class FutureCompletesTest {
     Assert.assertTrue(client.isCompleted());
     Assert.assertFalse(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
-    Assert.assertEquals(new Integer(20), client.outcome());
-    Assert.assertEquals(new Integer(20), andThenValue);
+    Assert.assertEquals(Integer.valueOf(20), client.outcome());
+    Assert.assertEquals(Integer.valueOf(20), andThenValue);
     Assert.assertNull(failureValue);
   }
 
@@ -322,7 +322,7 @@ public class FutureCompletesTest {
 
     final Completes<Integer> client =
       service
-        .andThen(new Integer(-100), (value) -> 2 * value)
+        .andThen(Integer.valueOf(-100), (value) -> 2 * value)
         .andThen((x) -> andThenValue = x)
         .otherwise((x) -> failureValue = 1000);
 
@@ -333,9 +333,9 @@ public class FutureCompletesTest {
     Assert.assertTrue(client.isCompleted());
     Assert.assertTrue(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
-    Assert.assertEquals(new Integer(1000), completed);
+    Assert.assertEquals(Integer.valueOf(1000), completed);
     Assert.assertNull(andThenValue);
-    Assert.assertEquals(new Integer(1000), failureValue);
+    Assert.assertEquals(Integer.valueOf(1000), failureValue);
   }
 
   @Test
@@ -344,7 +344,7 @@ public class FutureCompletesTest {
 
     final Completes<Integer> client =
       service
-        .andThen(new Integer(-100), (value) -> 2 * value)
+        .andThen(Integer.valueOf(-100), (value) -> 2 * value)
         .andThen((x) -> andThenValue = x)
         .otherwiseConsume((x) -> failureValue = 1000);
 
@@ -355,9 +355,9 @@ public class FutureCompletesTest {
     Assert.assertTrue(client.isCompleted());
     Assert.assertTrue(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
-    Assert.assertEquals(new Integer(-100), completed);
+    Assert.assertEquals(Integer.valueOf(-100), completed);
     Assert.assertNull(andThenValue);
-    Assert.assertEquals(new Integer(1000), failureValue);
+    Assert.assertEquals(Integer.valueOf(1000), failureValue);
   }
 
   @Test
@@ -366,7 +366,7 @@ public class FutureCompletesTest {
 
     final Completes<Integer> client =
             service
-                    .andThen(new Integer(-100), (value) -> 2 * value)
+                    .andThen(Integer.valueOf(-100), (value) -> 2 * value)
                     .andThen((x) -> andThenValue = x)
                     .otherwiseConsume((x) -> failureValue = 1000);
 
@@ -377,9 +377,9 @@ public class FutureCompletesTest {
     Assert.assertTrue(client.isCompleted());
     Assert.assertFalse(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
-    Assert.assertEquals(new Integer(10), completed);
+    Assert.assertEquals(Integer.valueOf(10), completed);
     Assert.assertNull(failureValue);
-    Assert.assertEquals(new Integer(10), andThenValue);
+    Assert.assertEquals(Integer.valueOf(10), andThenValue);
   }
 
   @Test
@@ -389,7 +389,7 @@ public class FutureCompletesTest {
     final Completes<Integer> client =
       service
         .andThen((value) -> 2 * value)
-        .andThenConsume(new Integer(-200), (x) -> andThenValue = 1000);
+        .andThenConsume(Integer.valueOf(-200), (x) -> andThenValue = 1000);
 
     service.with(-100);
 
@@ -398,7 +398,7 @@ public class FutureCompletesTest {
     Assert.assertTrue(client.isCompleted());
     Assert.assertTrue(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
-    Assert.assertEquals(new Integer(-200), completed);
+    Assert.assertEquals(Integer.valueOf(-200), completed);
     Assert.assertNull(andThenValue);
   }
 
@@ -409,7 +409,7 @@ public class FutureCompletesTest {
     final Completes<Integer> client =
       service
         .andThen((value) -> 2 * value)
-        .andThenTo(new Integer(-200), (x) -> Completes.withSuccess(1000));
+        .andThenTo(Integer.valueOf(-200), (x) -> Completes.withSuccess(1000));
 
     service.with(-100);
 
@@ -418,7 +418,7 @@ public class FutureCompletesTest {
     Assert.assertTrue(client.isCompleted());
     Assert.assertTrue(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
-    Assert.assertEquals(new Integer(-200), completed);
+    Assert.assertEquals(Integer.valueOf(-200), completed);
   }
 
   @Test
@@ -439,7 +439,7 @@ public class FutureCompletesTest {
     final Integer failureOutcome = client.await();
 
     Assert.assertTrue(service.hasFailed());
-    Assert.assertEquals(new Integer(-200), failureOutcome);
+    Assert.assertEquals(Integer.valueOf(-200), failureOutcome);
   }
 
   @Test
@@ -458,7 +458,7 @@ public class FutureCompletesTest {
     final Integer failureOutcome = client.await();
 
     Assert.assertTrue(client.hasFailed());
-    Assert.assertEquals(new Integer(-200), failureOutcome);
+    Assert.assertEquals(Integer.valueOf(-200), failureOutcome);
   }
 
   @Test
@@ -519,7 +519,7 @@ public class FutureCompletesTest {
 
     Assert.assertTrue(client.hasFailed());
     Assert.assertNull(andThenValue);
-    Assert.assertEquals(new Integer(40), failureValue);
+    Assert.assertEquals(Integer.valueOf(40), failureValue);
   }
 
   @Test
@@ -530,7 +530,7 @@ public class FutureCompletesTest {
 
     service.with(5);
 
-    Assert.assertNotEquals(new Integer(5), completed);
+    Assert.assertNotEquals(Integer.valueOf(5), completed);
     Assert.assertNull(completed);
   }
 
@@ -549,7 +549,7 @@ public class FutureCompletesTest {
 
     final Integer completed = completes.await();
 
-    Assert.assertEquals(new Integer(5), completed);
+    Assert.assertEquals(Integer.valueOf(5), completed);
   }
 
   @Test
@@ -606,7 +606,7 @@ public class FutureCompletesTest {
 
     Assert.assertFalse(client.hasFailed());
     Assert.assertNull(andThenValue);
-    Assert.assertEquals(new Integer(10), outcome);
+    Assert.assertEquals(Integer.valueOf(10), outcome);
   }
 
   @Test
@@ -625,7 +625,7 @@ public class FutureCompletesTest {
 
     Assert.assertFalse(client.hasFailed());
     Assert.assertNull(andThenValue);
-    Assert.assertEquals(new Integer(20), outcome);
+    Assert.assertEquals(Integer.valueOf(20), outcome);
   }
 
   @Test
@@ -646,7 +646,7 @@ public class FutureCompletesTest {
 
     Assert.assertFalse(client.hasFailed());
     Assert.assertNull(andThenValue);
-    Assert.assertEquals(new Integer(80), outcome);
+    Assert.assertEquals(Integer.valueOf(80), outcome);
   }
 
   @Test
@@ -668,7 +668,7 @@ public class FutureCompletesTest {
 
     Assert.assertFalse(client.hasFailed());
     Assert.assertNull(andThenValue);
-    Assert.assertEquals(new Integer(80), outcome);
+    Assert.assertEquals(Integer.valueOf(80), outcome);
   }
 
   @Test
@@ -691,7 +691,7 @@ public class FutureCompletesTest {
 
     Assert.assertFalse(client.hasFailed());
     Assert.assertNull(andThenValue);
-    Assert.assertEquals(new Integer(80), outcome);
+    Assert.assertEquals(Integer.valueOf(80), outcome);
   }
 
   @Test
@@ -714,8 +714,8 @@ public class FutureCompletesTest {
     final Integer outcome = client.await();
 
     Assert.assertFalse(client.hasFailed());
-    Assert.assertEquals(new Integer(40), andThenValue);
-    Assert.assertEquals(new Integer(40), outcome);
+    Assert.assertEquals(Integer.valueOf(40), andThenValue);
+    Assert.assertEquals(Integer.valueOf(40), outcome);
   }
 
   @Test
@@ -734,7 +734,7 @@ public class FutureCompletesTest {
     final Integer outcome = client.await();
 
     Assert.assertTrue(client.hasFailed());
-    Assert.assertEquals(new Integer(40), outcome);
+    Assert.assertEquals(Integer.valueOf(40), outcome);
   }
 
   @Test
@@ -746,8 +746,8 @@ public class FutureCompletesTest {
             .andThen((Integer value) -> { throw new IllegalStateException("" + (value * 2)); })
             .recoverFrom((e) -> failureValue = Integer.parseInt(e.getMessage()));
 
-    Assert.assertEquals(new Integer(20), failureValue);
-    Assert.assertEquals(new Integer(20), completes.outcome());
+    Assert.assertEquals(Integer.valueOf(20), failureValue);
+    Assert.assertEquals(Integer.valueOf(20), completes.outcome());
   }
 
   @Test
@@ -792,7 +792,7 @@ public class FutureCompletesTest {
       Assert.assertTrue(client.isCompleted());
       Assert.assertTrue(client.hasFailed());
       Assert.assertTrue(client.hasOutcome());
-      Assert.assertEquals(new Integer(40), outcome);
+      Assert.assertEquals(Integer.valueOf(40), outcome);
     }
   }
 
@@ -813,7 +813,7 @@ public class FutureCompletesTest {
     Assert.assertTrue(client.isCompleted());
     Assert.assertFalse(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
-    Assert.assertEquals(new Integer(20), outcome);
+    Assert.assertEquals(Integer.valueOf(20), outcome);
   }
 
   @Test
@@ -833,7 +833,7 @@ public class FutureCompletesTest {
     Assert.assertTrue(client.isCompleted());
     Assert.assertFalse(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
-    Assert.assertEquals(new Integer(60), outcome);
+    Assert.assertEquals(Integer.valueOf(60), outcome);
   }
 
   @Test
@@ -845,7 +845,7 @@ public class FutureCompletesTest {
       .andThen(value -> value * 2)
       .andThenTo(value -> Completes.withSuccess(value * 2))
       .andFinallyConsume(outcome -> {
-        Assert.assertEquals(new Integer(20), outcome);
+        Assert.assertEquals(Integer.valueOf(20), outcome);
         latch.countDown();
       });
 
@@ -869,7 +869,7 @@ public class FutureCompletesTest {
     Assert.assertTrue(client.isCompleted());
     Assert.assertTrue(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
-    Assert.assertEquals(new Integer(-1), outcome);
+    Assert.assertEquals(Integer.valueOf(-1), outcome);
   }
 
   @Test
@@ -904,7 +904,7 @@ public class FutureCompletesTest {
     Assert.assertTrue(client.isCompleted());
     Assert.assertTrue(client.hasFailed());
     Assert.assertTrue(client.hasOutcome());
-    Assert.assertEquals(new Integer(10), outcome);
+    Assert.assertEquals(Integer.valueOf(10), outcome);
   }
 
   @Test
@@ -931,13 +931,13 @@ public class FutureCompletesTest {
     final Integer outcome = client.await();
 
     Assert.assertFalse(client.hasFailed());
-    Assert.assertEquals(new Integer(80), outcome);
-    Assert.assertEquals(new Integer(80), client.outcome());
-    Assert.assertEquals(new Integer(80), service.outcome());
-    Assert.assertEquals(new Integer(80), stage1.outcome());
-    Assert.assertEquals(new Integer(80), stage2.outcome());
-    Assert.assertEquals(new Integer(80), stage3.outcome());
-    Assert.assertEquals(new Integer(20), nested.outcome());
+    Assert.assertEquals(Integer.valueOf(80), outcome);
+    Assert.assertEquals(Integer.valueOf(80), client.outcome());
+    Assert.assertEquals(Integer.valueOf(80), service.outcome());
+    Assert.assertEquals(Integer.valueOf(80), stage1.outcome());
+    Assert.assertEquals(Integer.valueOf(80), stage2.outcome());
+    Assert.assertEquals(Integer.valueOf(80), stage3.outcome());
+    Assert.assertEquals(Integer.valueOf(20), nested.outcome());
   }
 
   @Test
@@ -956,7 +956,7 @@ public class FutureCompletesTest {
     service.with(5);
 
     Assert.assertTrue(service.hasFailed());
-    Assert.assertEquals(new Integer(200), service.outcome());
+    Assert.assertEquals(Integer.valueOf(200), service.outcome());
   }
 
   @Test
@@ -972,7 +972,7 @@ public class FutureCompletesTest {
 
     service.with(-1);
 
-    Assert.assertEquals(new Integer(200), otherClient.outcome());
+    Assert.assertEquals(Integer.valueOf(200), otherClient.outcome());
   }
 
   @Test
@@ -987,7 +987,7 @@ public class FutureCompletesTest {
 
     service.with(-1);
 
-    Assert.assertEquals(new Integer(200), andThenValue);
+    Assert.assertEquals(Integer.valueOf(200), andThenValue);
   }
 
   private int multipleBy(final int amount, final int by) {

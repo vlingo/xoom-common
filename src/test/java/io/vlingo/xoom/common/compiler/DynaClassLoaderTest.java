@@ -51,8 +51,8 @@ public class DynaClassLoaderTest extends DynaTest {
     final Class<TestInterface> testClass = (Class<TestInterface>) classLoader.loadClass(classname);
     
     assertNotNull(testClass);
-    assertNotNull(testClass.newInstance());
-    assertEquals(1, testClass.newInstance().test());
+    assertNotNull(testClass.getDeclaredConstructor().newInstance());
+    assertEquals(1, testClass.getDeclaredConstructor().newInstance().test());
     
     // load another class from the default/parent ClassLoader
     final Class<DynaFile> actorDynaClass = (Class<DynaFile>) classLoader.loadClass("io.vlingo.xoom.common.compiler.DynaFile");
