@@ -21,7 +21,7 @@ import static org.junit.Assert.assertThrows;
 
 public class JsonSerializationTest {
 
-  private static TimeZone defaultTimeZone = TimeZone.getDefault();
+  private static final TimeZone defaultTimeZone = TimeZone.getDefault();
 
   @Test
   public void testItSerializesPlainText() {
@@ -126,16 +126,18 @@ public class JsonSerializationTest {
     });
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void testItSerializesDate() {
     final String expected = "\"369100800000\"";
-    final String serialized = JsonSerialization.serialized(new Date(81, 8, 12));
+    final String serialized = JsonSerialization.serialized(new Date(81, Calendar.SEPTEMBER, 12));
     assertJson(expected, serialized);
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void testItDeserializesDate() {
-    final Date expected = new Date(81, 8, 12);
+    final Date expected = new Date(81, Calendar.SEPTEMBER, 12);
     final Date deserialized = JsonSerialization.deserialized("\"369100800000\"", Date.class);
     assertEquals(expected, deserialized);
   }
@@ -214,18 +216,15 @@ public class JsonSerializationTest {
     }
   }
 
-  class TestSerializationSubject {
-    private TestSerializationChild child;
-    private String text;
-    private int number;
+  static class TestSerializationSubject {
+    private final TestSerializationChild child;
+    private final String text;
+    private final int number;
 
     public TestSerializationSubject(final TestSerializationChild child, final String text, final int number) {
       this.child = child;
       this.text = text;
       this.number = number;
-    }
-
-    private TestSerializationSubject() {
     }
 
     @Override
@@ -242,14 +241,11 @@ public class JsonSerializationTest {
     }
   }
 
-  class TestSerializationChild {
-    private String name;
+  static class TestSerializationChild {
+    private final String name;
 
     public TestSerializationChild(final String name) {
       this.name = name;
-    }
-
-    private TestSerializationChild() {
     }
 
     @Override
