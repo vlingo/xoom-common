@@ -3,6 +3,8 @@ package io.vlingo.xoom.common.serialization;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.json.JSONException;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
@@ -18,6 +20,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
 public class JsonSerializationTest {
+
+  private static TimeZone defaultTimeZone = TimeZone.getDefault();
 
   @Test
   public void testItSerializesPlainText() {
@@ -124,7 +128,7 @@ public class JsonSerializationTest {
 
   @Test
   public void testItSerializesDate() {
-    final String expected = "\"369093600000\"";
+    final String expected = "\"369100800000\"";
     final String serialized = JsonSerialization.serialized(new Date(81, 8, 12));
     assertJson(expected, serialized);
   }
@@ -132,7 +136,7 @@ public class JsonSerializationTest {
   @Test
   public void testItDeserializesDate() {
     final Date expected = new Date(81, 8, 12);
-    final Date deserialized = JsonSerialization.deserialized("\"369093600000\"", Date.class);
+    final Date deserialized = JsonSerialization.deserialized("\"369100800000\"", Date.class);
     assertEquals(expected, deserialized);
   }
 
@@ -190,6 +194,16 @@ public class JsonSerializationTest {
     final OffsetDateTime expected = OffsetDateTime.of(LocalDateTime.of(1981, 8, 12, 8, 55, 12), ZoneOffset.ofHours(7));
     final OffsetDateTime deserialized = JsonSerialization.deserialized("\"366429312000;+07:00\"", OffsetDateTime.class);
     assertEquals(expected, deserialized);
+  }
+
+  @Before
+  public void setUp() {
+    TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+  }
+
+  @After
+  public void tearDown() {
+    TimeZone.setDefault(defaultTimeZone);
   }
 
   private void assertJson(final String expected, final String actual) {
