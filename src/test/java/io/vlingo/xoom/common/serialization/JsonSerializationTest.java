@@ -1,6 +1,5 @@
 package io.vlingo.xoom.common.serialization;
 
-import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.json.JSONException;
 import org.junit.After;
@@ -19,84 +18,84 @@ import java.util.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
-public class JsonSerializationTest {
+abstract public class JsonSerializationTest {
 
   private static final TimeZone defaultTimeZone = TimeZone.getDefault();
 
   @Test
-  public void testItSerializesPlainText() {
+  public void itSerializesPlainText() {
     assertJson("\"plain text\"", JsonSerialization.serialized("plain text"));
   }
 
   @Test
-  public void testItDeserializesPlainTextByClass() {
+  public void itDeserializesPlainTextByClass() {
     assertEquals("plain text (class)", JsonSerialization.deserialized("\"plain text (class)\"", String.class));
   }
 
   @Test
-  public void testItDeserializesPlainTextByType() {
+  public void itDeserializesPlainTextByType() {
     assertEquals("plain text (type)", JsonSerialization.deserialized("\"plain text (type)\"", (Type) String.class));
   }
 
   @Test
-  public void testItSerializesNumbers() {
+  public void itSerializesNumbers() {
     assertJson("42", JsonSerialization.serialized(42));
   }
 
   @Test
-  public void testItDeserializesNumbersByClass() {
+  public void itDeserializesNumbersByClass() {
     assertEquals(13, (int) JsonSerialization.deserialized("13", Integer.class));
   }
 
   @Test
-  public void testItDeserializesNumbersByType() {
+  public void itDeserializesNumbersByType() {
     assertEquals(13, (int) JsonSerialization.deserialized("13", (Type) Integer.class));
   }
 
   @Test
-  public void testItDeserializesPreviouslySerializedObject() {
+  public void itDeserializesPreviouslySerializedObject() {
     final TestSerializationSubject expected = new TestSerializationSubject(new TestSerializationChild("Alice"), "lorem ipsum", 13);
     final TestSerializationSubject deserialized = JsonSerialization.deserialized(JsonSerialization.serialized(expected), TestSerializationSubject.class);
     assertEquals(expected, deserialized);
   }
 
   @Test
-  public void testItSerializesObjects() {
+  public void itSerializesObjects() {
     final String serialized = JsonSerialization.serialized(new TestSerializationSubject(new TestSerializationChild("Alice"), "lorem ipsum", 13));
     final String expected = "{\"child\":{\"name\":\"Alice\"},\"text\":\"lorem ipsum\",\"number\":13}";
     assertJson(expected, serialized);
   }
 
   @Test
-  public void testItDeserializesObjectsByClass() {
+  public void itDeserializesObjectsByClass() {
     final TestSerializationSubject deserialized = JsonSerialization.deserialized("{\"child\":{\"name\":\"Bob\"},\"text\":\"lorem ipsum\",\"number\":42}", TestSerializationSubject.class);
     final TestSerializationSubject expected = new TestSerializationSubject(new TestSerializationChild("Bob"), "lorem ipsum", 42);
     assertEquals(expected, deserialized);
   }
 
   @Test
-  public void testItDeserializesObjectsByType() {
+  public void itDeserializesObjectsByType() {
     final TestSerializationSubject expected = new TestSerializationSubject(new TestSerializationChild("Bob"), "lorem ipsum", 42);
     final TestSerializationSubject deserialized = JsonSerialization.deserialized("{\"child\":{\"name\":\"Bob\"},\"text\":\"lorem ipsum\",\"number\":42}", (Type) TestSerializationSubject.class);
     assertEquals(expected, deserialized);
   }
 
   @Test
-  public void testItSerializesCollections() {
+  public void itSerializesCollections() {
     final Collection<TestSerializationSubject> collection = Collections.singletonList(new TestSerializationSubject(new TestSerializationChild("Bob"), "lorem ipsum", 42));
     final String serialized = JsonSerialization.serialized(collection);
     assertJson("[{\"child\":{\"name\":\"Bob\"},\"text\":\"lorem ipsum\",\"number\":42}]", serialized);
   }
 
   @Test
-  public void testItSerializesLists() {
+  public void itSerializesLists() {
     final List<TestSerializationSubject> list = Collections.singletonList(new TestSerializationSubject(new TestSerializationChild("Bob"), "lorem ipsum", 42));
     final String serialized = JsonSerialization.serialized(list);
     assertJson("[{\"child\":{\"name\":\"Bob\"},\"text\":\"lorem ipsum\",\"number\":42}]", serialized);
   }
 
   @Test
-  public void testItDeserializesLists() {
+  public void itDeserializesLists() {
     final List<TestSerializationSubject> expected = Collections.singletonList(new TestSerializationSubject(new TestSerializationChild("Bob"), "lorem ipsum", 42));
     final List<TestSerializationSubject> deserialized = JsonSerialization.deserializedList("[{\"child\":{\"name\":\"Bob\"},\"text\":\"lorem ipsum\",\"number\":42}]", new TypeToken<List<TestSerializationSubject>>() {
     }.getType());
@@ -104,7 +103,7 @@ public class JsonSerializationTest {
   }
 
   @Test
-  public void testItSerializesClass() {
+  public void itSerializesClass() {
     final Class<TestSerializationSubject> clazz = TestSerializationSubject.class;
     final String serialized = JsonSerialization.serialized(clazz);
     final String expected = "\"io.vlingo.xoom.common.serialization.JsonSerializationTest$TestSerializationSubject\"";
@@ -112,15 +111,15 @@ public class JsonSerializationTest {
   }
 
   @Test
-  public void testItDeserializesClass() {
+  public void itDeserializesClass() {
     final String serialized = "\"io.vlingo.xoom.common.serialization.JsonSerializationTest$TestSerializationSubject\"";
     final Class<?> deserialized = JsonSerialization.deserialized(serialized, Class.class);
     assertEquals(TestSerializationSubject.class, deserialized);
   }
 
   @Test
-  public void testItThrowsIfClassIsNotFoundWhileDeserializing() {
-    assertThrows(JsonParseException.class, () -> {
+  public void itThrowsIfClassIsNotFoundWhileDeserializing() {
+    assertThrows(RuntimeException.class, () -> {
       final String serialized = "\"io.vlingo.xoom.common.serialization.JsonSerializationTest$MissingClass\"";
       JsonSerialization.deserialized(serialized, Class.class);
     });
@@ -128,7 +127,7 @@ public class JsonSerializationTest {
 
   @SuppressWarnings("deprecation")
   @Test
-  public void testItSerializesDate() {
+  public void itSerializesDate() {
     final String expected = "\"369100800000\"";
     final String serialized = JsonSerialization.serialized(new Date(81, Calendar.SEPTEMBER, 12));
     assertJson(expected, serialized);
@@ -136,81 +135,98 @@ public class JsonSerializationTest {
 
   @SuppressWarnings("deprecation")
   @Test
-  public void testItDeserializesDate() {
+  public void itDeserializesDate() {
     final Date expected = new Date(81, Calendar.SEPTEMBER, 12);
     final Date deserialized = JsonSerialization.deserialized("\"369100800000\"", Date.class);
     assertEquals(expected, deserialized);
   }
 
   @Test
-  public void testItSerializesLocalDate() {
+  public void itSerializesLocalDate() {
     final String expected = "\"4241\"";
     final String serialized = JsonSerialization.serialized(LocalDate.of(1981, 8, 12));
     assertJson(expected, serialized);
   }
 
   @Test
-  public void testItDeserializesLocalDate() {
+  public void itDeserializesLocalDate() {
     final LocalDate expected = LocalDate.of(1981, 8, 12);
     final LocalDate deserialized = JsonSerialization.deserialized("\"4241\"", LocalDate.class);
     assertEquals(expected, deserialized);
   }
 
   @Test
-  public void testItDeserializesLocalDateFromFormattedString() {
+  public void itDeserializesLocalDateFromFormattedString() {
     final LocalDate expected = LocalDate.of(1981, 8, 12);
     final LocalDate deserialized = JsonSerialization.deserialized("\"1981-08-12\"", LocalDate.class);
     assertEquals(expected, deserialized);
   }
 
   @Test
-  public void testItSerializesLocalDateTime() {
+  public void itSerializesLocalDateTime() {
     final String expected = "\"366454512000\"";
     final String serialized = JsonSerialization.serialized(LocalDateTime.of(1981, 8, 12, 8, 55, 12));
     assertJson(expected, serialized);
   }
 
   @Test
-  public void testItDeserializesLocalDateTime() {
+  public void itDeserializesLocalDateTime() {
     final LocalDateTime expected = LocalDateTime.of(1981, 8, 12, 8, 55, 12);
     final LocalDateTime deserialized = JsonSerialization.deserialized("\"366454512000\"", LocalDateTime.class);
     assertEquals(expected, deserialized);
   }
 
   @Test
-  public void testItDeserializesLocalDateTimeFromFormattedString() {
+  public void itDeserializesLocalDateTimeFromFormattedString() {
     final LocalDateTime expected = LocalDateTime.of(1981, 8, 12, 8, 55, 12);
     final LocalDateTime deserialized = JsonSerialization.deserialized("\"1981-08-12T08:55:12\"", LocalDateTime.class);
     assertEquals(expected, deserialized);
   }
 
   @Test
-  public void testItSerializesOffsetDateTime() {
+  public void itSerializesOffsetDateTime() {
     final String expected = "\"366429312000;+07:00\"";
     final String serialized = JsonSerialization.serialized(OffsetDateTime.of(LocalDateTime.of(1981, 8, 12, 8, 55, 12), ZoneOffset.ofHours(7)));
     assertJson(expected, serialized);
   }
 
   @Test
-  public void testItDeserializesOffsetDateTime() {
+  public void itDeserializesOffsetDateTime() {
     final OffsetDateTime expected = OffsetDateTime.of(LocalDateTime.of(1981, 8, 12, 8, 55, 12), ZoneOffset.ofHours(7));
     final OffsetDateTime deserialized = JsonSerialization.deserialized("\"366429312000;+07:00\"", OffsetDateTime.class);
     assertEquals(expected, deserialized);
   }
 
+  abstract protected JsonSerializationStrategy serializationStrategy();
+
+  private JsonSerializationStrategy defaultStrategy() {
+    return new GsonJsonSerialization();
+  }
+
   @Before
-  public void setUp() {
+  public void configureStrategy() {
+    JsonSerialization.use(serializationStrategy());
+  }
+
+  @After
+  public void restoreStrategy() {
+    JsonSerialization.use(defaultStrategy());
+  }
+
+  @Before
+  public void configureTimeZone() {
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
   }
 
   @After
-  public void tearDown() {
+  public void restoreTimeZone() {
     TimeZone.setDefault(defaultTimeZone);
   }
 
   private void assertJson(final String expected, final String actual) {
     try {
-      JSONAssert.assertEquals(expected, actual, JSONCompareMode.STRICT);
+      final String message = String.format("Expected: `%s`, but got: `%s`.", expected, actual);
+      JSONAssert.assertEquals(message, expected, actual, JSONCompareMode.STRICT);
     } catch (JSONException e) {
       throw new AssertionError(e);
     }
