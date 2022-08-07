@@ -203,6 +203,12 @@ abstract public class JsonSerializationTest {
     assertJson("{\"property\":\"value\"}", serialized);
   }
 
+  @Test
+  public void itIgnoresNullValues() {
+    final String serialized = JsonSerialization.serialized(Collections.singletonMap("key", null));
+    assertJson("{}", serialized);
+  }
+
   abstract protected JsonSerializationStrategy serializationStrategy();
 
   private JsonSerializationStrategy defaultStrategy() {
