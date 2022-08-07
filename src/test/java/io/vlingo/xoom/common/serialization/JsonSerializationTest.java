@@ -197,6 +197,12 @@ abstract public class JsonSerializationTest {
     assertEquals(expected, deserialized);
   }
 
+  @Test
+  public void itSerializesByIgnoringGetters() {
+    final String serialized = JsonSerialization.serialized(new ClassWithGetters());
+    assertJson("{\"property\":\"value\"}", serialized);
+  }
+
   abstract protected JsonSerializationStrategy serializationStrategy();
 
   private JsonSerializationStrategy defaultStrategy() {
@@ -275,6 +281,18 @@ abstract public class JsonSerializationTest {
     @Override
     public int hashCode() {
       return Objects.hash(name);
+    }
+  }
+
+  static class ClassWithGetters {
+    public String property = "value";
+
+    public String getIgnored() {
+      return "ignored";
+    }
+
+    public boolean isIgnored() {
+      return false;
     }
   }
 }
