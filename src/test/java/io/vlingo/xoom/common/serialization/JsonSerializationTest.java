@@ -1,6 +1,8 @@
 package io.vlingo.xoom.common.serialization;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.google.gson.reflect.TypeToken;
+import io.vlingo.xoom.common.serialization.gson.GsonJsonSerialization;
 import org.json.JSONException;
 import org.junit.After;
 import org.junit.Before;
@@ -272,6 +274,10 @@ abstract public class JsonSerializationTest {
   static class TestSerializationChild {
     private final String name;
 
+    // Unfortunately, single argument constructors are not auto-recognised by jackson
+    // @see https://github.com/FasterXML/jackson-databind/issues/1498
+    // @see https://github.com/FasterXML/jackson-module-parameter-names/issues/21#issuecomment-110994068
+    @JsonCreator
     public TestSerializationChild(final String name) {
       this.name = name;
     }
