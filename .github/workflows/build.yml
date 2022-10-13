@@ -11,5 +11,5 @@ env:
 
 jobs:
   build:
-    uses: vlingo/xoom-platform/.github/workflows/reusable/build.yml@master
+    uses: vlingo/xoom-platform/.github/workflows/build.yml@master
     secrets: inherit
